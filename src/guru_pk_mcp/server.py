@@ -10,6 +10,7 @@ from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 from mcp.types import TextContent
 
+from .config import ConfigManager
 from .custom_personas import CustomPersonaManager
 from .models import PKSession
 from .personas import (
@@ -36,6 +37,7 @@ class GuruPKServer:
 
         self.session_manager = SessionManager(data_dir)
         self.custom_persona_manager = CustomPersonaManager(data_dir)
+        self.config_manager = ConfigManager(data_dir)
         self.current_session: PKSession | None = None
         self._register_tools()
 
@@ -188,6 +190,38 @@ class GuruPKServer:
                         "required": ["description"],
                     },
                 ),
+                types.Tool(
+                    name="set_language",
+                    description="设置专家回复使用的语言",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "language": {
+                                "type": "string",
+                                "enum": [
+                                    "chinese",
+                                    "english",
+                                    "japanese",
+                                    "korean",
+                                    "french",
+                                    "german",
+                                    "spanish",
+                                ],
+                                "description": "语言代码：chinese(中文), english(英语), japanese(日语), korean(韩语), french(法语), german(德语), spanish(西语)",
+                            }
+                        },
+                        "required": ["language"],
+                    },
+                ),
+                types.Tool(
+                    name="get_language_settings",
+                    description="查看当前语言设置和支持的语言",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": False,
+                    },
+                ),
             ]
 
         # 统一工具处理器
@@ -223,6 +257,10 @@ class GuruPKServer:
                 return await self._handle_create_custom_persona_from_description(
                     arguments
                 )
+            elif name == "set_language":
+                return await self._handle_set_language(arguments)
+            elif name == "get_language_settings":
+                return await self._handle_get_language_settings(arguments)
             else:
                 return [TextContent(type="text", text=f"❌ 未知工具: {name}")]
 
@@ -583,6 +621,7 @@ class GuruPKServer:
                 session.current_round,
                 context,
                 self.custom_persona_manager.custom_personas,
+                self.config_manager.get_language_instruction(),
             )
 
             # 返回格式化的prompt信息
@@ -991,7 +1030,11 @@ class GuruPKServer:
 
             # 生成综合分析的prompt
             synthesis_prompt = generate_round_prompt(
-                "综合大师", 4, context, self.custom_persona_manager.custom_personas
+                "综合大师",
+                4,
+                context,
+                self.custom_persona_manager.custom_personas,
+                self.config_manager.get_language_instruction(),
             )
 
             result = f"""🧠 **准备进行最终综合分析**
@@ -1439,6 +1482,8 @@ class GuruPKServer:
 
 ### 高级功能
 - `get_usage_statistics` - 查看使用统计
+- `set_language` - 🌍 设置专家回复语言
+- `get_language_settings` - 查看语言设置
 - `guru_pk_help` - 获取系统帮助（本工具）
 
 ## 🚀 快速开始
@@ -1468,6 +1513,11 @@ list_available_personas({})
 create_custom_persona_from_description({
   "description": "我想要一个现代教育领域最顶尖的大师"
 })
+```
+
+5. **🌍 设置回复语言**：
+```
+set_language({"language": "english"})
 ```
 
 ## 🎭 内置专家阵容（13位）
@@ -1787,6 +1837,106 @@ create_custom_persona_from_description({
 - **core_traits**: 专家的3-5个核心特质（数组格式）
 - **speaking_style**: 专家的语言风格（20-30字）
 - **base_prompt**: 详细的角色设定（150-300字，包含背景、特点、语言风格）"""
+
+    async def _handle_set_language(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """设置专家回复使用的语言"""
+        try:
+            language = arguments.get("language", "").strip()
+            if not language:
+                return [
+                    TextContent(
+                        type="text",
+                        text='❌ 请提供语言代码。\n\n使用方法：set_language({"language": "chinese"})',
+                    )
+                ]
+
+            supported_languages = self.config_manager.get_supported_languages()
+            if language not in supported_languages:
+                supported_list = ", ".join(supported_languages)
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"❌ 不支持的语言: {language}\n\n支持的语言: {supported_list}",
+                    )
+                ]
+
+            success = self.config_manager.set_language(language)
+            if success:
+                display_name = self.config_manager.get_language_display_name(language)
+                language_instruction = self.config_manager.get_language_instruction()
+
+                result = f"""✅ **语言设置已更新**
+
+**当前语言**: {display_name} ({language})
+**语言指令**: {language_instruction}
+
+💡 **说明**: 所有专家在生成角色提示时都会收到明确的语言指令，确保回复使用指定语言。
+
+🔄 **生效范围**:
+- 新启动的PK会话
+- 获取专家角色提示
+- 综合分析阶段
+
+⚠️ **注意**: 已进行中的会话不会受到影响，需要重新启动会话才能使用新的语言设置。"""
+
+                return [TextContent(type="text", text=result)]
+            else:
+                return [TextContent(type="text", text="❌ 语言设置保存失败")]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 设置语言失败: {str(e)}")]
+
+    async def _handle_get_language_settings(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """查看当前语言设置和支持的语言"""
+        try:
+            current_language = self.config_manager.get_language()
+            current_display = self.config_manager.get_language_display_name(
+                current_language
+            )
+            current_instruction = self.config_manager.get_language_instruction()
+            supported_languages = self.config_manager.get_supported_languages()
+
+            result = f"""🌍 **语言设置**
+
+**当前语言**: {current_display} ({current_language})
+**语言指令**: {current_instruction}
+
+## 🗣️ 支持的语言
+
+"""
+
+            for lang in supported_languages:
+                display_name = self.config_manager.get_language_display_name(lang)
+                is_current = "✅" if lang == current_language else "  "
+                result += f"{is_current} **{display_name}** ({lang})\n"
+
+            result += """
+## 🔧 使用方法
+
+**设置语言**:
+```
+set_language({"language": "english"})
+```
+
+**支持的语言代码**:
+- `chinese` - 中文（默认）
+- `english` - English
+- `japanese` - 日本語
+- `korean` - 한국어
+- `french` - Français
+- `german` - Deutsch
+- `spanish` - Español
+
+💡 **提示**: 语言设置会影响所有专家的回复语言，确保获得一致的语言体验。"""
+
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 获取语言设置失败: {str(e)}")]
 
     async def run(self) -> None:
         """运行MCP服务器"""

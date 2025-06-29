@@ -244,6 +244,7 @@ def generate_round_prompt(
     round_num: int,
     context: dict[str, Any],
     custom_personas: dict[str, Any] | None = None,
+    language_instruction: str = "请务必使用中文回答。",
 ) -> str:
     """根据轮次和上下文动态生成prompt"""
     # 先检查自定义思想家
@@ -260,6 +261,8 @@ def generate_round_prompt(
         # 第1轮：独立思考
         return f"""{base}
 
+{language_instruction}
+
 现在用户向你提出了一个问题：{question}
 
 请以你独特的思维方式和哲学观点来深度分析这个问题。不要参考任何其他人的观点，完全基于你自己的思考给出见解。请保持你的个性化语言风格。"""
@@ -275,6 +278,8 @@ def generate_round_prompt(
                 other_text += f"\n\n**{name}的观点：**\n{response}"
 
         return f"""{base}
+
+{language_instruction}
 
 原问题：{question}
 
@@ -301,6 +306,8 @@ def generate_round_prompt(
 
         return f"""{base}
 
+{language_instruction}
+
 这是最后一轮发言机会。经过前两轮的深入思考和辩论，现在请给出你最终的、最完善的解决方案。
 
 原问题：{question}
@@ -317,7 +324,9 @@ def generate_round_prompt(
         for name, response in all_final_responses.items():
             responses_text += f"\n\n**{name}的最终方案：**\n{response}"
 
-        return f"""你现在是一位智慧的综合大师，需要分析和整合三位思想家的最终方案。
+        return f"""{language_instruction}
+
+你现在是一位智慧的综合大师，需要分析和整合三位思想家的最终方案。
 
 原始问题：{question}
 
