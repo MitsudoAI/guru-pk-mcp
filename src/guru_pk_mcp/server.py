@@ -174,6 +174,20 @@ class GuruPKServer:
                         "additionalProperties": False,
                     },
                 ),
+                types.Tool(
+                    name="create_custom_persona_from_description",
+                    description="根据自然语言描述智能创建自定义专家",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "description": {
+                                "type": "string",
+                                "description": "用自然语言描述想要创建的专家，例如：'我想要一个现代教育领域最顶尖的大师'",
+                            }
+                        },
+                        "required": ["description"],
+                    },
+                ),
             ]
 
         # 统一工具处理器
@@ -205,6 +219,10 @@ class GuruPKServer:
                 return await self._handle_advance_to_next_round(arguments)
             elif name == "get_usage_statistics":
                 return await self._handle_get_usage_statistics(arguments)
+            elif name == "create_custom_persona_from_description":
+                return await self._handle_create_custom_persona_from_description(
+                    arguments
+                )
             else:
                 return [TextContent(type="text", text=f"❌ 未知工具: {name}")]
 
@@ -1375,6 +1393,7 @@ class GuruPKServer:
 ### 专家管理
 - `list_available_personas` - 查看所有可用专家
 - `recommend_personas` - 智能推荐专家组合
+- `create_custom_persona_from_description` - 🌟 自然语言创建自定义专家
 
 ### 会话管理
 - `view_session_history` - 查看会话历史
@@ -1405,6 +1424,13 @@ recommend_personas({
 3. **查看可用专家**：
 ```
 list_available_personas({})
+```
+
+4. **🌟 自然语言创建专家**：
+```
+create_custom_persona_from_description({
+  "description": "我想要一个现代教育领域最顶尖的大师"
+})
 ```
 
 ## 🎭 内置专家阵容（13位）
@@ -1587,6 +1613,143 @@ list_available_personas({})
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 获取统计失败: {str(e)}")]
+
+    async def _handle_create_custom_persona_from_description(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """根据自然语言描述智能创建自定义专家"""
+        try:
+            description = arguments.get("description", "").strip()
+            if not description:
+                return [
+                    TextContent(
+                        type="text",
+                        text='❌ 请提供专家描述。\n\n使用方法：create_custom_persona_from_description({"description": "我想要一个现代教育领域最顶尖的大师"})',
+                    )
+                ]
+
+            # 生成智能专家创建提示
+            creation_prompt = self._generate_persona_creation_prompt(description)
+
+            result = f"""🤖 **智能专家创建助手**
+
+**您的需求**: {description}
+
+为了创建最符合您需求的专家，我需要您协助提供以下信息。请按照下面的格式填写：
+
+---
+
+{creation_prompt}
+
+---
+
+💡 **使用说明**:
+1. 请根据上面的模板，结合您的需求描述，填写专家信息
+2. 填写完成后，请使用标准的 `create_custom_persona` 工具提交
+3. 系统会自动验证并保存您的自定义专家
+
+🎯 **提示**: 您可以参考现有的13位内置专家作为创建灵感，使用 `list_available_personas` 查看他们的特点。"""
+
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 创建专家失败: {str(e)}")]
+
+    def _generate_persona_creation_prompt(self, user_description: str) -> str:
+        """根据用户描述生成专家创建提示"""
+
+        # 分析用户描述中的关键词来推荐合适的专家特质
+        description_lower = user_description.lower()
+
+        # 推荐的专家信息模板
+        if any(
+            word in description_lower
+            for word in ["教育", "学习", "教学", "老师", "教授"]
+        ):
+            # 教育领域专家
+            suggested_name = "肯·罗宾逊"
+            suggested_description = "现代教育改革先驱，创造力教育倡导者"
+            suggested_traits = ["创造力教育", "个性化学习", "教育变革"]
+            suggested_style = "富有激情，善于用故事启发思考"
+            example_prompt = """你是肯·罗宾逊，世界知名的教育学家和创造力专家。你致力于教育体系的根本变革。
+
+你的特点：
+- 强调每个人都有独特的天赋和学习方式
+- 批判传统工业化教育模式
+- 倡导创造力和个性化教育
+- 用幽默和故事传达深刻的教育理念
+- 语言风格：幽默风趣，深入浅出，善于用生动的比喻解释教育理念"""
+
+        elif any(
+            word in description_lower
+            for word in ["科技", "技术", "AI", "人工智能", "编程"]
+        ):
+            # 科技领域专家
+            suggested_name = "杰弗里·辛顿"
+            suggested_description = "深度学习教父，人工智能先驱"
+            suggested_traits = ["深度学习", "神经网络", "人工智能伦理"]
+            suggested_style = "严谨科学，前瞻性思维"
+            example_prompt = """你是杰弗里·辛顿，被誉为"深度学习教父"的人工智能先驱。
+
+你的特点：
+- 在神经网络和深度学习领域做出奠基性贡献
+- 对AI的未来发展有深刻洞察
+- 关注AI的伦理和安全问题
+- 严谨的科学态度
+- 语言风格：理性客观，技术深度强，善于预见技术趋势"""
+
+        elif any(
+            word in description_lower for word in ["心理", "治疗", "咨询", "情感"]
+        ):
+            # 心理学专家
+            suggested_name = "维克多·弗兰克尔"
+            suggested_description = "意义疗法创始人，集中营幸存者"
+            suggested_traits = ["意义疗法", "生存意义", "心理韧性"]
+            suggested_style = "深刻人性洞察，充满希望力量"
+            example_prompt = """你是维克多·弗兰克尔，意义疗法的创始人，集中营的幸存者。
+
+你的特点：
+- 认为寻找生活意义是人类最基本的动力
+- 从极端痛苦中找到希望和成长
+- 强调人类精神的不可摧毁性
+- 将个人经历转化为普世智慧
+- 语言风格：深沉有力，充满人性关怀，善于从苦难中提炼智慧"""
+
+        else:
+            # 通用专家模板
+            suggested_name = "专家名字"
+            suggested_description = "简要描述专家的身份和主要贡献"
+            suggested_traits = ["核心特质1", "核心特质2", "核心特质3"]
+            suggested_style = "描述专家的说话风格和思维特点"
+            example_prompt = """你是[专家名字]，[专家身份和背景]。
+
+你的特点：
+- [核心特点1]
+- [核心特点2]
+- [核心特点3]
+- [思维方式]
+- 语言风格：[具体的说话风格和表达特点]"""
+
+        return f"""**请填写专家信息**（参考您的需求：{user_description}）
+
+```json
+{{
+  "name": "{suggested_name}",
+  "emoji": "🎓",
+  "description": "{suggested_description}",
+  "core_traits": {suggested_traits},
+  "speaking_style": "{suggested_style}",
+  "base_prompt": "{example_prompt}"
+}}
+```
+
+**字段说明**:
+- **name**: 专家的姓名（建议选择真实的历史人物或当代专家）
+- **emoji**: 代表专家的表情符号（1个字符）
+- **description**: 专家的简要介绍（20-50字）
+- **core_traits**: 专家的3-5个核心特质（数组格式）
+- **speaking_style**: 专家的语言风格（20-30字）
+- **base_prompt**: 详细的角色设定（150-300字，包含背景、特点、语言风格）"""
 
     async def run(self) -> None:
         """运行MCP服务器"""
