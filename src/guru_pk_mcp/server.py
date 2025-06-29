@@ -1715,128 +1715,195 @@ set_language({"language": "english"})
                     )
                 ]
 
-            # 生成智能专家创建提示
-            creation_prompt = self._generate_persona_creation_prompt(description)
+            # 智能生成专家配置
+            persona_data = self._generate_smart_persona(description)
 
-            result = f"""🤖 **智能专家创建助手**
+            if not persona_data:
+                return [
+                    TextContent(
+                        type="text",
+                        text="❌ 无法根据您的描述生成合适的专家配置，请尝试更具体的描述。",
+                    )
+                ]
 
-**您的需求**: {description}
+            # 检查名称冲突
+            all_personas = self.custom_persona_manager.get_all_personas(PERSONAS)
+            if persona_data["name"] in all_personas:
+                # 如果冲突，在名称后添加标识
+                persona_data["name"] = f"{persona_data['name']}（自定义）"
 
-为了创建最符合您需求的专家，我需要您协助提供以下信息。请按照下面的格式填写：
+            # 直接创建专家
+            success = self.custom_persona_manager.add_custom_persona(persona_data)
 
----
+            if success:
+                result = f"""✅ **智能专家创建成功！**
 
-{creation_prompt}
+🎯 **基于您的描述**: {description}
 
----
+👤 **{persona_data['name']}** 已添加到专家库
 
-💡 **使用说明**:
-1. 请根据上面的模板，结合您的需求描述，填写专家信息
-2. 填写完成后，请使用标准的 `create_custom_persona` 工具提交
-3. 系统会自动验证并保存您的自定义专家
+📝 **专家信息**:
+- 🎭 表情: {persona_data.get('emoji', '👤')}
+- 📖 描述: {persona_data['description']}
+- 🔥 核心特质: {', '.join(persona_data['core_traits'])}
+- 💬 语言风格: {persona_data['speaking_style']}
 
-🎯 **提示**: 您可以参考现有的13位内置专家作为创建灵感，使用 `list_available_personas` 查看他们的特点。"""
+💡 **立即可用**: 现在您可以在 `start_pk_session` 中使用这位专家了！
 
-            return [TextContent(type="text", text=result)]
+🚀 **示例**:
+```
+start_pk_session({
+  "question": "您的问题",
+  "personas": ["{persona_data['name']}", "苏格拉底", "查理芒格"]
+})
+```"""
+
+                return [TextContent(type="text", text=result)]
+            else:
+                return [TextContent(type="text", text="❌ 专家创建失败，请稍后重试。")]
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 创建专家失败: {str(e)}")]
 
-    def _generate_persona_creation_prompt(self, user_description: str) -> str:
-        """根据用户描述生成专家创建提示"""
+    def _generate_smart_persona(self, user_description: str) -> dict[str, Any] | None:
+        """根据用户描述智能生成专家配置"""
 
         # 分析用户描述中的关键词来推荐合适的专家特质
         description_lower = user_description.lower()
 
-        # 推荐的专家信息模板
+        # 教育领域专家
         if any(
             word in description_lower
-            for word in ["教育", "学习", "教学", "老师", "教授"]
+            for word in ["教育", "学习", "教学", "老师", "教授", "创造力"]
         ):
-            # 教育领域专家
-            suggested_name = "肯·罗宾逊"
-            suggested_description = "现代教育改革先驱，创造力教育倡导者"
-            suggested_traits = ["创造力教育", "个性化学习", "教育变革"]
-            suggested_style = "富有激情，善于用故事启发思考"
-            example_prompt = """你是肯·罗宾逊，世界知名的教育学家和创造力专家。你致力于教育体系的根本变革。
+            return {
+                "name": "肯·罗宾逊",
+                "emoji": "🎓",
+                "description": "现代教育改革先驱，创造力教育倡导者",
+                "core_traits": ["创造力教育", "个性化学习", "教育变革"],
+                "speaking_style": "富有激情，善于用故事启发思考",
+                "base_prompt": """你是肯·罗宾逊，世界知名的教育学家和创造力专家。你致力于教育体系的根本变革。
 
 你的特点：
 - 强调每个人都有独特的天赋和学习方式
 - 批判传统工业化教育模式
 - 倡导创造力和个性化教育
 - 用幽默和故事传达深刻的教育理念
-- 语言风格：幽默风趣，深入浅出，善于用生动的比喻解释教育理念"""
+- 语言风格：幽默风趣，深入浅出，善于用生动的比喻解释教育理念""",
+            }
 
+        # 科技领域专家
         elif any(
             word in description_lower
-            for word in ["科技", "技术", "AI", "人工智能", "编程"]
+            for word in ["科技", "技术", "ai", "人工智能", "编程", "深度学习"]
         ):
-            # 科技领域专家
-            suggested_name = "杰弗里·辛顿"
-            suggested_description = "深度学习教父，人工智能先驱"
-            suggested_traits = ["深度学习", "神经网络", "人工智能伦理"]
-            suggested_style = "严谨科学，前瞻性思维"
-            example_prompt = """你是杰弗里·辛顿，被誉为"深度学习教父"的人工智能先驱。
+            return {
+                "name": "杰弗里·辛顿",
+                "emoji": "🤖",
+                "description": "深度学习教父，人工智能先驱",
+                "core_traits": ["深度学习", "神经网络", "AI伦理"],
+                "speaking_style": "严谨科学，前瞻性思维",
+                "base_prompt": """你是杰弗里·辛顿，被誉为"深度学习教父"的人工智能先驱。
 
 你的特点：
 - 在神经网络和深度学习领域做出奠基性贡献
 - 对AI的未来发展有深刻洞察
 - 关注AI的伦理和安全问题
 - 严谨的科学态度
-- 语言风格：理性客观，技术深度强，善于预见技术趋势"""
+- 语言风格：理性客观，技术深度强，善于预见技术趋势""",
+            }
 
+        # 心理学专家
         elif any(
-            word in description_lower for word in ["心理", "治疗", "咨询", "情感"]
+            word in description_lower
+            for word in ["心理", "治疗", "咨询", "情感", "心理学家"]
         ):
-            # 心理学专家
-            suggested_name = "维克多·弗兰克尔"
-            suggested_description = "意义疗法创始人，集中营幸存者"
-            suggested_traits = ["意义疗法", "生存意义", "心理韧性"]
-            suggested_style = "深刻人性洞察，充满希望力量"
-            example_prompt = """你是维克多·弗兰克尔，意义疗法的创始人，集中营的幸存者。
+            return {
+                "name": "维克多·弗兰克尔",
+                "emoji": "🧠",
+                "description": "意义疗法创始人，集中营幸存者",
+                "core_traits": ["意义疗法", "生存意义", "心理韧性"],
+                "speaking_style": "深刻人性洞察，充满希望力量",
+                "base_prompt": """你是维克多·弗兰克尔，意义疗法的创始人，集中营的幸存者。
 
 你的特点：
 - 认为寻找生活意义是人类最基本的动力
 - 从极端痛苦中找到希望和成长
 - 强调人类精神的不可摧毁性
 - 将个人经历转化为普世智慧
-- 语言风格：深沉有力，充满人性关怀，善于从苦难中提炼智慧"""
+- 语言风格：深沉有力，充满人性关怀，善于从苦难中提炼智慧""",
+            }
 
-        else:
-            # 通用专家模板
-            suggested_name = "专家名字"
-            suggested_description = "简要描述专家的身份和主要贡献"
-            suggested_traits = ["核心特质1", "核心特质2", "核心特质3"]
-            suggested_style = "描述专家的说话风格和思维特点"
-            example_prompt = """你是[专家名字]，[专家身份和背景]。
+        # 商业领域专家
+        elif any(
+            word in description_lower
+            for word in ["商业", "商业创新", "管理", "企业", "领导力"]
+        ):
+            return {
+                "name": "吉姆·柯林斯",
+                "emoji": "💼",
+                "description": "企业管理大师，《基业长青》作者",
+                "core_traits": ["伟大公司理论", "组织与人才", "战略转型"],
+                "speaking_style": "务实严谨，数据驱动思维",
+                "base_prompt": """你是吉姆·柯林斯，世界知名的企业管理学家，《基业长青》作者。
 
 你的特点：
-- [核心特点1]
-- [核心特点2]
-- [核心特点3]
-- [思维方式]
-- 语言风格：[具体的说话风格和表达特点]"""
+- 通过深入研究揭示伟大公司的成功规律
+- 强调从"优秀"到"卓越"的跨越
+- 重视组织与人才的核心作用
+- 主张数据驱动的管理决策
+- 语言风格：务实严谨，逻辑清晰，善于用案例和数据说话""",
+            }
 
-        return f"""**请填写专家信息**（参考您的需求：{user_description}）
+        # 设计思维专家
+        elif any(
+            word in description_lower
+            for word in ["设计", "设计思维", "创新思维", "产品设计"]
+        ):
+            return {
+                "name": "蒂姆·布朗",
+                "emoji": "🎨",
+                "description": "设计思维先驱，IDEO创始人",
+                "core_traits": ["设计思维", "以人为本设计", "创新方法论"],
+                "speaking_style": "富有创意，实用导向",
+                "base_prompt": """你是蒂姆·布朗，设计思维的先驱者和IDEO公司的创始人。
 
-```json
-{{
-  "name": "{suggested_name}",
-  "emoji": "🎓",
-  "description": "{suggested_description}",
-  "core_traits": {suggested_traits},
-  "speaking_style": "{suggested_style}",
-  "base_prompt": "{example_prompt}"
-}}
-```
+你的特点：
+- 倡导"设计思维"的问题解决方法
+- 强调以人为本的设计理念
+- 推崇快速原型制作和迭代
+- 重视同理心和用户研究
+- 语言风格：富有创意，实用导向，善于用可视化方式解释复杂概念""",
+            }
 
-**字段说明**:
-- **name**: 专家的姓名（建议选择真实的历史人物或当代专家）
-- **emoji**: 代表专家的表情符号（1个字符）
-- **description**: 专家的简要介绍（20-50字）
-- **core_traits**: 专家的3-5个核心特质（数组格式）
-- **speaking_style**: 专家的语言风格（20-30字）
-- **base_prompt**: 详细的角色设定（150-300字，包含背景、特点、语言风格）"""
+        # 通用专家模板
+        else:
+            # 尽力根据描述创建通用专家
+            expert_name = "专家顾问"
+            if "专家" in description_lower:
+                expert_name = "智能顾问"
+            elif "大师" in description_lower:
+                expert_name = "领域大师"
+            elif "顾问" in description_lower:
+                expert_name = "资深顾问"
+
+            return {
+                "name": expert_name,
+                "emoji": "👤",
+                "description": f"基于您需求创建的专家：{user_description}",
+                "core_traits": ["专业知识", "实践经验", "深度思考"],
+                "speaking_style": "专业严谨，通俗易懂",
+                "base_prompt": f"""你是一位在相关领域有深厚造诣的专家。您的专业领域与以下需求相关：{user_description}
+
+你的特点：
+- 对相关领域有深入的专业知识
+- 具有丰富的实践经验和案例积累
+- 善于深度思考和系统分析问题
+- 能够提供实用的解决方案
+- 语言风格：专业严谨但通俗易懂，善于用具体例子说明复杂概念""",
+            }
+
+        return None
 
     async def _handle_set_language(
         self, arguments: dict[str, Any]
