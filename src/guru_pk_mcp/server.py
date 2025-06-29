@@ -255,16 +255,27 @@ class GuruPKServer:
             # 验证personas（包括自定义的）
             all_personas = self.custom_persona_manager.get_all_personas(PERSONAS)
             valid_personas = []
+            invalid_personas = []
+
             for persona in personas:
-                if persona in all_personas:
-                    valid_personas.append(persona)
+                matched_persona = self._find_matching_persona(persona, all_personas)
+                if matched_persona:
+                    valid_personas.append(matched_persona)
+                else:
+                    invalid_personas.append(persona)
 
             if len(valid_personas) < 3:
                 available = ", ".join(all_personas.keys())
+                invalid_info = (
+                    f"未找到的专家: {', '.join(invalid_personas)}"
+                    if invalid_personas
+                    else ""
+                )
+                error_msg = f"❌ 需要选择3位思想家。{invalid_info}\n\n可选择的思想家：{available}"
                 return [
                     TextContent(
                         type="text",
-                        text=f"❌ 需要选择3位思想家。可选择的思想家：{available}",
+                        text=error_msg,
                     )
                 ]
 
@@ -303,6 +314,32 @@ class GuruPKServer:
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 启动会话失败: {str(e)}")]
+
+    def _normalize_persona_name(self, name: str) -> str:
+        """标准化专家名称，移除常见的差异字符"""
+        # 移除中文标点符号和空格，统一为标准格式
+        import re
+
+        # 移除中文句号、英文句号、空格、全角空格等
+        normalized = re.sub(r"[·\.\s\u3000]", "", name.strip())
+        return normalized
+
+    def _find_matching_persona(
+        self, input_name: str, all_personas: dict[str, Any]
+    ) -> str | None:
+        """智能匹配专家名称，容忍常见的格式差异"""
+        input_normalized = self._normalize_persona_name(input_name)
+
+        # 首先尝试精确匹配
+        if input_name in all_personas:
+            return input_name
+
+        # 然后尝试标准化匹配
+        for persona_name in all_personas:
+            if self._normalize_persona_name(persona_name) == input_normalized:
+                return persona_name
+
+        return None
 
     def _get_smart_recommendation(self, question: str) -> dict[str, Any] | None:
         """根据问题内容智能推荐专家组合"""
