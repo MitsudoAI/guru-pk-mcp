@@ -48,132 +48,132 @@ class GuruPKServer:
             """返回可用工具列表"""
             return [
                 types.Tool(
-                name="start_pk_session",
-                description="启动新的专家PK会话",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "question": {
-                            "type": "string",
-                            "description": "要讨论的问题",
+                    name="start_pk_session",
+                    description="启动新的专家PK会话",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "question": {
+                                "type": "string",
+                                "description": "要讨论的问题",
+                            },
+                            "personas": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "参与讨论的三位专家名称（可选，默认为苏格拉底、埃隆马斯克、查理芒格）",
+                            },
                         },
-                        "personas": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "参与讨论的三位专家名称（可选，默认为苏格拉底、埃隆马斯克、查理芒格）",
+                        "required": ["question"],
+                    },
+                ),
+                types.Tool(
+                    name="guru_pk_help",
+                    description="获取系统帮助和介绍",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": False,
+                    },
+                ),
+                types.Tool(
+                    name="get_persona_prompt",
+                    description="获取当前专家的角色提示",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": False,
+                    },
+                ),
+                types.Tool(
+                    name="record_round_response",
+                    description="记录当前轮次的回答",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "response": {
+                                "type": "string",
+                                "description": "专家的回答内容",
+                            }
+                        },
+                        "required": ["response"],
+                    },
+                ),
+                types.Tool(
+                    name="get_session_status",
+                    description="获取当前会话状态",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": False,
+                    },
+                ),
+                types.Tool(
+                    name="list_available_personas",
+                    description="列出所有可用的专家",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": False,
+                    },
+                ),
+                types.Tool(
+                    name="recommend_personas",
+                    description="根据问题类型智能推荐专家组合",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "question": {
+                                "type": "string",
+                                "description": "要分析的问题",
+                            }
+                        },
+                        "required": ["question"],
+                    },
+                ),
+                types.Tool(
+                    name="view_session_history",
+                    description="查看会话历史",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "session_id": {
+                                "type": "string",
+                                "description": "会话ID（可选，默认查看当前会话）",
+                            }
                         },
                     },
-                    "required": ["question"],
-                },
-            ),
-            types.Tool(
-                name="guru_pk_help",
-                description="获取系统帮助和介绍",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "additionalProperties": False,
-                },
-            ),
-            types.Tool(
-                name="get_persona_prompt",
-                description="获取当前专家的角色提示",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "additionalProperties": False,
-                },
-            ),
-            types.Tool(
-                name="record_round_response",
-                description="记录当前轮次的回答",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "response": {
-                            "type": "string",
-                            "description": "专家的回答内容",
-                        }
+                ),
+                types.Tool(
+                    name="get_usage_statistics",
+                    description="获取使用统计和分析",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": False,
                     },
-                    "required": ["response"],
-                },
-            ),
-            types.Tool(
-                name="get_session_status",
-                description="获取当前会话状态",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "additionalProperties": False,
-                },
-            ),
-            types.Tool(
-                name="list_available_personas",
-                description="列出所有可用的专家",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "additionalProperties": False,
-                },
-            ),
-            types.Tool(
-                name="recommend_personas",
-                description="根据问题类型智能推荐专家组合",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "question": {
-                            "type": "string",
-                            "description": "要分析的问题",
-                        }
+                ),
+                types.Tool(
+                    name="export_session",
+                    description="导出会话记录为Markdown文件",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "session_id": {
+                                "type": "string",
+                                "description": "会话ID（可选，默认导出当前会话）",
+                            }
+                        },
                     },
-                    "required": ["question"],
-                },
-            ),
-            types.Tool(
-                name="view_session_history",
-                description="查看会话历史",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "session_id": {
-                            "type": "string",
-                            "description": "会话ID（可选，默认查看当前会话）",
-                        }
+                ),
+                types.Tool(
+                    name="advance_to_next_round",
+                    description="手动进入下一轮或下一个专家",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": False,
                     },
-                },
-            ),
-            types.Tool(
-                name="get_usage_statistics",
-                description="获取使用统计和分析",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "additionalProperties": False,
-                },
-            ),
-            types.Tool(
-                name="export_session",
-                description="导出会话记录为Markdown文件",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "session_id": {
-                            "type": "string",
-                            "description": "会话ID（可选，默认导出当前会话）",
-                        }
-                    },
-                },
-            ),
-            types.Tool(
-                name="advance_to_next_round",
-                description="手动进入下一轮或下一个专家",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "additionalProperties": False,
-                },
-            ),
+                ),
             ]
 
         # 统一工具处理器
@@ -182,7 +182,7 @@ class GuruPKServer:
             name: str, arguments: dict[str, Any]
         ) -> list[TextContent]:
             """统一处理所有工具调用"""
-            
+
             if name == "start_pk_session":
                 return await self._handle_start_pk_session(arguments)
             elif name == "guru_pk_help":
@@ -208,7 +208,9 @@ class GuruPKServer:
             else:
                 return [TextContent(type="text", text=f"❌ 未知工具: {name}")]
 
-    async def _handle_start_pk_session(self, arguments: dict[str, Any]) -> list[TextContent]:
+    async def _handle_start_pk_session(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """启动新的PK会话"""
         try:
             question = arguments.get("question", "").strip()
@@ -274,7 +276,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 启动会话失败: {str(e)}")]
 
         # 工具2: 获取思想家角色prompt
-    async def _handle_get_persona_prompt(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_get_persona_prompt(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """获取当前思想家的角色prompt"""
         try:
             if not self.current_session:
@@ -289,9 +294,7 @@ class GuruPKServer:
             current_persona = session.get_current_persona()
 
             if not current_persona:
-                return [
-                    TextContent(type="text", text="❌ 当前会话已完成所有轮次。")
-                ]
+                return [TextContent(type="text", text="❌ 当前会话已完成所有轮次。")]
 
             # 准备上下文
             context = {"question": session.user_question}
@@ -357,7 +360,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 获取提示失败: {str(e)}")]
 
         # 工具3: 记录回答
-    async def _handle_record_round_response(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_record_round_response(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """记录当前轮次的回答"""
         try:
             if not self.current_session:
@@ -443,7 +449,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 记录回答失败: {str(e)}")]
 
         # 工具4: 获取会话状态
-    async def _handle_get_session_status(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_get_session_status(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """获取当前会话状态"""
         try:
             if not self.current_session:
@@ -483,7 +492,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 获取状态失败: {str(e)}")]
 
         # 工具5: 列出可用思想家
-    async def _handle_list_available_personas(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_list_available_personas(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """列出所有可用的思想家"""
         try:
             # 内置思想家
@@ -503,9 +515,7 @@ class GuruPKServer:
             # 自定义思想家
             if custom_personas:
                 result += "## 👤 自定义专家\n\n"
-                for i, persona in enumerate(
-                    custom_personas, len(builtin_personas) + 1
-                ):
+                for i, persona in enumerate(custom_personas, len(builtin_personas) + 1):
                     result += (
                         f"{i}. {persona['emoji']} **{persona['name']}** (自定义)\n"
                     )
@@ -520,12 +530,13 @@ class GuruPKServer:
             return [TextContent(type="text", text=result)]
 
         except Exception as e:
-            return [
-                TextContent(type="text", text=f"❌ 获取思想家列表失败: {str(e)}")
-            ]
+            return [TextContent(type="text", text=f"❌ 获取思想家列表失败: {str(e)}")]
 
         # 工具6: 查看会话历史
-    async def _handle_view_session_history(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_view_session_history(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """查看会话历史"""
         try:
 
@@ -587,7 +598,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 查看历史失败: {str(e)}")]
 
         # 工具7: 进入下一轮
-    async def _handle_advance_to_next_round(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_advance_to_next_round(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """手动进入下一轮或下一个专家"""
         try:
             if not self.current_session:
@@ -597,9 +611,7 @@ class GuruPKServer:
             current_persona = session.get_current_persona()
 
             if not current_persona:
-                return [
-                    TextContent(type="text", text="✅ 会话已经完成了所有轮次。")
-                ]
+                return [TextContent(type="text", text="✅ 会话已经完成了所有轮次。")]
 
             # 切换到下一个
             has_next = session.advance_to_next_persona()
@@ -630,7 +642,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 切换失败: {str(e)}")]
 
         # 工具8: 获取轮次上下文
-    async def _handle_get_context_for_round(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_get_context_for_round(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """获取当前轮次的详细上下文信息"""
         try:
             if not self.current_session:
@@ -672,9 +687,7 @@ class GuruPKServer:
                         result += "\n"
 
             elif round_num == 4:
-                result += (
-                    "**第4轮要求**: 智慧综合，分析融合三位专家的最终方案。\n\n"
-                )
+                result += "**第4轮要求**: 智慧综合，分析融合三位专家的最终方案。\n\n"
                 if 3 in session.responses:
                     result += "**各专家最终方案**:\n"
                     for persona, response in session.responses[3].items():
@@ -687,7 +700,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 获取上下文失败: {str(e)}")]
 
         # 工具9: 综合最终答案
-    async def _handle_synthesize_final_answer(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_synthesize_final_answer(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """生成最终综合答案（第4轮专用）"""
         try:
             if not self.current_session:
@@ -743,7 +759,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 准备综合分析失败: {str(e)}")]
 
         # 新增工具: 列出历史会话
-    async def _handle_list_sessions(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_list_sessions(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """列出所有历史会话"""
         try:
             sessions = self.session_manager.list_sessions()
@@ -763,9 +782,7 @@ class GuruPKServer:
                 result += f"{i}. {status_icon} **{session['session_id']}**\n"
                 result += f"   📝 {session['question']}\n"
                 result += f"   👥 专家: {', '.join(session['personas'])}\n"
-                result += (
-                    f"   📅 {session['created_at'][:19].replace('T', ' ')}\n\n"
-                )
+                result += f"   📅 {session['created_at'][:19].replace('T', ' ')}\n\n"
 
             if len(sessions) > 10:
                 result += f"... 还有 {len(sessions) - 10} 个历史会话\n\n"
@@ -778,7 +795,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 获取会话列表失败: {str(e)}")]
 
         # 新增工具: 继续历史会话
-    async def _handle_resume_session(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_resume_session(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """继续一个历史会话"""
         try:
             session_id = arguments.get("session_id", "").strip()
@@ -838,7 +858,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 恢复会话失败: {str(e)}")]
 
         # Phase 3 工具: 创建自定义思想家
-    async def _handle_create_custom_persona(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_create_custom_persona(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """创建自定义思想家"""
         try:
             # 检查必填字段
@@ -897,18 +920,17 @@ class GuruPKServer:
                 return [TextContent(type="text", text=result)]
             else:
                 return [
-                    TextContent(
-                        type="text", text="❌ 创建失败，请检查输入数据格式。"
-                    )
+                    TextContent(type="text", text="❌ 创建失败，请检查输入数据格式。")
                 ]
 
         except Exception as e:
-            return [
-                TextContent(type="text", text=f"❌ 创建自定义思想家失败: {str(e)}")
-            ]
+            return [TextContent(type="text", text=f"❌ 创建自定义思想家失败: {str(e)}")]
 
         # Phase 3 工具: 导出会话
-    async def _handle_export_session(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_export_session(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """导出会话数据"""
         try:
             session_id = arguments.get("session_id")
@@ -948,9 +970,7 @@ class GuruPKServer:
             }
 
             for round_num in sorted(session.responses.keys()):
-                md_content += (
-                    f"## {round_names.get(round_num, f'第{round_num}轮')}\n\n"
-                )
+                md_content += f"## {round_names.get(round_num, f'第{round_num}轮')}\n\n"
 
                 for persona, response in session.responses[round_num].items():
                     md_content += f"### {persona}\n\n"
@@ -989,7 +1009,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 导出失败: {str(e)}")]
 
         # Phase 3 工具: 智能推荐思想家
-    async def _handle_recommend_personas(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_recommend_personas(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """根据问题类型智能推荐专家组合"""
         try:
             question = arguments.get("question", "").strip()
@@ -1125,7 +1148,10 @@ class GuruPKServer:
             return [TextContent(type="text", text=f"❌ 生成推荐失败: {str(e)}")]
 
         # 工具2: 获取帮助信息
-    async def _handle_guru_pk_help(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_guru_pk_help(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """获取系统帮助和介绍"""
         help_text = """# 🎭 Guru-PK MCP 专家辩论系统
 
@@ -1227,7 +1253,10 @@ list_available_personas({})
         return [TextContent(type="text", text=help_text)]
 
         # Phase 3 工具: 统计分析
-    async def _handle_get_usage_statistics(self, arguments: dict[str, Any]) -> list[TextContent]:
+
+    async def _handle_get_usage_statistics(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
         """获取使用统计和分析"""
         try:
             sessions = self.session_manager.list_sessions()
@@ -1244,9 +1273,7 @@ list_available_personas({})
             total_sessions = len(sessions)
             completed_sessions = len([s for s in sessions if s["is_completed"]])
             completion_rate = (
-                (completed_sessions / total_sessions * 100)
-                if total_sessions > 0
-                else 0
+                (completed_sessions / total_sessions * 100) if total_sessions > 0 else 0
             )
 
             # 专家使用统计
@@ -1301,9 +1328,7 @@ list_available_personas({})
 """
 
             for i, (persona, count) in enumerate(popular_personas, 1):
-                percentage = (
-                    (count / total_sessions * 100) if total_sessions > 0 else 0
-                )
+                percentage = (count / total_sessions * 100) if total_sessions > 0 else 0
                 result += f"{i}. {format_persona_info(persona)} - {count}次 ({percentage:.1f}%)\n"
 
             result += "\n## 🔍 问题领域分析\n"
@@ -1339,9 +1364,7 @@ list_available_personas({})
                                 total_chars += len(full_session.final_synthesis)
                                 total_responses += 1
 
-                avg_chars = (
-                    total_chars // total_responses if total_responses > 0 else 0
-                )
+                avg_chars = total_chars // total_responses if total_responses > 0 else 0
 
                 result += f"""
 ## 💬 讨论质量
@@ -1371,16 +1394,16 @@ list_available_personas({})
 
         async with stdio_server() as (read_stream, write_stream):
             await self.server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="guru-pk",
-                server_version="1.0.0",
-                capabilities=self.server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
+                read_stream,
+                write_stream,
+                InitializationOptions(
+                    server_name="guru-pk",
+                    server_version="1.0.0",
+                    capabilities=self.server.get_capabilities(
+                        notification_options=NotificationOptions(),
+                        experimental_capabilities={},
+                    ),
                 ),
-            ),
             )
 
 
