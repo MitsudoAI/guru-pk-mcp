@@ -62,8 +62,26 @@ class GuruPKServer:
                             "personas": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "参与讨论的三位专家名称（可选，默认为苏格拉底、埃隆马斯克、查理芒格）",
+                                "description": "参与讨论的三位专家名称（可选，如不提供将使用智能推荐）",
                             },
+                            "recommended_by_host": {
+                                "type": "boolean",
+                                "description": "是否由MCP Host端智能推荐（内部使用）",
+                            },
+                        },
+                        "required": ["question"],
+                    },
+                ),
+                types.Tool(
+                    name="get_smart_recommendation_guidance",
+                    description="获取智能专家推荐指导（MCP Host端LLM使用）",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "question": {
+                                "type": "string",
+                                "description": "要分析的问题内容",
+                            }
                         },
                         "required": ["question"],
                     },
@@ -281,6 +299,8 @@ class GuruPKServer:
 
             if name == "start_pk_session":
                 return await self._handle_start_pk_session(arguments)
+            elif name == "get_smart_recommendation_guidance":
+                return await self._handle_get_smart_recommendation_guidance(arguments)
             elif name == "guru_pk_help":
                 return await self._handle_guru_pk_help(arguments)
             elif name == "get_persona_prompt":
@@ -321,24 +341,30 @@ class GuruPKServer:
         try:
             question = arguments.get("question", "").strip()
             personas = arguments.get("personas", [])
+            recommended_by_host = arguments.get("recommended_by_host", False)
 
             if not question:
                 return [
                     TextContent(
                         type="text",
-                        text='❌ 请提供一个问题来启动PK会话。\n\n使用方法：start_pk_session({"question": "你的问题", "personas": ["苏格拉底", "埃隆马斯克", "查理芒格"]})',
+                        text='❌ 请提供一个问题来启动PK会话。\n\n📋 **两种使用方式**：\n\n1️⃣ **智能推荐**（推荐）：\n```javascript\n// 步骤1: 获取推荐指导\nget_smart_recommendation_guidance({"question": "你的问题"})\n\n// 步骤2: 基于指导推荐专家，然后启动会话\nstart_pk_session({"question": "你的问题", "personas": ["推荐的专家1", "推荐的专家2", "推荐的专家3"], "recommended_by_host": true})\n```\n\n2️⃣ **手动指定**：\n```javascript\nstart_pk_session({"question": "你的问题", "personas": ["苏格拉底", "埃隆马斯克", "查理芒格"]})\n```',
                     )
                 ]
 
-            # 如果没有指定personas，使用智能推荐
+            # 如果没有指定personas，提示使用智能推荐
             if not personas:
-                recommendation = self._get_smart_recommendation(question)
-                if recommendation:
-                    personas = recommendation["combo"]
-                    recommended_reason = recommendation["reason"]
-                else:
-                    personas = ["苏格拉底", "埃隆马斯克", "查理芒格"]
-                    recommended_reason = "经典全能组合：哲学思辨 + 创新思维 + 投资智慧"
+                return [
+                    TextContent(
+                        type="text",
+                        text=f'🎯 **未指定专家，建议使用智能推荐！**\n\n**问题**: {question}\n\n📋 **推荐使用智能推荐**：\n```javascript\n// 步骤1: 获取智能推荐指导\nget_smart_recommendation_guidance({{"question": "{question}"}})\n\n// 步骤2: 基于指导选择专家后启动会话\n// start_pk_session({{"question": "{question}", "personas": ["推荐专家1", "推荐专家2", "推荐专家3"], "recommended_by_host": true}})\n```\n\n🔄 **或使用经典默认组合**：\n```javascript\nstart_pk_session({{"question": "{question}", "personas": ["苏格拉底", "埃隆马斯克", "查理芒格"]}})\n```',
+                    )
+                ]
+
+            # 设置推荐理由
+            if recommended_by_host:
+                recommended_reason = "🤖 MCP Host端智能推荐组合"
+            else:
+                recommended_reason = "👤 用户手动指定组合"
 
             # 验证personas（包括自定义的）
             all_personas = self.custom_persona_manager.get_all_personas(PERSONAS)
@@ -380,10 +406,8 @@ class GuruPKServer:
                 ]
             )
 
-            # 添加推荐原因（如果是自动推荐的）
-            recommendation_info = ""
-            if not arguments.get("personas"):
-                recommendation_info = f"\n🎯 **智能推荐**: {recommended_reason}\n"
+            # 添加推荐原因
+            recommendation_info = f"\n🎯 **专家组合**: {recommended_reason}\n"
 
             result = f"""🎯 **专家PK会话已启动！**
 
@@ -617,6 +641,106 @@ class GuruPKServer:
 
         except Exception:
             return None
+
+    async def _handle_get_smart_recommendation_guidance(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """获取智能专家推荐指导（MCP Host端LLM使用）"""
+        try:
+            question = arguments.get("question", "")
+            if not question:
+                return [TextContent(type="text", text="❌ 请提供要分析的问题")]
+
+            # 获取所有可用专家（内置+自定义）
+            all_personas = self.custom_persona_manager.get_all_personas(PERSONAS)
+
+            # 构建专家信息列表
+            persona_info = []
+            for name, persona in all_personas.items():
+                if hasattr(persona, "description"):
+                    desc = persona.description
+                elif hasattr(persona, "base_prompt"):
+                    # 从base_prompt中提取简介
+                    lines = persona.base_prompt.split("\n")
+                    desc = next(
+                        (line for line in lines if "是" in line and len(line) < 100),
+                        name,
+                    )
+                else:
+                    desc = name
+
+                emoji = getattr(persona, "emoji", "👤")
+                persona_info.append(f"{emoji} **{name}**: {desc}")
+
+            # 构建指导内容
+            guidance = f"""# 🎯 智能专家推荐指导
+
+## 📋 任务说明
+请根据以下问题分析，从可用专家中智能推荐3位最合适的专家组合：
+
+**问题**: {question}
+
+## 👥 可用专家列表
+{chr(10).join(persona_info)}
+
+## 🎨 推荐原则
+
+### 1. 多元视角
+- 选择来自不同领域/背景的专家，确保观点多样性
+- 避免选择思维模式过于相似的专家组合
+
+### 2. 问题相关性
+- 优先选择与问题领域直接相关的专家
+- 考虑跨领域专家可能带来的独特洞察
+
+### 3. 思辨互补
+- 选择能够形成有效对话和思辨的专家组合
+- 包含不同立场/观点的专家，促进深度讨论
+
+### 4. 智慧层次
+- 结合理论专家（哲学家、思想家）
+- 结合实践专家（企业家、科学家）
+- 结合创新专家（突破常规思维）
+
+## 📝 输出格式
+
+请按以下JSON格式输出推荐结果：
+
+```json
+{{
+  "recommended_personas": ["专家1", "专家2", "专家3"],
+  "reason": "推荐理由：说明为什么这个组合最适合讨论该问题",
+  "expected_perspectives": [
+    "专家1将从X角度分析...",
+    "专家2将从Y角度思考...",
+    "专家3将从Z角度贡献..."
+  ]
+}}
+```
+
+## 💡 分析框架
+
+1. **问题类型识别**:
+   - 属于哪个主要领域？
+   - 涉及哪些子领域？
+   - 是理论问题还是实践问题？
+
+2. **所需视角分析**:
+   - 需要哪些专业视角？
+   - 需要哪些思维方式？
+   - 需要什么样的经验背景？
+
+3. **专家匹配**:
+   - 哪些专家最相关？
+   - 如何组合才能产生最佳讨论效果？
+   - 如何平衡不同观点？
+
+现在请基于以上指导，为给定问题推荐最佳的3位专家组合。"""
+
+            return [TextContent(type="text", text=guidance)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 获取推荐指导失败: {str(e)}")]
 
         # 工具2: 获取思想家角色prompt
 
@@ -1361,7 +1485,7 @@ class GuruPKServer:
     async def _handle_recommend_personas(
         self, arguments: dict[str, Any]
     ) -> list[TextContent]:
-        """根据问题类型智能推荐专家组合"""
+        """智能专家推荐（建议使用MCP Host端推荐）"""
         try:
             question = arguments.get("question", "").strip()
             if not question:
@@ -1372,125 +1496,44 @@ class GuruPKServer:
                     )
                 ]
 
-            # 简单的关键词匹配推荐算法
-            recommendations = []
-            question_lower = question.lower()
-
-            # 推荐规则
-            if any(
-                word in question_lower
-                for word in ["创业", "商业", "投资", "经营", "企业", "生意"]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["埃隆马斯克", "查理芒格", "稻盛和夫"],
-                        "reason": "商业创新组合：第一性原理创新思维 + 投资智慧 + 经营哲学",
-                        "score": 95,
-                    },
-                    {
-                        "combo": ["史蒂夫乔布斯", "埃隆马斯克", "稻盛和夫"],
-                        "reason": "产品创新组合：极致产品思维 + 颠覆式创新 + 匠人精神",
-                        "score": 90,
-                    },
-                ]
-
-            elif any(
-                word in question_lower
-                for word in ["人生", "成长", "学习", "认知", "思维", "心理"]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["苏格拉底", "大卫伯恩斯", "吉杜克里希那穆提"],
-                        "reason": "心理成长组合：哲学思辨 + CBT技巧 + 内在觉察",
-                        "score": 95,
-                    },
-                    {
-                        "combo": ["王阳明", "曾国藩", "稻盛和夫"],
-                        "reason": "修身养性组合：知行合一 + 品格修养 + 人格典范",
-                        "score": 90,
-                    },
-                ]
-
-            elif any(
-                word in question_lower
-                for word in ["系统", "管理", "复杂", "问题", "解决", "策略"]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["杰伊福雷斯特", "查理芒格", "苏格拉底"],
-                        "reason": "系统分析组合：系统动力学 + 多元思维 + 批判思辨",
-                        "score": 95,
-                    },
-                    {
-                        "combo": ["杰伊福雷斯特", "埃隆马斯克", "王阳明"],
-                        "reason": "创新解决组合：系统思维 + 创新突破 + 知行合一",
-                        "score": 88,
-                    },
-                ]
-
-            elif any(
-                word in question_lower
-                for word in ["产品", "设计", "用户", "体验", "技术"]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["史蒂夫乔布斯", "埃隆马斯克", "孙子"],
-                        "reason": "产品创新组合：极致体验 + 技术创新 + 战略思维",
-                        "score": 92,
-                    },
-                    {
-                        "combo": ["史蒂夫乔布斯", "稻盛和夫", "苏格拉底"],
-                        "reason": "完美主义组合：产品极致 + 匠人精神 + 深度思考",
-                        "score": 88,
-                    },
-                ]
-
-            else:
-                # 默认通用推荐
-                recommendations = [
-                    {
-                        "combo": ["苏格拉底", "埃隆马斯克", "查理芒格"],
-                        "reason": "经典全能组合：哲学思辨 + 创新思维 + 投资智慧",
-                        "score": 90,
-                    },
-                    {
-                        "combo": ["苏格拉底", "卡尔波普尔", "杰伊福雷斯特"],
-                        "reason": "理性分析组合：批判思维 + 科学方法 + 系统思维",
-                        "score": 85,
-                    },
-                ]
-
-            # 检查推荐的专家是否都可用
-            all_personas = self.custom_persona_manager.get_all_personas(PERSONAS)
-            valid_recommendations = []
-
-            for rec in recommendations:
-                if all(persona in all_personas for persona in rec["combo"]):  # type: ignore
-                    valid_recommendations.append(rec)
-
-            if not valid_recommendations:
-                return [
-                    TextContent(
-                        type="text", text="❌ 无法生成推荐，请检查可用专家列表。"
-                    )
-                ]
-
-            result = f"""🎯 **智能专家推荐**
+            return [
+                TextContent(
+                    type="text",
+                    text=f"""🎯 **专家推荐服务**
 
 **问题**: {question}
 
-**推荐组合**:\n\n"""
+## 🤖 **推荐使用智能推荐（推荐）**
 
-            for i, rec in enumerate(valid_recommendations[:3], 1):
-                result += f"## {i}. 推荐指数: {rec['score']}/100\n\n"
-                result += f"**专家组合**: {', '.join([format_persona_info(p) for p in rec['combo']])}\n\n"  # type: ignore
-                result += f"**推荐理由**: {rec['reason']}\n\n"
-                result += f"💡 使用命令: `start_pk_session({{\"question\": \"{question}\", \"personas\": {rec['combo']}}})`\n\n"
-                result += "---\n\n"
+新的智能推荐系统使用**MCP Host端LLM智能生成**，能够：
+- ✅ 真正理解问题语义和深层需求
+- ✅ 动态匹配所有可用专家（包括您的自定义专家）
+- ✅ 根据问题特点生成最佳专家组合
+- ✅ 提供详细的推荐理由和预期视角
 
-            result += "💭 **提示**: 这些推荐基于问题关键词匹配。您也可以自由组合任意三位专家。"
+### 📋 **智能推荐使用方法**：
 
-            return [TextContent(type="text", text=result)]
+```javascript
+// 步骤1: 获取智能推荐指导
+get_smart_recommendation_guidance({{"question": "{question}"}})
+
+// 步骤2: 基于指导推荐专家，然后启动会话
+// start_pk_session({{"question": "{question}", "personas": ["推荐专家1", "推荐专家2", "推荐专家3"], "recommended_by_host": true}})
+```
+
+## 🔄 **传统推荐（备选）**
+
+如果您希望使用传统的关键词匹配推荐，可以直接启动会话：
+
+```javascript
+start_pk_session({{"question": "{question}"}})
+```
+
+---
+
+💡 **建议**: 优先使用智能推荐，获得更精准和个性化的专家组合！""",
+                )
+            ]
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 生成推荐失败: {str(e)}")]
