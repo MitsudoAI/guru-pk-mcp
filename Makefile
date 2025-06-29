@@ -47,10 +47,10 @@ server:
 build:
 	uv build
 
-publish-test:
+publish-test: clean build
 	uv run twine upload --repository testpypi dist/*
 
-publish:
+publish: clean build
 	uv run twine upload dist/*
 
 clean:
