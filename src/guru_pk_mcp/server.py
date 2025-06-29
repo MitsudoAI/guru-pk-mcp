@@ -1739,11 +1739,12 @@ set_language({"language": "english"})
             success = self.custom_persona_manager.add_custom_persona(persona_data)
 
             if success:
+                persona_name = persona_data["name"]
                 result = f"""✅ **智能专家创建成功！**
 
 🎯 **基于您的描述**: {description}
 
-👤 **{persona_data['name']}** 已添加到专家库
+👤 **{persona_name}** 已添加到专家库
 
 📝 **专家信息**:
 - 🎭 表情: {persona_data.get('emoji', '👤')}
@@ -1755,10 +1756,10 @@ set_language({"language": "english"})
 
 🚀 **示例**:
 ```
-start_pk_session({
+start_pk_session({{
   "question": "您的问题",
-  "personas": ["{persona_data['name']}", "苏格拉底", "查理芒格"]
-})
+  "personas": ["{persona_name}", "苏格拉底", "查理芒格"]
+}})
 ```"""
 
                 return [TextContent(type="text", text=result)]
