@@ -3,11 +3,12 @@
     "guru-pk": {
       "command": "uvx",
       "args": [
+        "--from",
         "guru-pk-mcp",
         "guru-pk-mcp-server"
       ],
       "env": {
-        "DATA_DIR": "~/guru-pk-data"
+        "DATA_DIR": "~/.guru-pk-data"
       }
     }
   }

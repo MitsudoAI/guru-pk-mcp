@@ -7,7 +7,7 @@
         "guru-pk-mcp-server"
       ],
       "env": {
-        "DATA_DIR": "/path/to/guru-pk-mcp/data"
+        "DATA_DIR": "~/.guru-pk-data"
       }
     }
   }

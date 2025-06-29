@@ -180,7 +180,8 @@ temp/
 tmp/
 
 # MCP configuration (user-specific paths)
-config/mcp_config.json
+config/*.json
+!config/.gitkeep
 
 # UV tool cache
 .uv/

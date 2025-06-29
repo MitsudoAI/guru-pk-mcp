@@ -31,6 +31,8 @@ class GuruPKServer:
         import os
 
         data_dir = os.environ.get("DATA_DIR")
+        if data_dir and data_dir.startswith("~"):
+            data_dir = os.path.expanduser(data_dir)
 
         self.session_manager = SessionManager(data_dir)
         self.custom_persona_manager = CustomPersonaManager(data_dir)

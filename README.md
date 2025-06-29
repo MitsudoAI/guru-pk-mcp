@@ -25,9 +25,9 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
   "mcpServers": {
     "guru-pk": {
       "command": "uvx",
-      "args": ["guru-pk-mcp", "guru-pk-mcp-server"],
+      "args": ["--from", "guru-pk-mcp", "guru-pk-mcp-server"],
       "env": {
-        "DATA_DIR": "~/guru-pk-data"
+        "DATA_DIR": "~/.guru-pk-data"
       }
     }
   }
@@ -44,7 +44,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
       "command": "uvx", 
       "args": ["--from", "/path/to/guru-pk-mcp", "guru-pk-mcp-server"],
       "env": {
-        "DATA_DIR": "/path/to/guru-pk-mcp/data"
+        "DATA_DIR": "~/.guru-pk-data"
       }
     }
   }
