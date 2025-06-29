@@ -224,9 +224,15 @@ class GuruPKServer:
                     )
                 ]
 
-            # 如果没有指定personas，使用默认的三位
+            # 如果没有指定personas，使用智能推荐
             if not personas:
-                personas = ["苏格拉底", "埃隆马斯克", "查理芒格"]
+                recommendation = self._get_smart_recommendation(question)
+                if recommendation:
+                    personas = recommendation["combo"]
+                    recommended_reason = recommendation["reason"]
+                else:
+                    personas = ["苏格拉底", "埃隆马斯克", "查理芒格"]
+                    recommended_reason = "经典全能组合：哲学思辨 + 创新思维 + 投资智慧"
 
             # 验证personas（包括自定义的）
             all_personas = self.custom_persona_manager.get_all_personas(PERSONAS)
@@ -257,11 +263,16 @@ class GuruPKServer:
                 ]
             )
 
+            # 添加推荐原因（如果是自动推荐的）
+            recommendation_info = ""
+            if not arguments.get("personas"):
+                recommendation_info = f"\n🎯 **智能推荐**: {recommended_reason}\n"
+
             result = f"""🎯 **专家PK会话已启动！**
 
 **会话ID**: `{session.session_id}`
 **问题**: {session.user_question}
-
+{recommendation_info}
 **参与的三位专家**：
 {personas_info}
 
@@ -274,6 +285,140 @@ class GuruPKServer:
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 启动会话失败: {str(e)}")]
+
+    def _get_smart_recommendation(self, question: str) -> dict[str, Any] | None:
+        """根据问题内容智能推荐专家组合"""
+        try:
+            question_lower = question.lower()
+            
+            # 教育学习类
+            if any(
+                word in question_lower
+                for word in ["教育", "学习", "英语", "语言", "学生", "儿童", "孩子", "小学", "中学", "教学", "学校", "课程"]
+            ):
+                recommendations = [
+                    {
+                        "combo": ["苏格拉底", "大卫伯恩斯", "王阳明"],
+                        "reason": "教育智慧组合：苏格拉底式启发教学 + 认知心理学 + 知行合一的学习理念",
+                        "score": 95,
+                    },
+                    {
+                        "combo": ["苏格拉底", "吉杜克里希那穆提", "稻盛和夫"],
+                        "reason": "成长启发组合：哲学思辨 + 觉察学习 + 匠人精神",
+                        "score": 90,
+                    },
+                ]
+                
+            # 商业创业类  
+            elif any(
+                word in question_lower
+                for word in ["创业", "商业", "投资", "经营", "企业", "生意", "商务"]
+            ):
+                recommendations = [
+                    {
+                        "combo": ["埃隆马斯克", "查理芒格", "稻盛和夫"],
+                        "reason": "商业创新组合：第一性原理创新思维 + 投资智慧 + 经营哲学",
+                        "score": 95,
+                    },
+                    {
+                        "combo": ["史蒂夫乔布斯", "埃隆马斯克", "稻盛和夫"],
+                        "reason": "产品创新组合：极致产品思维 + 颠覆式创新 + 匠人精神",
+                        "score": 90,
+                    },
+                ]
+
+            # 人生成长类
+            elif any(
+                word in question_lower
+                for word in ["人生", "成长", "认知", "思维", "心理", "修养", "品格", "情感", "压力", "焦虑"]
+            ):
+                recommendations = [
+                    {
+                        "combo": ["苏格拉底", "大卫伯恩斯", "吉杜克里希那穆提"],
+                        "reason": "心理成长组合：哲学思辨 + CBT认知疗法 + 内在觉察智慧",
+                        "score": 95,
+                    },
+                    {
+                        "combo": ["王阳明", "曾国藩", "稻盛和夫"],
+                        "reason": "修身养性组合：知行合一 + 品格修养 + 人格典范",
+                        "score": 90,
+                    },
+                ]
+
+            # 系统管理类
+            elif any(
+                word in question_lower
+                for word in ["系统", "管理", "复杂", "问题", "解决", "策略", "方法", "流程", "组织"]
+            ):
+                recommendations = [
+                    {
+                        "combo": ["杰伊福雷斯特", "查理芒格", "苏格拉底"],
+                        "reason": "系统分析组合：系统动力学 + 多元思维模型 + 批判思辨",
+                        "score": 95,
+                    },
+                    {
+                        "combo": ["杰伊福雷斯特", "埃隆马斯克", "王阳明"],
+                        "reason": "创新解决组合：系统思维 + 创新突破 + 知行合一",
+                        "score": 88,
+                    },
+                ]
+
+            # 产品技术类
+            elif any(
+                word in question_lower
+                for word in ["产品", "设计", "用户", "体验", "技术", "软件", "开发", "创新"]
+            ):
+                recommendations = [
+                    {
+                        "combo": ["史蒂夫乔布斯", "埃隆马斯克", "孙子"],
+                        "reason": "产品创新组合：极致用户体验 + 技术创新 + 战略思维",
+                        "score": 92,
+                    },
+                    {
+                        "combo": ["史蒂夫乔布斯", "稻盛和夫", "苏格拉底"],
+                        "reason": "完美主义组合：产品极致 + 匠人精神 + 深度思考",
+                        "score": 88,
+                    },
+                ]
+                
+            # 宗教精神类
+            elif any(
+                word in question_lower  
+                for word in ["宗教", "信仰", "精神", "圣经", "教会", "上帝", "神", "灵性", "道德", "伦理"]
+            ):
+                recommendations = [
+                    {
+                        "combo": ["苏格拉底", "王阳明", "吉杜克里希那穆提"],
+                        "reason": "精神哲学组合：理性思辨 + 心学智慧 + 灵性觉察",
+                        "score": 95,
+                    },
+                    {
+                        "combo": ["苏格拉底", "曾国藩", "稻盛和夫"],
+                        "reason": "道德修养组合：哲学思辨 + 儒家修身 + 敬天爱人",
+                        "score": 90,
+                    },
+                ]
+
+            else:
+                # 默认通用推荐
+                recommendations = [
+                    {
+                        "combo": ["苏格拉底", "埃隆马斯克", "查理芒格"],
+                        "reason": "经典全能组合：哲学思辨 + 创新思维 + 投资智慧",
+                        "score": 90,
+                    },
+                ]
+
+            # 检查推荐的专家是否都可用
+            all_personas = self.custom_persona_manager.get_all_personas(PERSONAS)
+            for rec in recommendations:
+                if all(persona in all_personas for persona in rec["combo"]):
+                    return rec
+                    
+            return None
+            
+        except Exception as e:
+            return None
 
         # 工具2: 获取思想家角色prompt
 
@@ -1212,12 +1357,12 @@ list_available_personas({})
 ### 哲学思辨
 - **🧠 苏格拉底** - 古希腊哲学家，以思辨和质疑著称
 - **☯️ 王阳明** - 明代心学大师，知行合一的倡导者
-- **🧘 吉杜·克里希那穆提** - 觉察智慧导师，当下生活的哲学家
+- **🧘 吉杜克里希那穆提** - 觉察智慧导师，当下生活的哲学家
 
 ### 商业创新
-- **🚀 埃隆·马斯克** - 现代创新教父，第一性原理思维大师
-- **📚 查理·芒格** - 投资智慧大师，多元思维模型的倡导者
-- **🍎 史蒂夫·乔布斯** - 产品完美主义者，用户体验至上的创新者
+- **🚀 埃隆马斯克** - 现代创新教父，第一性原理思维大师
+- **📚 查理芒格** - 投资智慧大师，多元思维模型的倡导者
+- **🍎 史蒂夫乔布斯** - 产品完美主义者，用户体验至上的创新者
 - **🌸 稻盛和夫** - 经营之圣，敬天爱人的经营哲学家
 
 ### 经济战略
@@ -1227,15 +1372,15 @@ list_available_personas({})
 
 ### 科学方法
 - **🔬 卡尔·波普尔** - 科学哲学巨匠，可证伪性理论创立者
-- **🔄 杰伊·福雷斯特** - 系统动力学之父，反馈环理论创建者
+- **🔄 杰伊福雷斯特** - 系统动力学之父，反馈环理论创建者
 - **🧠 大卫·伯恩斯** - CBT心理学大师，《感受的事实》作者
 
 ## 🌟 热门专家组合推荐
 
-- **投资决策组**：路德维希·冯·米塞斯 + 查理·芒格 + 埃隆·马斯克
-- **心理成长组**：苏格拉底 + 大卫·伯恩斯 + 吉杜·克里希那穆提
-- **战略决策组**：孙子 + 曾国藩 + 查理·芒格
-- **科学理性组**：卡尔·波普尔 + 苏格拉底 + 杰伊·福雷斯特
+- **投资决策组**：路德维希·冯·米塞斯 + 查理芒格 + 埃隆马斯克
+- **心理成长组**：苏格拉底 + 大卫·伯恩斯 + 吉杜克里希那穆提
+- **战略决策组**：孙子 + 曾国藩 + 查理芒格
+- **科学理性组**：卡尔·波普尔 + 苏格拉底 + 杰伊福雷斯特
 
 ## 🎯 典型对话流程
 
