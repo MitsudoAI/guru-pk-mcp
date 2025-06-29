@@ -290,11 +290,25 @@ class GuruPKServer:
         """根据问题内容智能推荐专家组合"""
         try:
             question_lower = question.lower()
-            
+            recommendations: list[dict[str, Any]] = []
+
             # 教育学习类
             if any(
                 word in question_lower
-                for word in ["教育", "学习", "英语", "语言", "学生", "儿童", "孩子", "小学", "中学", "教学", "学校", "课程"]
+                for word in [
+                    "教育",
+                    "学习",
+                    "英语",
+                    "语言",
+                    "学生",
+                    "儿童",
+                    "孩子",
+                    "小学",
+                    "中学",
+                    "教学",
+                    "学校",
+                    "课程",
+                ]
             ):
                 recommendations = [
                     {
@@ -308,8 +322,8 @@ class GuruPKServer:
                         "score": 90,
                     },
                 ]
-                
-            # 商业创业类  
+
+            # 商业创业类
             elif any(
                 word in question_lower
                 for word in ["创业", "商业", "投资", "经营", "企业", "生意", "商务"]
@@ -330,7 +344,18 @@ class GuruPKServer:
             # 人生成长类
             elif any(
                 word in question_lower
-                for word in ["人生", "成长", "认知", "思维", "心理", "修养", "品格", "情感", "压力", "焦虑"]
+                for word in [
+                    "人生",
+                    "成长",
+                    "认知",
+                    "思维",
+                    "心理",
+                    "修养",
+                    "品格",
+                    "情感",
+                    "压力",
+                    "焦虑",
+                ]
             ):
                 recommendations = [
                     {
@@ -348,7 +373,17 @@ class GuruPKServer:
             # 系统管理类
             elif any(
                 word in question_lower
-                for word in ["系统", "管理", "复杂", "问题", "解决", "策略", "方法", "流程", "组织"]
+                for word in [
+                    "系统",
+                    "管理",
+                    "复杂",
+                    "问题",
+                    "解决",
+                    "策略",
+                    "方法",
+                    "流程",
+                    "组织",
+                ]
             ):
                 recommendations = [
                     {
@@ -366,7 +401,16 @@ class GuruPKServer:
             # 产品技术类
             elif any(
                 word in question_lower
-                for word in ["产品", "设计", "用户", "体验", "技术", "软件", "开发", "创新"]
+                for word in [
+                    "产品",
+                    "设计",
+                    "用户",
+                    "体验",
+                    "技术",
+                    "软件",
+                    "开发",
+                    "创新",
+                ]
             ):
                 recommendations = [
                     {
@@ -380,11 +424,22 @@ class GuruPKServer:
                         "score": 88,
                     },
                 ]
-                
+
             # 宗教精神类
             elif any(
-                word in question_lower  
-                for word in ["宗教", "信仰", "精神", "圣经", "教会", "上帝", "神", "灵性", "道德", "伦理"]
+                word in question_lower
+                for word in [
+                    "宗教",
+                    "信仰",
+                    "精神",
+                    "圣经",
+                    "教会",
+                    "上帝",
+                    "神",
+                    "灵性",
+                    "道德",
+                    "伦理",
+                ]
             ):
                 recommendations = [
                     {
@@ -414,10 +469,10 @@ class GuruPKServer:
             for rec in recommendations:
                 if all(persona in all_personas for persona in rec["combo"]):
                     return rec
-                    
+
             return None
-            
-        except Exception as e:
+
+        except Exception:
             return None
 
         # 工具2: 获取思想家角色prompt
