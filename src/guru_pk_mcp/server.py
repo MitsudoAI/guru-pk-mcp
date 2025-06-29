@@ -837,19 +837,15 @@ class GuruPKServer:
                 4: "第4轮：智慧综合",
             }
 
-            result = f"""🎭 **角色扮演提示**
+            result = f"""{prompt}
+
+---
+
+🎭 **角色扮演提示**
 
 **会话**: {session.session_id}
 **轮次**: {round_names.get(session.current_round, f"第{session.current_round}轮")}
 **角色**: {self._format_persona_info_with_custom(current_persona)}
-
----
-
-**请现在扮演这个角色，使用以下指导来回答用户的问题：**
-
-{prompt}
-
----
 
 💡 **提示**: 完全进入角色，用该思想家的语言风格、思维方式来回答。回答完成后，请使用 `record_round_response` 工具记录你的回答。"""
 
@@ -865,15 +861,24 @@ class GuruPKServer:
     ) -> list[TextContent]:
         """记录当前轮次的回答"""
         try:
+            # 获取语言设置
+            config = ConfigManager()
+            language_instruction = config.get_language_instruction()
+
             if not self.current_session:
-                return [TextContent(type="text", text="❌ 没有活跃的会话。")]
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{language_instruction}\n\n❌ 没有活跃的会话。",
+                    )
+                ]
 
             response = arguments.get("response", "").strip()
             if not response:
                 return [
                     TextContent(
                         type="text",
-                        text='❌ 请提供回答内容。\n\n使用方法：record_round_response({"response": "你的回答内容"})',
+                        text=f'{language_instruction}\n\n❌ 请提供回答内容。\n\n使用方法：record_round_response({{"response": "你的回答内容"}})',
                     )
                 ]
 
@@ -894,7 +899,9 @@ class GuruPKServer:
                 return [
                     TextContent(
                         type="text",
-                        text=f"""✅ **最终综合分析已完成！**
+                        text=f"""{language_instruction}
+
+✅ **最终综合分析已完成！**
 
 🎉 **会话 {session.session_id} 圆满结束**
 
@@ -912,7 +919,9 @@ class GuruPKServer:
                 return [
                     TextContent(
                         type="text",
-                        text=f"""✅ **所有轮次已完成！**
+                        text=f"""{language_instruction}
+
+✅ **所有轮次已完成！**
 
 🎉 **三位专家的讨论已经结束**
 📊 **最终统计**:
@@ -932,7 +941,9 @@ class GuruPKServer:
                 4: "第4轮：智慧综合",
             }
 
-            result = f"""✅ **回答已记录！**
+            result = f"""{language_instruction}
+
+✅ **回答已记录！**
 
 **{current_persona}** 的观点已保存。
 
@@ -954,11 +965,15 @@ class GuruPKServer:
     ) -> list[TextContent]:
         """获取当前会话状态"""
         try:
+            # 获取语言设置
+            config = ConfigManager()
+            language_instruction = config.get_language_instruction()
+
             if not self.current_session:
                 return [
                     TextContent(
                         type="text",
-                        text="❌ 没有活跃的会话。请先使用 start_pk_session 启动一个会话。",
+                        text=f"{language_instruction}\n\n❌ 没有活跃的会话。请先使用 start_pk_session 启动一个会话。",
                     )
                 ]
 
@@ -971,7 +986,9 @@ class GuruPKServer:
             completed = status["completed_responses"]
             progress = f"{completed}/{total_expected}"
 
-            result = f"""📊 **会话状态报告**
+            result = f"""{language_instruction}
+
+📊 **会话状态报告**
 
 **会话ID**: `{status['session_id']}`
 **问题**: {status['question']}
@@ -997,12 +1014,17 @@ class GuruPKServer:
     ) -> list[TextContent]:
         """列出所有可用的思想家"""
         try:
+            # 获取语言设置
+            config = ConfigManager()
+            language_instruction = config.get_language_instruction()
+
             # 内置思想家
             builtin_personas = get_available_personas()
             # 自定义思想家
             custom_personas = self.custom_persona_manager.list_custom_personas()
 
-            result = "🎭 **可用的思想家专家**\n\n"
+            # 在开头添加语言指示
+            result = f"{language_instruction}\n\n🎭 **可用的思想家专家**\n\n"
 
             # 内置思想家
             result += "## 📚 内置专家\n\n"
@@ -1038,6 +1060,9 @@ class GuruPKServer:
     ) -> list[TextContent]:
         """查看会话历史"""
         try:
+            # 获取语言设置
+            config = ConfigManager()
+            language_instruction = config.get_language_instruction()
 
             session_id = arguments.get("session_id")
             if session_id:
@@ -1045,7 +1070,10 @@ class GuruPKServer:
                 session = self.session_manager.load_session(session_id)
                 if not session:
                     return [
-                        TextContent(type="text", text=f"❌ 未找到会话 {session_id}")
+                        TextContent(
+                            type="text",
+                            text=f"{language_instruction}\n\n❌ 未找到会话 {session_id}",
+                        )
                     ]
             else:
                 # 查看当前会话
@@ -1053,12 +1081,14 @@ class GuruPKServer:
                     return [
                         TextContent(
                             type="text",
-                            text="❌ 没有活跃的会话。请提供 session_id 参数查看历史会话。",
+                            text=f"{language_instruction}\n\n❌ 没有活跃的会话。请提供 session_id 参数查看历史会话。",
                         )
                     ]
                 session = self.current_session
 
-            result = f"""📚 **会话讨论历史**
+            result = f"""{language_instruction}
+
+📚 **会话讨论历史**
 
 **会话ID**: `{session.session_id}`
 **问题**: {session.user_question}
@@ -1577,7 +1607,13 @@ start_pk_session({{"question": "{question}"}})
         self, arguments: dict[str, Any]
     ) -> list[TextContent]:
         """获取系统帮助和介绍"""
-        help_text = """# 🎭 Guru-PK MCP 专家辩论系统
+        # 获取语言设置
+        config = ConfigManager()
+        language_instruction = config.get_language_instruction()
+
+        help_text = f"""{language_instruction}
+
+# 🎭 Guru-PK MCP 专家辩论系统
 
 欢迎使用Guru-PK！这是一个基于MCP协议的AI专家辩论系统，让您能够与13位顶级思想家进行多轮深度对话。
 
@@ -1631,7 +1667,7 @@ recommend_personas({
 
 3. **查看可用专家**：
 ```
-list_available_personas({})
+list_available_personas()
 ```
 
 4. **🌟 自然语言创建专家**：
