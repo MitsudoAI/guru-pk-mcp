@@ -18,7 +18,7 @@ class SessionManager:
             # 使用环境变量或默认到用户家目录
             import os
 
-            data_dir = os.environ.get("DATA_DIR", os.path.expanduser("~/guru-pk-data"))
+            data_dir = os.environ.get("DATA_DIR", os.path.expanduser("~/.guru-pk-data"))
 
         self.data_dir = Path(data_dir)
         try:

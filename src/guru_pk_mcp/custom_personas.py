@@ -15,7 +15,7 @@ class CustomPersonaManager:
         if data_dir is None:
             import os
 
-            data_dir = os.environ.get("DATA_DIR", os.path.expanduser("~/guru-pk-data"))
+            data_dir = os.environ.get("DATA_DIR", os.path.expanduser("~/.guru-pk-data"))
 
         self.data_dir = Path(data_dir)
         self.custom_personas_file = self.data_dir / "custom_personas.json"
