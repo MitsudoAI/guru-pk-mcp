@@ -997,62 +997,34 @@ class GuruPKServer:
     ) -> list[TextContent]:
         """列出所有可用的思想家"""
         try:
-            # 获取当前语言设置
-            config = ConfigManager()
-            current_language = config.get_language()
-
-            # 根据语言设置调整文本
-            if current_language == "chinese":
-                labels = {
-                    "title": "🎭 **可用的思想家专家**",
-                    "builtin": "## 📚 内置专家",
-                    "custom": "## 👤 自定义专家",
-                    "custom_suffix": "(自定义)",
-                    "no_custom": "暂无自定义专家。使用 `create_custom_persona` 创建专属专家。",
-                    "traits_label": "🔑 核心特质",
-                    "usage_tip": "💡 **使用提示**: 在 start_pk_session 中指定 personas 参数来选择专家组合。",
-                    "example": '例如: `start_pk_session({"question": "你的问题", "personas": ["苏格拉底", "埃隆马斯克", "查理芒格"]})`',
-                }
-            else:
-                labels = {
-                    "title": "🎭 **Available Expert Personas**",
-                    "builtin": "## 📚 Built-in Experts",
-                    "custom": "## 👤 Custom Experts",
-                    "custom_suffix": "(Custom)",
-                    "no_custom": "No custom experts yet. Use `create_custom_persona` to create your own.",
-                    "traits_label": "🔑 Core Traits",
-                    "usage_tip": "💡 **Usage**: Specify personas parameter in start_pk_session to select expert combinations.",
-                    "example": 'Example: `start_pk_session({"question": "your question", "personas": ["Socrates", "Elon Musk", "Charlie Munger"]})`',
-                }
-
             # 内置思想家
             builtin_personas = get_available_personas()
             # 自定义思想家
             custom_personas = self.custom_persona_manager.list_custom_personas()
 
-            result = f"{labels['title']}\n\n"
+            result = "🎭 **可用的思想家专家**\n\n"
 
             # 内置思想家
-            result += f"{labels['builtin']}\n\n"
+            result += "## 📚 内置专家\n\n"
             for i, persona in enumerate(builtin_personas, 1):
                 result += f"{i}. {persona['emoji']} **{persona['name']}**\n"
                 result += f"   📝 {persona['description']}\n"
-                result += (
-                    f"   {labels['traits_label']}: {', '.join(persona['traits'])}\n\n"
-                )
+                result += f"   🔑 核心特质: {', '.join(persona['traits'])}\n\n"
 
             # 自定义思想家
             if custom_personas:
-                result += f"{labels['custom']}\n\n"
+                result += "## 👤 自定义专家\n\n"
                 for i, persona in enumerate(custom_personas, len(builtin_personas) + 1):
-                    result += f"{i}. {persona['emoji']} **{persona['name']}** {labels['custom_suffix']}\n"
+                    result += (
+                        f"{i}. {persona['emoji']} **{persona['name']}** (自定义)\n"
+                    )
                     result += f"   📝 {persona['description']}\n"
-                    result += f"   {labels['traits_label']}: {', '.join(persona['traits'])}\n\n"
+                    result += f"   🔑 核心特质: {', '.join(persona['traits'])}\n\n"
             else:
-                result += f"{labels['custom']}\n\n{labels['no_custom']}\n\n"
+                result += "## 👤 自定义专家\n\n暂无自定义专家。使用 `create_custom_persona` 创建专属专家。\n\n"
 
-            result += f"{labels['usage_tip']}\n"
-            result += labels["example"]
+            result += "💡 **使用提示**: 在 start_pk_session 中指定 personas 参数来选择专家组合。\n"
+            result += '例如: `start_pk_session({"question": "你的问题", "personas": ["苏格拉底", "埃隆马斯克", "查理芒格"]})`'
 
             return [TextContent(type="text", text=result)]
 
