@@ -15,7 +15,6 @@ from .custom_personas import CustomPersonaManager
 from .models import PKSession
 from .personas import (
     PERSONAS,
-    format_persona_info,
     generate_round_prompt,
     get_available_personas,
 )
@@ -401,7 +400,7 @@ class GuruPKServer:
             # 生成启动信息
             personas_info = "\n".join(
                 [
-                    f"{i+1}. {format_persona_info(p)}"
+                    f"{i+1}. {self._format_persona_info_with_custom(p)}"
                     for i, p in enumerate(session.selected_personas)
                 ]
             )
@@ -418,7 +417,7 @@ class GuruPKServer:
 {personas_info}
 
 📍 **当前状态**: 第1轮 - 独立思考阶段
-👤 **即将发言**: {format_persona_info(session.get_current_persona())}
+👤 **即将发言**: {self._format_persona_info_with_custom(session.get_current_persona())}
 
 💡 **下一步**: 使用 `get_persona_prompt` 工具获取当前专家的角色提示，然后让我扮演该专家来回答您的问题。"""
 
@@ -742,6 +741,38 @@ class GuruPKServer:
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 获取推荐指导失败: {str(e)}")]
 
+    def _format_persona_info_with_custom(self, persona_name: str) -> str:
+        """格式化显示思想家信息（包含自定义专家）"""
+        # 获取所有专家（内置+自定义）
+        all_personas = self.custom_persona_manager.get_all_personas(PERSONAS)
+
+        if persona_name not in all_personas:
+            return f"未知思想家: {persona_name}"
+
+        persona = all_personas[persona_name]
+
+        # 检查是否有emoji和description属性
+        emoji = getattr(persona, "emoji", "👤")
+
+        if hasattr(persona, "description"):
+            description = persona.description
+        elif hasattr(persona, "base_prompt"):
+            # 从base_prompt中提取简介
+            lines = persona.base_prompt.split("\n")
+            description = next(
+                (line for line in lines if "是" in line and len(line) < 100),
+                f"{persona_name}专家",
+            )
+        else:
+            # 如果是内置专家（字典格式）
+            if isinstance(persona, dict):
+                emoji = persona.get("emoji", "👤")
+                description = persona.get("description", f"{persona_name}专家")
+            else:
+                description = f"{persona_name}专家"
+
+        return f"{emoji} **{persona_name}** - {description}"
+
         # 工具2: 获取思想家角色prompt
 
     async def _handle_get_persona_prompt(
@@ -810,7 +841,7 @@ class GuruPKServer:
 
 **会话**: {session.session_id}
 **轮次**: {round_names.get(session.current_round, f"第{session.current_round}轮")}
-**角色**: {format_persona_info(current_persona)}
+**角色**: {self._format_persona_info_with_custom(current_persona)}
 
 ---
 
@@ -907,7 +938,7 @@ class GuruPKServer:
 
 📍 **下一步**:
 - **轮次**: {round_names.get(session.current_round, f"第{session.current_round}轮")}
-- **发言者**: {format_persona_info(next_persona)}
+- **发言者**: {self._format_persona_info_with_custom(next_persona)}
 
 💡 使用 `get_persona_prompt` 获取下一位专家的角色提示。"""
 
@@ -947,10 +978,10 @@ class GuruPKServer:
 
 **当前进展**:
 - 🎯 **当前轮次**: {status['round_name']}
-- 👤 **当前发言者**: {format_persona_info(status['current_persona']) if status['current_persona'] else '已完成'}
+- 👤 **当前发言者**: {self._format_persona_info_with_custom(status['current_persona']) if status['current_persona'] else '已完成'}
 - 📈 **完成进度**: {progress}
 
-**参与专家**: {', '.join([format_persona_info(p) for p in status['personas']])}
+**参与专家**: {', '.join([self._format_persona_info_with_custom(p) for p in status['personas']])}
 
 **状态**: {'✅ 已完成' if status['is_completed'] else '🔄 进行中'}"""
 
@@ -1032,7 +1063,7 @@ class GuruPKServer:
 **会话ID**: `{session.session_id}`
 **问题**: {session.user_question}
 **创建时间**: {session.created_at}
-**参与专家**: {', '.join([format_persona_info(p) for p in session.selected_personas])}
+**参与专家**: {', '.join([self._format_persona_info_with_custom(p) for p in session.selected_personas])}
 
 ---
 
@@ -1049,7 +1080,9 @@ class GuruPKServer:
                 result += f"## {round_names.get(round_num, f'第{round_num}轮')}\n\n"
 
                 for persona, response in session.responses[round_num].items():
-                    result += f"### {format_persona_info(persona)}\n\n"
+                    result += (
+                        f"### {self._format_persona_info_with_custom(persona)}\n\n"
+                    )
                     result += f"{response}\n\n---\n\n"
 
             if session.final_synthesis:
@@ -1100,7 +1133,7 @@ class GuruPKServer:
 
 📍 **当前状态**:
 - **轮次**: {round_names.get(session.current_round, f"第{session.current_round}轮")}
-- **发言者**: {format_persona_info(next_persona)}
+- **发言者**: {self._format_persona_info_with_custom(next_persona)}
 
 💡 使用 `get_persona_prompt` 获取角色提示。"""
 
@@ -1128,7 +1161,7 @@ class GuruPKServer:
 **会话**: {session.session_id}
 **问题**: {session.user_question}
 **当前轮次**: 第{round_num}轮
-**当前专家**: {format_persona_info(current_persona) if current_persona else '已完成'}
+**当前专家**: {self._format_persona_info_with_custom(current_persona) if current_persona else '已完成'}
 
 ---
 
@@ -1319,7 +1352,7 @@ class GuruPKServer:
 
 📍 **当前状态**:
 - **轮次**: {round_names.get(session.current_round, f"第{session.current_round}轮")}
-- **待发言**: {format_persona_info(current_persona)}
+- **待发言**: {self._format_persona_info_with_custom(current_persona)}
 - **进度**: {status['completed_responses']}/{len(session.selected_personas) * 3 + 1}
 
 💡 使用 `get_persona_prompt` 获取当前专家的角色提示。"""
@@ -1735,7 +1768,7 @@ set_language({"language": "english"})
 
             for i, (persona, count) in enumerate(popular_personas, 1):
                 percentage = (count / total_sessions * 100) if total_sessions > 0 else 0
-                result += f"{i}. {format_persona_info(persona)} - {count}次 ({percentage:.1f}%)\n"
+                result += f"{i}. {self._format_persona_info_with_custom(persona)} - {count}次 ({percentage:.1f}%)\n"
 
             result += "\n## 🔍 问题领域分析\n"
             if question_keywords:
