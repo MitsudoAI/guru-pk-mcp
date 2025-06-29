@@ -1716,7 +1716,10 @@ set_language({"language": "english"})
                 ]
 
             # 智能生成专家配置
-            persona_data = self._generate_smart_persona(description)
+            language_instruction = self.config_manager.get_language_instruction()
+            persona_data = self._generate_smart_persona(
+                description, language_instruction
+            )
 
             if not persona_data:
                 return [
@@ -1765,7 +1768,9 @@ start_pk_session({
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 创建专家失败: {str(e)}")]
 
-    def _generate_smart_persona(self, user_description: str) -> dict[str, Any] | None:
+    def _generate_smart_persona(
+        self, user_description: str, language_instruction: str = "请务必使用中文回答。"
+    ) -> dict[str, Any] | None:
         """根据用户描述智能生成专家配置"""
 
         # 分析用户描述中的关键词来推荐合适的专家特质
@@ -1782,7 +1787,9 @@ start_pk_session({
                 "description": "现代教育改革先驱，创造力教育倡导者",
                 "core_traits": ["创造力教育", "个性化学习", "教育变革"],
                 "speaking_style": "富有激情，善于用故事启发思考",
-                "base_prompt": """你是肯·罗宾逊，世界知名的教育学家和创造力专家。你致力于教育体系的根本变革。
+                "base_prompt": f"""{language_instruction}
+
+你是肯·罗宾逊，世界知名的教育学家和创造力专家。你致力于教育体系的根本变革。
 
 你的特点：
 - 强调每个人都有独特的天赋和学习方式
@@ -1803,7 +1810,9 @@ start_pk_session({
                 "description": "深度学习教父，人工智能先驱",
                 "core_traits": ["深度学习", "神经网络", "AI伦理"],
                 "speaking_style": "严谨科学，前瞻性思维",
-                "base_prompt": """你是杰弗里·辛顿，被誉为"深度学习教父"的人工智能先驱。
+                "base_prompt": f"""{language_instruction}
+
+你是杰弗里·辛顿，被誉为"深度学习教父"的人工智能先驱。
 
 你的特点：
 - 在神经网络和深度学习领域做出奠基性贡献
@@ -1824,7 +1833,9 @@ start_pk_session({
                 "description": "意义疗法创始人，集中营幸存者",
                 "core_traits": ["意义疗法", "生存意义", "心理韧性"],
                 "speaking_style": "深刻人性洞察，充满希望力量",
-                "base_prompt": """你是维克多·弗兰克尔，意义疗法的创始人，集中营的幸存者。
+                "base_prompt": f"""{language_instruction}
+
+你是维克多·弗兰克尔，意义疗法的创始人，集中营的幸存者。
 
 你的特点：
 - 认为寻找生活意义是人类最基本的动力
@@ -1845,7 +1856,9 @@ start_pk_session({
                 "description": "企业管理大师，《基业长青》作者",
                 "core_traits": ["伟大公司理论", "组织与人才", "战略转型"],
                 "speaking_style": "务实严谨，数据驱动思维",
-                "base_prompt": """你是吉姆·柯林斯，世界知名的企业管理学家，《基业长青》作者。
+                "base_prompt": f"""{language_instruction}
+
+你是吉姆·柯林斯，世界知名的企业管理学家，《基业长青》作者。
 
 你的特点：
 - 通过深入研究揭示伟大公司的成功规律
@@ -1866,7 +1879,9 @@ start_pk_session({
                 "description": "设计思维先驱，IDEO创始人",
                 "core_traits": ["设计思维", "以人为本设计", "创新方法论"],
                 "speaking_style": "富有创意，实用导向",
-                "base_prompt": """你是蒂姆·布朗，设计思维的先驱者和IDEO公司的创始人。
+                "base_prompt": f"""{language_instruction}
+
+你是蒂姆·布朗，设计思维的先驱者和IDEO公司的创始人。
 
 你的特点：
 - 倡导"设计思维"的问题解决方法
@@ -1893,7 +1908,9 @@ start_pk_session({
                 "description": f"基于您需求创建的专家：{user_description}",
                 "core_traits": ["专业知识", "实践经验", "深度思考"],
                 "speaking_style": "专业严谨，通俗易懂",
-                "base_prompt": f"""你是一位在相关领域有深厚造诣的专家。您的专业领域与以下需求相关：{user_description}
+                "base_prompt": f"""{language_instruction}
+
+你是一位在相关领域有深厚造诣的专家。您的专业领域与以下需求相关：{user_description}
 
 你的特点：
 - 对相关领域有深入的专业知识
