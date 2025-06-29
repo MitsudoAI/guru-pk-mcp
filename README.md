@@ -79,12 +79,29 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ## 💡 使用方法
 
-### 基础工具
+### 核心功能
 - `start_pk_session` - 启动专家辩论
 - `get_smart_recommendation_guidance` - 获取智能推荐指导（推荐）
-- `recommend_personas` - 传统关键词推荐
-- `guru_pk_help` - 获取系统帮助
+- `get_persona_prompt` - 获取当前专家的角色提示
+- `record_round_response` - 记录专家发言
+- `get_session_status` - 查看会话状态
+
+### 专家管理
 - `list_available_personas` - 查看所有专家
+- `recommend_personas` - 传统关键词推荐
+- `create_custom_persona_from_description` - 智能创建自定义专家
+- `save_custom_persona` - 保存自定义专家数据
+
+### 会话管理
+- `view_session_history` - 查看会话历史
+- `export_session` - 导出会话为Markdown文件
+- `advance_to_next_round` - 手动进入下一轮/专家
+
+### 系统设置
+- `get_language_settings` - 查看当前语言设置
+- `set_language` - 设置回复语言
+- `get_usage_statistics` - 获取使用统计分析
+- `guru_pk_help` - 获取系统帮助
 
 ### 🌟 智能自定义专家创建（重点功能）
 
@@ -142,15 +159,14 @@ save_custom_persona({
 
 #### 📋 使用方法
 ```javascript
-// 步骤1: 获取智能推荐指导
-get_smart_recommendation_guidance({"question": "你的问题"})
+// 智能推荐（推荐）: 直接提问，自动推荐最佳专家组合
+start_pk_session({"question": "你的问题"})
 
-// 步骤2: 基于指导推荐专家，然后启动会话
-start_pk_session({
-  "question": "你的问题", 
-  "personas": ["推荐专家1", "推荐专家2", "推荐专家3"],
-  "recommended_by_host": true
-})
+// 手动选择: 指定特定专家组合
+start_pk_session({"question": "你的问题", "personas": ["苏格拉底", "埃隆马斯克", "查理芒格"]})
+
+// 高级功能: 获取推荐指导（可选）
+get_smart_recommendation_guidance({"question": "你的问题"})
 ```
 
 #### 🎯 智能推荐优势
@@ -305,10 +321,13 @@ create_custom_persona_from_description({
 
 ## 💡 使用提示
 
-- 输入 `guru_pk_help` 获取系统介绍
-- 直接提问开始专家辩论  
-- 使用 `list_available_personas` 查看专家
-- 推荐使用UVX方式安装，零配置依赖管理
+- 🤖 **直接提问** - 最简单的使用方式，自动智能推荐专家
+- 📋 `guru_pk_help` - 获取系统介绍和详细帮助
+- 👥 `list_available_personas` - 查看所有可用专家
+- 📊 `get_usage_statistics` - 查看使用统计和分析
+- 📄 `export_session` - 导出会话记录为Markdown
+- 🌍 `set_language` - 设置专家回复语言
+- 💾 推荐使用UVX方式安装，零配置依赖管理
 
 ## 💭 设计理念
 
