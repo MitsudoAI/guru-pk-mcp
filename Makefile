@@ -1,4 +1,4 @@
-.PHONY: help install dev-install format lint test server build clean all
+.PHONY: help install dev-install format lint test server build clean all lint-docs check fix-docs fix
 
 help:
 	@echo "Guru-PK MCP 开发命令"
@@ -17,6 +17,10 @@ help:
 	@echo "  publish-test - 发布到测试PyPI"
 	@echo "  publish     - 发布到正式PyPI"
 	@echo "  all         - 运行完整的开发流程"
+	@echo "  lint-docs   - 检查文档格式"
+	@echo "  fix-docs    - 自动修复文档格式"
+	@echo "  check       - 检查所有格式"
+	@echo "  fix         - 修复所有格式问题"
 
 install:
 	uv pip install -e .
@@ -60,4 +64,16 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 
-all: format lint test build
+all: format lint lint-docs test build
+
+lint-docs:
+	npx markdownlint-cli2 "README.md" "docs/**/*.md"
+
+fix-docs:
+	npx markdownlint-cli2 --fix "README.md" "docs/**/*.md"
+
+check: lint lint-docs test
+	@echo "✅ 所有检查通过"
+
+fix: format fix-docs
+	@echo "✅ 所有格式修复完成"

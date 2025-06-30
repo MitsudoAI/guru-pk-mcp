@@ -13,6 +13,7 @@
 ## 🚀 快速安装
 
 ### 1. 安装依赖
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -20,6 +21,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ### 2. 配置MCP客户端
 
 **推荐方式：从PyPI安装**
+
 ```json
 {
   "mcpServers": {
@@ -37,6 +39,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 > **注意**: macOS用户可能需要使用完整路径：`/Users/{用户名}/.local/bin/uvx`
 
 **开发方式：从源码安装**
+
 ```json
 {
   "mcpServers": {
@@ -52,27 +55,32 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### 3. 开始使用
+
 重启MCP客户端，输入 `guru_pk_help` 获取帮助，或直接提问开始专家辩论！
 
 ## 🎭 专家阵容
 
 ### 哲学思辨
+
 🧠 **苏格拉底** - 批判思维，质疑表面答案  
 ☯️ **王阳明** - 心学大师，知行合一  
 🧘 **克里希那穆提** - 觉察智慧，当下哲学  
 
 ### 商业创新  
+
 🚀 **埃隆·马斯克** - 第一性原理，颠覆创新  
 📚 **查理·芒格** - 多元思维，投资智慧  
 🍎 **史蒂夫·乔布斯** - 产品完美主义，用户体验  
 🌸 **稻盛和夫** - 敬天爱人，经营哲学  
 
 ### 经济战略
+
 💰 **冯·米塞斯** - 奥地利学派，人类行动学  
 ⚔️ **孙子** - 兵学圣祖，战略思维  
 📖 **曾国藩** - 修身治国，渐进改良  
 
 ### 科学方法
+
 🔬 **卡尔·波普尔** - 可证伪性，批判理性主义  
 🔄 **杰伊·福雷斯特** - 系统动力学，反馈环理论  
 🧠 **大卫·伯恩斯** - CBT心理学，认知重构  
@@ -80,6 +88,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ## 💡 使用方法
 
 ### 核心功能
+
 - `start_pk_session` - 启动专家辩论
 - `get_smart_recommendation_guidance` - 获取智能推荐指导（推荐）
 - `get_persona_prompt` - 获取当前专家的角色提示
@@ -87,17 +96,20 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 - `get_session_status` - 查看会话状态
 
 ### 专家管理
+
 - `list_available_personas` - 查看所有专家
 - `recommend_personas` - 传统关键词推荐
 - `create_custom_persona_from_description` - 智能创建自定义专家
 - `save_custom_persona` - 保存自定义专家数据
 
 ### 会话管理
+
 - `view_session_history` - 查看会话历史
 - `export_session` - 导出会话为Markdown文件
 - `advance_to_next_round` - 手动进入下一轮/专家
 
 ### 系统设置
+
 - `get_language_settings` - 查看当前语言设置
 - `set_language` - 设置回复语言
 - `get_usage_statistics` - 获取使用统计分析
@@ -108,14 +120,17 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 **全新架构：MCP Host端LLM智能生成 + MCP Server端保存**
 
 #### 第一步：获取创建指导
-```
+
+```javascript
 create_custom_persona_from_description({
   "description": "我想要一个世界历史方面的顶尖专家"
 })
 ```
 
 #### 第二步：LLM生成专家数据
+
 系统返回详细指导后，让MCP Host端的LLM生成完整专家数据：
+
 ```json
 {
   "name": "汤因比",
@@ -128,19 +143,22 @@ create_custom_persona_from_description({
 ```
 
 #### 第三步：保存专家
-```
+
+```javascript
 save_custom_persona({
   "persona_data": { /* 上面生成的完整数据 */ }
 })
 ```
 
 **🎯 核心优势：**
+
 - 🧠 **真正智能** - 利用MCP Host端LLM的强大生成能力
 - 🎭 **专业定制** - 创建真正有价值的领域专家，而非通用模板
 - 🔧 **完整验证** - 自动处理名称冲突、数据验证等技术细节
 - 📚 **详细指导** - 提供专家数据模板和创建要点
 
 #### 🌟 推荐专家领域
+
 - **历史学**: 汤因比、黄仁宇、钱穆
 - **物理学**: 爱因斯坦、费曼、霍金  
 - **文学**: 莎士比亚、鲁迅、村上春树
@@ -148,7 +166,8 @@ save_custom_persona({
 - **经济学**: 亚当·斯密、凯恩斯、张五常
 
 ### 传统使用示例
-```
+
+```javascript
 问题："如何在AI时代保持竞争力？"
 专家：["苏格拉底", "埃隆马斯克", "大卫伯恩斯"]
 ```
@@ -158,6 +177,7 @@ save_custom_persona({
 **全新智能推荐系统** - 采用MCP Host端LLM智能生成架构
 
 #### 📋 使用方法
+
 ```javascript
 // 智能推荐（推荐）: 直接提问，自动推荐最佳专家组合
 start_pk_session({"question": "你的问题"})
@@ -170,12 +190,14 @@ get_smart_recommendation_guidance({"question": "你的问题"})
 ```
 
 #### 🎯 智能推荐优势
+
 - ✅ **真正智能** - 理解问题语义，而非关键词匹配
 - ✅ **全专家池** - 自动包含内置和自定义专家
 - ✅ **动态组合** - 根据问题特点生成最佳专家组合
 - ✅ **个性化** - 支持复杂和跨领域问题
 
 #### 🔄 传统推荐组合（备选）
+
 **投资决策** - 冯·米塞斯 + 查理·芒格 + 埃隆·马斯克  
 **心理成长** - 苏格拉底 + 大卫·伯恩斯 + 克里希那穆提  
 **战略决策** - 孙子 + 曾国藩 + 查理·芒格  
@@ -194,6 +216,7 @@ get_smart_recommendation_guidance({"question": "你的问题"})
 **存储**: 本地JSON | **特点**: 零部署、隐私保护
 
 ### 项目结构
+
 ```
 src/guru_pk_mcp/
 ├── server.py           # MCP服务器
@@ -210,13 +233,16 @@ src/guru_pk_mcp/
 **革命性的专家推荐体验** - 这是Guru-PK MCP的重要创新，彻底解决了传统关键词匹配推荐的局限性。
 
 #### 🎯 为什么需要智能推荐？
+
 传统推荐系统的问题：
+
 - 🔍 **关键词匹配** - 无法理解问题的深层语义
 - 📋 **静态组合** - 推荐组合固定，缺乏灵活性
 - ❌ **遗漏自定义专家** - 无法包含用户创建的专家
 - 🏷️ **覆盖有限** - 只能处理预设的几个领域
 
 #### 🚀 智能推荐架构优势
+
 ```mermaid
 graph LR
     A[用户问题] --> B[get_smart_recommendation_guidance]
@@ -226,10 +252,12 @@ graph LR
 ```
 
 **MCP Host端智能 + MCP Server端执行** 的完美分工：
+
 - 🧠 **Host端负责智能** - 利用LLM的语义理解和分析能力
 - ⚙️ **Server端负责执行** - 提供数据、验证、管理会话
 
 #### 📋 智能推荐特性
+
 - ✅ **语义理解** - 真正理解问题的本质和需求
 - ✅ **全专家池** - 自动包含所有内置和自定义专家
 - ✅ **动态匹配** - 根据问题特点实时生成最佳组合
@@ -237,6 +265,7 @@ graph LR
 - ✅ **详细指导** - 提供推荐原则、分析框架、输出格式
 
 #### 💡 使用示例
+
 ```javascript
 // 复杂问题：涉及多个领域
 get_smart_recommendation_guidance({
@@ -262,6 +291,7 @@ get_smart_recommendation_guidance({
 **革命性的专家创建体验** - 这是Guru-PK MCP最强大的功能，也是与其他AI辩论系统的核心差异化优势。
 
 #### ⚡ 超简单的创建流程
+
 ```bash
 # 1. 用自然语言描述需求
 create_custom_persona_from_description({
@@ -274,6 +304,7 @@ create_custom_persona_from_description({
 ```
 
 #### 🎭 智能推荐专家库
+
 系统内置了各领域顶级专家的模板：
 
 **教育领域**: 肯·罗宾逊（创造力教育）  
@@ -284,6 +315,7 @@ create_custom_persona_from_description({
 ...更多领域持续扩展
 
 #### 💡 使用技巧
+
 ```bash
 # 具体领域
 "我需要一个区块链技术专家"
@@ -301,15 +333,18 @@ create_custom_persona_from_description({
 ```
 
 ### 传统方式：手动创建专家
+
 如果您仍希望手动创建，可以使用 `create_custom_persona` 工具
 
 ### 数据管理  
+
 - 自动保存会话到本地JSON
 - 支持Markdown导出
 - 历史会话查看和恢复
 - 完全本地化，保护隐私
 
 ### 统计分析
+
 - 会话完成率和活跃度
 - 热门专家排行榜  
 - 问题领域分析
@@ -332,23 +367,27 @@ create_custom_persona_from_description({
 ## 💭 设计理念
 
 ### 灵感来源
+
 本项目受到 [人生教练团Agent](https://mp.weixin.qq.com/s/QGNzRRo7U3Y2fmvOXNJvyw) 的启发。原文提出了多角色PK的创新思路，通常这类系统会使用LangGraph等Agent框架开发，而原作者选择了"飞书MCP"实现更简单的方案，思路巧妙。
 
 ### 技术方案对比
 
 **🔧 Agent框架开发**
+
 - ✅ 功能强大，可集成多个LLM API
 - ✅ 前端交互灵活，控制性强
 - ❌ 开发复杂度高
 - ❌ API调用成本高昂
 
 **☁️ 飞书MCP方案**  
+
 - ✅ 几乎零开发，部署简单
 - ✅ 利用现有飞书生态
 - ❌ 依赖第三方服务
 - ❌ 定制化程度有限
 
 **🏠 本地MCP方案（本项目）**
+
 - ✅ 与订阅制Chat APP结合，无API费用
 - ✅ 数据本地化，隐私保护
 - ✅ 开源可定制，技术独立
@@ -357,14 +396,17 @@ create_custom_persona_from_description({
 - ❌ 需要一定开发工作
 
 ### 核心优势
+
 本项目选择本地MCP方案，在保持"专家PK"、"大神PK"、"人生教练团"这类AI专家辩论系统的核心理念的同时，**最大化成本效益和智能化程度**：
 
 #### 🤖 **智能化优势**
+
 - **MCP Host端LLM智能** - 专家推荐、专家创建均由订阅制LLM智能完成
 - **语义理解** - 真正理解问题本质，而非简单关键词匹配
 - **动态适应** - 根据用户的自定义专家库实时调整推荐策略
 
 #### 💰 **成本效益优势**  
+
 - **零API费用** - 充分利用订阅制Chat APP的LLM能力
 - **本地隐私** - 所有数据本地存储，完全隐私保护
 - **技术独立** - 开源可定制，不依赖任何第三方服务
