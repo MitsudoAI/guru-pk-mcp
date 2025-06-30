@@ -1514,8 +1514,17 @@ class GuruPKServer:
                     md_content += f"### {persona}\n\n"
                     md_content += f"{response}\n\n---\n\n"
 
+            # Only add final_synthesis if it's different from round 4 content
             if session.final_synthesis:
-                md_content += f"## 🌟 最终综合方案\n\n{session.final_synthesis}\n\n"
+                # Check if final_synthesis is identical to any round 4 response
+                round_4_responses = session.responses.get(4, {})
+                is_duplicate = any(
+                    session.final_synthesis == response
+                    for response in round_4_responses.values()
+                )
+
+                if not is_duplicate:
+                    md_content += f"## 🌟 最终综合方案\n\n{session.final_synthesis}\n\n"
 
             md_content += f"""## 📊 统计信息
 
