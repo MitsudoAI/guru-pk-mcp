@@ -14,9 +14,29 @@
 
 ### 1. 安装依赖
 
+**方式一：使用安装脚本（推荐）**
+
+**macOS/Linux:**
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+**Windows:**
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**方式二：使用 pip 安装（适用于所有平台）**
+
+```bash
+pip install uv
+```
+
+**方式三：下载安装包**
+
+从 [UV Releases](https://github.com/astral-sh/uv/releases) 页面下载对应平台的安装包
 
 ### 2. 配置MCP客户端
 
@@ -29,14 +49,21 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
       "command": "uvx",
       "args": ["--from", "guru-pk-mcp", "guru-pk-mcp-server"],
       "env": {
-        "DATA_DIR": "~/.guru-pk-data"
+        "DATA_DIR": "~/.guru-pk-data"  // macOS/Linux: ~/目录, Windows: %USERPROFILE%目录
       }
     }
   }
 }
 ```
 
-> **注意**: macOS用户可能需要使用完整路径：`/Users/{用户名}/.local/bin/uvx`
+> **注意**:
+>
+> - macOS用户可能需要使用完整路径：`/Users/{用户名}/.local/bin/uvx`
+> - Windows用户：`~`会自动解析为用户主目录（如 `C:\Users\{用户名}`），无需手动修改
+> - 如果遇到路径问题，可以使用绝对路径替代，例如：
+>   - Windows: `"DATA_DIR": "C:\\Users\\{用户名}\\.guru-pk-data"`
+>   - macOS: `"DATA_DIR": "/Users/{用户名}/.guru-pk-data"`
+>   - Linux: `"DATA_DIR": "/home/{用户名}/.guru-pk-data"`
 
 **开发方式：从源码安装**
 
@@ -47,7 +74,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
       "command": "uvx", 
       "args": ["--from", "/path/to/guru-pk-mcp", "guru-pk-mcp-server"],
       "env": {
-        "DATA_DIR": "~/.guru-pk-data"
+        "DATA_DIR": "~/.guru-pk-data"  // macOS/Linux: ~/目录, Windows: %USERPROFILE%目录
       }
     }
   }
