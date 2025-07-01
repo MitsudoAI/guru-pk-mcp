@@ -5,7 +5,214 @@
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from enum import Enum
 from typing import Any
+
+
+class DebateMode(Enum):
+    """辩论模式枚举"""
+
+    QUICK_CONSULTATION = "quick"  # 快速咨询模式 (2轮)
+    STANDARD_DEBATE = "standard"  # 标准辩论模式 (4轮)
+    DEEP_EXPLORATION = "deep"  # 深度探讨模式 (6轮)
+    FREE_DEBATE = "free"  # 自由辩论模式 (用户控制)
+
+
+class QuestionComplexity(Enum):
+    """问题复杂度枚举"""
+
+    SIMPLE = "simple"
+    STANDARD = "standard"
+    COMPLEX = "complex"
+
+
+@dataclass
+class QuestionProfile:
+    """问题分析档案"""
+
+    question: str
+    domains: list[str]  # 涉及的领域
+    complexity: QuestionComplexity
+    required_expertise: list[str]  # 需要的专业知识
+    thinking_modes: list[str]  # 需要的思维模式
+    debate_mode: DebateMode  # 推荐的辩论模式
+    analysis_timestamp: str
+    keywords: list[str]  # 关键词
+    expected_rounds: int  # 预期轮数
+
+    @classmethod
+    def create_from_question(cls, question: str) -> "QuestionProfile":
+        """从问题创建档案（简化版，实际会由智能分析生成）"""
+        return cls(
+            question=question,
+            domains=["通用"],
+            complexity=QuestionComplexity.STANDARD,
+            required_expertise=[],
+            thinking_modes=[],
+            debate_mode=DebateMode.STANDARD_DEBATE,
+            analysis_timestamp=datetime.now().isoformat(),
+            keywords=[],
+            expected_rounds=4,
+        )
+
+
+@dataclass
+class ExpertProfile:
+    """专家档案（动态生成）"""
+
+    name: str
+    emoji: str
+    description: str
+    background: str  # 专业背景
+    thinking_style: str  # 思维特征
+    debate_strategy: str  # 辩论策略
+    knowledge_domains: list[str]  # 知识领域
+    personality_traits: list[str]  # 个性特质
+    potential_biases: list[str]  # 潜在偏见
+    source: str  # 来源（"builtin", "custom", "generated"）
+    base_prompt: str  # 基础提示词
+    generation_timestamp: str | None = None  # 生成时间戳
+    relevance_score: float | None = None  # 与问题的相关性评分
+
+    @classmethod
+    def from_builtin_persona(cls, persona_data: dict[str, Any]) -> "ExpertProfile":
+        """从内置专家数据创建档案"""
+        return cls(
+            name=persona_data["name"],
+            emoji=persona_data["emoji"],
+            description=persona_data["description"],
+            background=persona_data["description"],
+            thinking_style=persona_data["speaking_style"],
+            debate_strategy="基于专业背景进行分析",
+            knowledge_domains=persona_data.get("domains", []),
+            personality_traits=persona_data["core_traits"],
+            potential_biases=[],
+            source="builtin",
+            base_prompt=persona_data["base_prompt"],
+            relevance_score=0.8,
+        )
+
+    @classmethod
+    def from_custom_persona(cls, persona_data: dict[str, Any]) -> "ExpertProfile":
+        """从自定义专家数据创建档案"""
+        return cls(
+            name=persona_data["name"],
+            emoji=persona_data.get("emoji", "👤"),
+            description=persona_data["description"],
+            background=persona_data["description"],
+            thinking_style=persona_data["speaking_style"],
+            debate_strategy="基于自定义设定进行分析",
+            knowledge_domains=persona_data.get("domains", []),
+            personality_traits=persona_data["core_traits"],
+            potential_biases=[],
+            source="custom",
+            base_prompt=persona_data["base_prompt"],
+            relevance_score=0.7,
+        )
+
+    @classmethod
+    def create_generated_expert(cls, expert_data: dict[str, Any]) -> "ExpertProfile":
+        """创建智能生成的专家档案"""
+        return cls(
+            name=expert_data["name"],
+            emoji=expert_data.get("emoji", "🤖"),
+            description=expert_data["description"],
+            background=expert_data["background"],
+            thinking_style=expert_data["thinking_style"],
+            debate_strategy=expert_data["debate_strategy"],
+            knowledge_domains=expert_data["knowledge_domains"],
+            personality_traits=expert_data["personality_traits"],
+            potential_biases=expert_data["potential_biases"],
+            source="generated",
+            base_prompt=expert_data["base_prompt"],
+            generation_timestamp=datetime.now().isoformat(),
+            relevance_score=expert_data.get("relevance_score", 0.9),
+        )
+
+
+@dataclass
+class ExpertRecommendation:
+    """专家推荐结果"""
+
+    experts: list[ExpertProfile]  # 推荐的专家列表（通常5个）
+    recommendation_reason: str  # 推荐理由
+    expected_perspectives: list[str]  # 预期视角
+    question_profile: QuestionProfile  # 问题档案
+    diversity_score: float  # 多样性评分
+    relevance_score: float  # 相关性评分
+    generation_timestamp: str
+
+    @classmethod
+    def create_recommendation(
+        cls,
+        experts: list[ExpertProfile],
+        question_profile: QuestionProfile,
+        reason: str = "",
+        perspectives: list[str] | None = None,
+    ) -> "ExpertRecommendation":
+        """创建专家推荐"""
+        if perspectives is None:
+            perspectives = []
+
+        return cls(
+            experts=experts,
+            recommendation_reason=reason,
+            expected_perspectives=perspectives,
+            question_profile=question_profile,
+            diversity_score=cls._calculate_diversity_score(experts),
+            relevance_score=cls._calculate_relevance_score(experts),
+            generation_timestamp=datetime.now().isoformat(),
+        )
+
+    @staticmethod
+    def _calculate_diversity_score(experts: list[ExpertProfile]) -> float:
+        """计算专家组合的多样性评分"""
+        if not experts:
+            return 0.0
+
+        # 简化的多样性计算：基于不同来源和领域的数量
+        sources = {expert.source for expert in experts}
+        domains = {domain for expert in experts for domain in expert.knowledge_domains}
+
+        source_diversity = len(sources) / 3  # 最多3种来源
+        domain_diversity = min(len(domains) / len(experts), 1.0)
+
+        return (source_diversity + domain_diversity) / 2
+
+    @staticmethod
+    def _calculate_relevance_score(experts: list[ExpertProfile]) -> float:
+        """计算专家组合的相关性评分"""
+        if not experts:
+            return 0.0
+
+        scores = [expert.relevance_score or 0.5 for expert in experts]
+        return sum(scores) / len(scores)
+
+
+@dataclass
+class DebateQualityMetrics:
+    """辩论质量指标"""
+
+    novelty_score: float  # 观点新颖度 (0-10)
+    depth_score: float  # 论证深度 (0-10)
+    interaction_score: float  # 互动质量 (0-10)
+    practicality_score: float  # 实用价值 (0-10)
+    overall_score: float  # 总体评分 (0-10)
+    feedback: str  # 质量反馈
+    timestamp: str
+
+    @classmethod
+    def create_initial(cls) -> "DebateQualityMetrics":
+        """创建初始质量指标"""
+        return cls(
+            novelty_score=5.0,
+            depth_score=5.0,
+            interaction_score=5.0,
+            practicality_score=5.0,
+            overall_score=5.0,
+            feedback="辩论刚开始，暂无评分",
+            timestamp=datetime.now().isoformat(),
+        )
 
 
 @dataclass
@@ -15,19 +222,42 @@ class PKSession:
     session_id: str
     user_question: str
     selected_personas: list[str]
-    current_round: int  # 1-4 (独立思考、交叉辩论、最终立场、综合分析)
+    current_round: int
     current_persona_index: int
     responses: dict[int, dict[str, str]]  # {round: {persona: response}}
     final_synthesis: str | None
     created_at: str
     updated_at: str
 
+    # 新增字段：支持动态专家系统
+    question_profile: QuestionProfile | None = None
+    expert_profiles: dict[str, ExpertProfile] | None = None  # {persona_name: profile}
+    expert_recommendation: ExpertRecommendation | None = None
+    debate_mode: DebateMode = DebateMode.STANDARD_DEBATE
+    max_rounds: int = 4
+    quality_metrics: DebateQualityMetrics | None = None
+    is_recommended_by_host: bool = False  # 是否由Host端智能推荐
+    expert_relationships: dict[str, list[str]] | None = None  # 专家关系图谱
+
     @classmethod
     def create_new(
-        cls, user_question: str, selected_personas: list[str]
+        cls,
+        user_question: str,
+        selected_personas: list[str],
+        debate_mode: DebateMode = DebateMode.STANDARD_DEBATE,
+        question_profile: QuestionProfile | None = None,
+        expert_recommendation: ExpertRecommendation | None = None,
+        is_recommended_by_host: bool = False,
     ) -> "PKSession":
         """创建新的PK会话"""
         now = datetime.now().isoformat()
+        max_rounds = {
+            DebateMode.QUICK_CONSULTATION: 2,
+            DebateMode.STANDARD_DEBATE: 4,
+            DebateMode.DEEP_EXPLORATION: 6,
+            DebateMode.FREE_DEBATE: 4,  # 默认4轮，可动态调整
+        }.get(debate_mode, 4)
+
         return cls(
             session_id=str(uuid.uuid4())[:8],
             user_question=user_question,
@@ -38,11 +268,40 @@ class PKSession:
             final_synthesis=None,
             created_at=now,
             updated_at=now,
+            question_profile=question_profile,
+            expert_profiles=None,
+            expert_recommendation=expert_recommendation,
+            debate_mode=debate_mode,
+            max_rounds=max_rounds,
+            quality_metrics=DebateQualityMetrics.create_initial(),
+            is_recommended_by_host=is_recommended_by_host,
+            expert_relationships=None,
         )
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
-        return asdict(self)
+        result = asdict(self)
+
+        # 处理枚举类型序列化
+        if "debate_mode" in result and hasattr(result["debate_mode"], "value"):
+            result["debate_mode"] = result["debate_mode"].value
+
+        # 处理其他可能的复杂对象
+        if "question_profile" in result and result["question_profile"]:
+            if hasattr(result["question_profile"], "complexity") and hasattr(
+                result["question_profile"]["complexity"], "value"
+            ):
+                result["question_profile"]["complexity"] = result["question_profile"][
+                    "complexity"
+                ].value
+            if hasattr(result["question_profile"], "debate_mode") and hasattr(
+                result["question_profile"]["debate_mode"], "value"
+            ):
+                result["question_profile"]["debate_mode"] = result["question_profile"][
+                    "debate_mode"
+                ].value
+
+        return result
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PKSession":
@@ -54,6 +313,26 @@ class PKSession:
             for key, value in data["responses"].items():
                 responses[int(key)] = value
             data["responses"] = responses
+
+        # 处理枚举类型反序列化
+        if "debate_mode" in data and isinstance(data["debate_mode"], str):
+            data["debate_mode"] = DebateMode(data["debate_mode"])
+
+        # 处理问题档案中的枚举
+        if "question_profile" in data and data["question_profile"]:
+            if "complexity" in data["question_profile"] and isinstance(
+                data["question_profile"]["complexity"], str
+            ):
+                data["question_profile"]["complexity"] = QuestionComplexity(
+                    data["question_profile"]["complexity"]
+                )
+            if "debate_mode" in data["question_profile"] and isinstance(
+                data["question_profile"]["debate_mode"], str
+            ):
+                data["question_profile"]["debate_mode"] = DebateMode(
+                    data["question_profile"]["debate_mode"]
+                )
+
         return cls(**data)
 
     def get_current_persona(self) -> str:
@@ -71,7 +350,7 @@ class PKSession:
             # 当前轮次所有人都发言完毕，进入下一轮
             self.current_round += 1
             self.current_persona_index = 0
-            return self.current_round <= 4
+            return self.current_round <= self.max_rounds
         return True
 
     def record_response(self, persona: str, response: str) -> None:
@@ -84,12 +363,7 @@ class PKSession:
 
     def get_session_status(self) -> dict[str, Any]:
         """获取会话状态信息"""
-        round_names = {
-            1: "第1轮：独立思考",
-            2: "第2轮：交叉辩论",
-            3: "第3轮：最终立场",
-            4: "第4轮：智慧综合",
-        }
+        round_names = self._get_round_names()
 
         current_persona = self.get_current_persona()
 
@@ -107,18 +381,68 @@ class PKSession:
                     for r in round_responses.values()
                 ]
             ),
-            "is_completed": self.current_round > 4 or self.final_synthesis is not None,
+            "is_completed": self.current_round > self.max_rounds
+            or self.final_synthesis is not None,
+            "debate_mode": self.debate_mode.value,
+            "max_rounds": self.max_rounds,
+            "quality_score": (
+                self.quality_metrics.overall_score if self.quality_metrics else 0.0
+            ),
+            "is_recommended_by_host": self.is_recommended_by_host,
         }
 
     def get_round_description(self) -> str:
         """获取当前轮次的描述"""
-        round_names = {
-            1: "独立思考阶段",
-            2: "交叉辩论阶段",
-            3: "最终立场阶段",
-            4: "智慧综合阶段",
-        }
-        return round_names.get(self.current_round, "已完成")
+        round_descriptions = self._get_round_descriptions()
+        return round_descriptions.get(self.current_round, "已完成")
+
+    def _get_round_names(self) -> dict[int, str]:
+        """根据辩论模式获取轮次名称"""
+        if self.debate_mode == DebateMode.QUICK_CONSULTATION:
+            return {
+                1: "第1轮：快速洞察",
+                2: "第2轮：行动建议",
+            }
+        elif self.debate_mode == DebateMode.DEEP_EXPLORATION:
+            return {
+                1: "第1轮：独立思考",
+                2: "第2轮：交叉辩论",
+                3: "第3轮：方案细化",
+                4: "第4轮：风险评估",
+                5: "第5轮：最终立场",
+                6: "第6轮：智慧综合",
+            }
+        else:  # STANDARD_DEBATE 或 FREE_DEBATE
+            return {
+                1: "第1轮：独立思考",
+                2: "第2轮：交叉辩论",
+                3: "第3轮：最终立场",
+                4: "第4轮：智慧综合",
+            }
+
+    def _get_round_descriptions(self) -> dict[int, str]:
+        """根据辩论模式获取轮次描述"""
+        if self.debate_mode == DebateMode.QUICK_CONSULTATION:
+            return {
+                1: "快速洞察阶段",
+                2: "行动建议阶段",
+            }
+        elif self.debate_mode == DebateMode.DEEP_EXPLORATION:
+            return {
+                1: "独立思考阶段",
+                2: "交叉辩论阶段",
+                3: "方案细化阶段",
+                4: "风险评估阶段",
+                5: "最终立场阶段",
+                6: "智慧综合阶段",
+            }
+        else:
+            return {
+                1: "独立思考阶段",
+                2: "交叉辩论阶段",
+                3: "最终立场阶段",
+                4: "智慧综合阶段",
+            }
 
     def add_response(self, persona: str, response: str) -> None:
         """添加回应（新方法名，与record_response相同功能）"""
@@ -133,4 +457,31 @@ class PKSession:
     @property
     def is_completed(self) -> bool:
         """检查会话是否已完成"""
-        return self.current_round > 4 or self.final_synthesis is not None
+        return self.current_round > self.max_rounds or self.final_synthesis is not None
+
+    def update_quality_metrics(self, metrics: DebateQualityMetrics) -> None:
+        """更新质量指标"""
+        self.quality_metrics = metrics
+        self.updated_at = datetime.now().isoformat()
+
+    def set_expert_profiles(self, profiles: dict[str, ExpertProfile]) -> None:
+        """设置专家档案"""
+        self.expert_profiles = profiles
+        self.updated_at = datetime.now().isoformat()
+
+    def get_expert_profile(self, persona_name: str) -> ExpertProfile | None:
+        """获取指定专家的档案"""
+        if self.expert_profiles:
+            return self.expert_profiles.get(persona_name)
+        return None
+
+    def adjust_max_rounds(self, new_max_rounds: int) -> None:
+        """动态调整最大轮数（自由辩论模式）"""
+        if self.debate_mode == DebateMode.FREE_DEBATE:
+            self.max_rounds = new_max_rounds
+            self.updated_at = datetime.now().isoformat()
+
+    def set_expert_relationships(self, relationships: dict[str, list[str]]) -> None:
+        """设置专家关系图谱"""
+        self.expert_relationships = relationships
+        self.updated_at = datetime.now().isoformat()

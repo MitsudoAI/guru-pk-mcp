@@ -34,8 +34,8 @@ class GuruPKServer:
         if data_dir and data_dir.startswith("~"):
             data_dir = os.path.expanduser(data_dir)
 
-        self.session_manager = SessionManager(data_dir)
         self.custom_persona_manager = CustomPersonaManager(data_dir)
+        self.session_manager = SessionManager(data_dir, self.custom_persona_manager)
         self.config_manager = ConfigManager(data_dir)
         self.current_session: PKSession | None = None
         self._register_tools()
@@ -83,6 +83,78 @@ class GuruPKServer:
                             }
                         },
                         "required": ["question"],
+                    },
+                ),
+                types.Tool(
+                    name="analyze_question_profile",
+                    description="深度分析问题特征和复杂度（新功能）",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "question": {
+                                "type": "string",
+                                "description": "要分析的问题",
+                            }
+                        },
+                        "required": ["question"],
+                    },
+                ),
+                types.Tool(
+                    name="generate_dynamic_experts",
+                    description="动态生成专家推荐（5位候选专家）",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "question": {
+                                "type": "string",
+                                "description": "要讨论的问题",
+                            },
+                            "num_experts": {
+                                "type": "integer",
+                                "description": "推荐专家数量（默认5个）",
+                                "default": 5,
+                            },
+                        },
+                        "required": ["question"],
+                    },
+                ),
+                types.Tool(
+                    name="get_session_quality_analysis",
+                    description="获取会话质量分析和改进建议",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "session_id": {
+                                "type": "string",
+                                "description": "会话ID（可选，默认当前会话）",
+                            }
+                        },
+                    },
+                ),
+                types.Tool(
+                    name="get_expert_insights",
+                    description="获取专家洞察和关系分析",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "session_id": {
+                                "type": "string",
+                                "description": "会话ID（可选，默认当前会话）",
+                            }
+                        },
+                    },
+                ),
+                types.Tool(
+                    name="export_enhanced_session",
+                    description="导出增强的会话分析报告",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "session_id": {
+                                "type": "string",
+                                "description": "会话ID（可选，默认当前会话）",
+                            }
+                        },
                     },
                 ),
                 types.Tool(
@@ -300,6 +372,16 @@ class GuruPKServer:
                 return await self._handle_start_pk_session(arguments)
             elif name == "get_smart_recommendation_guidance":
                 return await self._handle_get_smart_recommendation_guidance(arguments)
+            elif name == "analyze_question_profile":
+                return await self._handle_analyze_question_profile(arguments)
+            elif name == "generate_dynamic_experts":
+                return await self._handle_generate_dynamic_experts(arguments)
+            elif name == "get_session_quality_analysis":
+                return await self._handle_get_session_quality_analysis(arguments)
+            elif name == "get_expert_insights":
+                return await self._handle_get_expert_insights(arguments)
+            elif name == "export_enhanced_session":
+                return await self._handle_export_enhanced_session(arguments)
             elif name == "guru_pk_help":
                 return await self._handle_guru_pk_help(arguments)
             elif name == "get_persona_prompt":
@@ -350,14 +432,51 @@ class GuruPKServer:
                     )
                 ]
 
-            # 如果没有指定personas，提示使用智能推荐
+            # 如果没有指定personas，使用动态推荐
             if not personas:
-                return [
-                    TextContent(
-                        type="text",
-                        text=f'🎯 **未指定专家，建议使用智能推荐！**\n\n**问题**: {question}\n\n📋 **推荐使用智能推荐**：\n```javascript\n// 步骤1: 获取智能推荐指导\nget_smart_recommendation_guidance({{"question": "{question}"}})\n\n// 步骤2: 基于指导选择专家后启动会话\n// start_pk_session({{"question": "{question}", "personas": ["推荐专家1", "推荐专家2", "推荐专家3"], "recommended_by_host": true}})\n```\n\n🔄 **或使用经典默认组合**：\n```javascript\nstart_pk_session({{"question": "{question}", "personas": ["苏格拉底", "埃隆马斯克", "查理芒格"]}})\n```',
+                try:
+                    # 使用动态专家推荐系统
+                    session = self.session_manager.create_dynamic_session(
+                        question=question, use_smart_recommendation=True
                     )
-                ]
+                    self.current_session = session
+
+                    # 生成启动信息
+                    personas_info = "\n".join(
+                        [
+                            f"{i+1}. {self._format_persona_info_with_custom(p)}"
+                            for i, p in enumerate(session.selected_personas)
+                        ]
+                    )
+
+                    result = f"""🎯 **动态专家推荐系统已启动！**
+
+**会话ID**: `{session.session_id}`
+**问题**: {session.user_question}
+**推荐理由**: 🤖 智能分析问题特征后推荐
+**辩论模式**: {session.debate_mode.value}
+**预期轮次**: {session.max_rounds}轮
+
+**推荐的三位专家**：
+{personas_info}
+
+📍 **当前状态**: {session.get_round_description()}
+👤 **即将发言**: {self._format_persona_info_with_custom(session.get_current_persona())}
+
+💡 **下一步**: 使用 `get_persona_prompt` 工具获取当前专家的角色提示。
+
+📈 **高级功能**: 使用 `get_expert_insights` 查看专家关系图谱和推荐详情。"""
+
+                    return [TextContent(type="text", text=result)]
+
+                except Exception as e:
+                    # 如果动态推荐失败，显示手动输入提示
+                    return [
+                        TextContent(
+                            type="text",
+                            text=f'⚠️ **动态推荐失败，请手动指定专家**\n\n**错误**: {str(e)}\n\n**问题**: {question}\n\n📋 **手动指定方式**：\n```javascript\nstart_pk_session({{"question": "{question}", "personas": ["苏格拉底", "埃隆马斯克", "查理芒格"]}}\n```\n\n💡 **建议**: 使用 `list_available_personas` 查看所有可用专家。',
+                        )
+                    ]
 
             # 设置推荐理由
             if recommended_by_host:
@@ -392,10 +511,13 @@ class GuruPKServer:
                     )
                 ]
 
-            # 创建新会话
-            session = PKSession.create_new(question, valid_personas[:3])
+            # 创建新会话（手动指定模式）
+            session = self.session_manager.create_dynamic_session(
+                question=question,
+                selected_experts=valid_personas[:3],
+                use_smart_recommendation=False,
+            )
             self.current_session = session
-            self.session_manager.save_session(session)
 
             # 生成启动信息
             personas_info = "\n".join(
@@ -2132,6 +2254,319 @@ set_language({"language": "english"})
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 获取语言设置失败: {str(e)}")]
+
+    async def _handle_analyze_question_profile(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """深度分析问题特征和复杂度"""
+        try:
+            question = arguments.get("question", "").strip()
+            if not question:
+                return [TextContent(type="text", text="❌ 请提供要分析的问题")]
+
+            # 使用问题分析器
+            from .dynamic_expert_engine import QuestionAnalyzer
+
+            analyzer = QuestionAnalyzer()
+            profile = analyzer.analyze_question(question)
+
+            result = f"""📊 **问题特征分析报告**
+
+**问题**: {profile.question}
+
+## 🎯 基本特征
+- **涉及领域**: {', '.join(profile.domains)}
+- **复杂度**: {profile.complexity.value}
+- **推荐辩论模式**: {profile.debate_mode.value}
+- **预期轮次**: {profile.expected_rounds}
+
+## 🧠 所需专业知识
+{chr(10).join(['- ' + expertise for expertise in profile.required_expertise]) if profile.required_expertise else '- 通用知识'}
+
+## 🤔 所需思维模式
+{chr(10).join(['- ' + mode for mode in profile.thinking_modes]) if profile.thinking_modes else '- 批判性思维'}
+
+## 🔑 关键词
+{', '.join(profile.keywords) if profile.keywords else '无特定关键词'}
+
+## 💡 建议
+基于分析结果，建议使用 `generate_dynamic_experts` 工具生成专门的专家推荐。"""
+
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 问题分析失败: {str(e)}")]
+
+    async def _handle_generate_dynamic_experts(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """动态生成专家推荐"""
+        try:
+            question = arguments.get("question", "").strip()
+            num_experts = arguments.get("num_experts", 5)
+
+            if not question:
+                return [TextContent(type="text", text="❌ 请提供要讨论的问题")]
+
+            # 生成专家推荐
+            recommendation = (
+                self.session_manager.expert_generator.generate_expert_recommendation(
+                    question, num_experts
+                )
+            )
+
+            # 格式化专家信息
+            experts_info = []
+            for i, expert in enumerate(recommendation.experts, 1):
+                source_icon = {"builtin": "📚", "custom": "👤", "generated": "🤖"}.get(
+                    expert.source, "❓"
+                )
+
+                experts_info.append(
+                    f"""{i}. {source_icon} **{expert.name}** ({expert.source})
+   📝 {expert.description}
+   🎯 相关度: {expert.relevance_score:.2f}
+   🧠 思维风格: {expert.thinking_style}
+   📚 知识领域: {', '.join(expert.knowledge_domains[:3])}"""
+                )
+
+            result = f"""🎯 **动态专家推荐结果**
+
+**问题**: {question}
+
+## 🤖 推荐理由
+{recommendation.recommendation_reason}
+
+## 👥 候选专家 ({len(recommendation.experts)}位)
+
+{chr(10).join(experts_info)}
+
+## 📊 推荐质量
+- **多样性评分**: {recommendation.diversity_score:.2f}/1.0
+- **相关性评分**: {recommendation.relevance_score:.2f}/1.0
+
+## 🔮 预期视角
+{chr(10).join(['- ' + perspective for perspective in recommendation.expected_perspectives]) if recommendation.expected_perspectives else '- 多元化专业视角'}
+
+## 🚀 使用建议
+选择其中3位专家启动辩论：
+```javascript
+start_pk_session({{
+  "question": "{question}",
+  "personas": ["专家1", "专家2", "专家3"],
+  "recommended_by_host": true
+}})
+```"""
+
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 专家推荐生成失败: {str(e)}")]
+
+    async def _handle_get_session_quality_analysis(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """获取会话质量分析"""
+        try:
+            session_id = arguments.get("session_id")
+
+            if session_id:
+                session = self.session_manager.load_session(session_id)
+                if not session:
+                    return [
+                        TextContent(type="text", text=f"❌ 未找到会话 {session_id}")
+                    ]
+            else:
+                if not self.current_session:
+                    return [
+                        TextContent(
+                            type="text",
+                            text="❌ 没有活跃的会话。请提供 session_id 参数。",
+                        )
+                    ]
+                session = self.current_session
+
+            # 更新质量分析
+            suggestions = self.session_manager.update_session_quality(session)
+
+            # 检查自适应流程
+            adaptive_check = self.session_manager.check_adaptive_flow(session)
+
+            if not session.quality_metrics:
+                return [
+                    TextContent(
+                        type="text", text="📊 当前会话暂无足够数据进行质量分析。"
+                    )
+                ]
+
+            metrics = session.quality_metrics
+            result = f"""📊 **会话质量分析报告**
+
+**会话ID**: `{session.session_id}`
+**问题**: {session.user_question}
+**当前轮次**: {session.current_round}/{session.max_rounds}
+
+## 🎯 质量指标
+
+- **📈 总体评分**: {metrics.overall_score:.1f}/10 - {self._get_score_level(metrics.overall_score)}
+- **💡 新颖度**: {metrics.novelty_score:.1f}/10
+- **🔍 深度**: {metrics.depth_score:.1f}/10
+- **🤝 互动质量**: {metrics.interaction_score:.1f}/10
+- **⚡ 实用性**: {metrics.practicality_score:.1f}/10
+
+## 💬 质量反馈
+{metrics.feedback}
+
+## 🔄 自适应建议"""
+
+            if adaptive_check["should_extend"]:
+                result += "\n- ⏯️ **建议延长**: 当前质量不足，已自动增加1轮讨论"
+            elif adaptive_check["should_end_early"]:
+                result += "\n- ⏭️ **可提前结束**: 讨论质量已达到优秀水平"
+            else:
+                result += "\n- ✅ **正常进行**: 保持当前讨论节奏"
+
+            if suggestions:
+                result += f"\n\n## 📈 改进建议\n{suggestions}"
+
+            result += f"\n\n## 📊 统计信息\n- **质量检测时间**: {metrics.timestamp[:19].replace('T', ' ')}"
+
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 质量分析失败: {str(e)}")]
+
+    def _get_score_level(self, score: float) -> str:
+        """获取评分等级"""
+        if score >= 8.5:
+            return "🌟 优秀"
+        elif score >= 7.0:
+            return "✅ 良好"
+        elif score >= 5.5:
+            return "⚠️ 一般"
+        else:
+            return "❌ 需改进"
+
+    async def _handle_get_expert_insights(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """获取专家洞察和关系分析"""
+        try:
+            session_id = arguments.get("session_id")
+
+            if session_id:
+                session = self.session_manager.load_session(session_id)
+                if not session:
+                    return [
+                        TextContent(type="text", text=f"❌ 未找到会话 {session_id}")
+                    ]
+            else:
+                if not self.current_session:
+                    return [TextContent(type="text", text="❌ 没有活跃的会话。")]
+                session = self.current_session
+
+            insights = self.session_manager.get_expert_insights(session)
+
+            result = f"""🔍 **专家洞察分析**
+
+**会话ID**: `{session.session_id}`
+
+## 👥 专家档案"""
+
+            if insights["expert_profiles"]:
+                for name, profile in insights["expert_profiles"].items():
+                    result += f"""
+
+### {name}
+- **专业背景**: {profile['background']}
+- **思维风格**: {profile['thinking_style']}
+- **知识领域**: {', '.join(profile['knowledge_domains'])}
+- **核心特质**: {', '.join(profile['personality_traits'])}
+- **来源**: {profile['source']}
+- **相关度**: {profile['relevance_score']:.2f}"""
+            else:
+                result += "\n暂无专家档案信息。"
+
+            # 推荐详情
+            if insights["recommendation_details"]:
+                details = insights["recommendation_details"]
+                result += f"""
+
+## 🎯 推荐分析
+- **推荐理由**: {details['reason']}
+- **多样性评分**: {details['diversity_score']:.2f}
+- **相关性评分**: {details['relevance_score']:.2f}
+
+### 🔮 预期视角
+{chr(10).join(['- ' + p for p in details['expected_perspectives']]) if details['expected_perspectives'] else '- 暂无预期视角信息'}"""
+
+            # 专家关系
+            if insights["relationships"]:
+                result += "\n\n## 🕸️ 专家关系图谱"
+                for expert, relations in insights["relationships"].items():
+                    if (
+                        relations.get("potential_allies")
+                        or relations.get("potential_opponents")
+                        or relations.get("complementary")
+                    ):
+                        result += f"\n\n### {expert}"
+                        if relations.get("potential_allies"):
+                            result += f"\n- 🤝 **潜在盟友**: {', '.join(relations['potential_allies'])}"
+                        if relations.get("potential_opponents"):
+                            result += f"\n- ⚔️ **观点对手**: {', '.join(relations['potential_opponents'])}"
+                        if relations.get("complementary"):
+                            result += f"\n- 🔄 **互补关系**: {', '.join(relations['complementary'])}"
+
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 专家洞察分析失败: {str(e)}")]
+
+    async def _handle_export_enhanced_session(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """导出增强的会话分析报告"""
+        try:
+            session_id = arguments.get("session_id")
+
+            if session_id:
+                session = self.session_manager.load_session(session_id)
+                if not session:
+                    return [
+                        TextContent(type="text", text=f"❌ 未找到会话 {session_id}")
+                    ]
+            else:
+                if not self.current_session:
+                    return [TextContent(type="text", text="❌ 没有活跃的会话。")]
+                session = self.current_session
+
+            # 导出增强报告
+            export_file = self.session_manager.export_enhanced_session(session)
+
+            result = f"""📄 **增强会话报告导出成功！**
+
+**文件路径**: `{export_file}`
+**格式**: Enhanced Markdown Report
+**会话ID**: {session.session_id}
+
+## 📊 报告内容
+- ✅ 完整讨论记录
+- ✅ 质量分析指标
+- ✅ 专家档案信息
+- ✅ 关系图谱分析
+- ✅ 推荐详情记录
+- ✅ 互动模式分析
+- ✅ 改进建议总结
+
+## 💡 使用说明
+该报告包含比标准导出更丰富的分析信息，适合深度复盘和研究使用。
+
+🔗 **对比**: 使用 `export_session` 获取标准格式报告。"""
+
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 增强报告导出失败: {str(e)}")]
 
     async def run(self) -> None:
         """运行MCP服务器"""
