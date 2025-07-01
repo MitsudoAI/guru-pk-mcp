@@ -92,7 +92,9 @@ class CustomPersonaManager:
                 "name": persona["name"],
                 "emoji": persona.get("emoji", "👤"),
                 "description": persona["description"],
-                "traits": persona["core_traits"],
+                "core_traits": persona["core_traits"],
+                "speaking_style": persona["speaking_style"],
+                "base_prompt": persona["base_prompt"],
             }
             for persona in self.custom_personas.values()
         ]

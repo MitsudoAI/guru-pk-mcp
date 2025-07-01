@@ -142,7 +142,9 @@ def test_list_custom_personas(manager):
         assert "name" in persona
         assert "emoji" in persona
         assert "description" in persona
-        assert "traits" in persona
+        assert "core_traits" in persona
+        assert "speaking_style" in persona
+        assert "base_prompt" in persona
 
 
 def test_delete_custom_persona(manager, sample_persona):

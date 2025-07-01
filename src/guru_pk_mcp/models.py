@@ -95,20 +95,29 @@ class ExpertProfile:
     @classmethod
     def from_custom_persona(cls, persona_data: dict[str, Any]) -> "ExpertProfile":
         """从自定义专家数据创建档案"""
-        return cls(
-            name=persona_data["name"],
-            emoji=persona_data.get("emoji", "👤"),
-            description=persona_data["description"],
-            background=persona_data["description"],
-            thinking_style=persona_data["speaking_style"],
-            debate_strategy="基于自定义设定进行分析",
-            knowledge_domains=persona_data.get("domains", []),
-            personality_traits=persona_data["core_traits"],
-            potential_biases=[],
-            source="custom",
-            base_prompt=persona_data["base_prompt"],
-            relevance_score=0.7,
-        )
+        try:
+            return cls(
+                name=persona_data["name"],
+                emoji=persona_data.get("emoji", "👤"),
+                description=persona_data["description"],
+                background=persona_data["description"],
+                thinking_style=persona_data["speaking_style"],
+                debate_strategy="基于自定义设定进行分析",
+                knowledge_domains=persona_data.get("domains", []),
+                personality_traits=persona_data["core_traits"],
+                potential_biases=[],
+                source="custom",
+                base_prompt=persona_data["base_prompt"],
+                relevance_score=0.7,
+            )
+        except KeyError as e:
+            raise ValueError(
+                f"Missing required field in custom persona data: {e}"
+            ) from e
+        except Exception as e:
+            raise ValueError(
+                f"Failed to create expert profile from custom persona: {e}"
+            ) from e
 
     @classmethod
     def create_generated_expert(cls, expert_data: dict[str, Any]) -> "ExpertProfile":
