@@ -173,6 +173,7 @@ $RECYCLE.BIN/
 
 # Project specific
 data/*.json
+data/*.md
 !data/.gitkeep
 logs/
 *.log
