@@ -3,6 +3,7 @@ Guru-PK MCP 服务器
 """
 
 import asyncio
+from datetime import datetime
 from typing import Any
 
 import mcp.types as types
@@ -38,6 +39,7 @@ class GuruPKServer:
         self.session_manager = SessionManager(data_dir, self.custom_persona_manager)
         self.config_manager = ConfigManager(data_dir)
         self.current_session: PKSession | None = None
+        self.pending_recommendation: dict[str, Any] | None = None
         self._register_tools()
 
     def _register_tools(self) -> None:
@@ -359,6 +361,23 @@ class GuruPKServer:
                         "additionalProperties": False,
                     },
                 ),
+                types.Tool(
+                    name="select_experts_and_start_session",
+                    description="从候选专家中选择3位并启动辩论会话",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "selected_experts": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "选择的3位专家名称",
+                                "minItems": 3,
+                                "maxItems": 3,
+                            }
+                        },
+                        "required": ["selected_experts"],
+                    },
+                ),
             ]
 
         # 统一工具处理器
@@ -412,6 +431,8 @@ class GuruPKServer:
                 return await self._handle_set_language(arguments)
             elif name == "get_language_settings":
                 return await self._handle_get_language_settings(arguments)
+            elif name == "select_experts_and_start_session":
+                return await self._handle_select_experts_and_start_session(arguments)
             else:
                 return [TextContent(type="text", text=f"❌ 未知工具: {name}")]
 
@@ -432,40 +453,45 @@ class GuruPKServer:
                     )
                 ]
 
-            # 如果没有指定personas，使用动态推荐
+            # 如果没有指定personas，生成候选专家供用户选择
             if not personas:
                 try:
-                    # 使用动态专家推荐系统
-                    session = self.session_manager.create_dynamic_session(
-                        question=question, use_smart_recommendation=True
+                    # 生成5个候选专家
+                    recommendation = self.session_manager.expert_generator.generate_expert_recommendation(
+                        question, num_experts=5
                     )
-                    self.current_session = session
 
-                    # 生成启动信息
-                    personas_info = "\n".join(
+                    # 存储候选信息用于后续选择
+                    self.pending_recommendation = {
+                        "question": question,
+                        "recommendation": recommendation,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+
+                    # 生成候选专家信息
+                    candidates_info = "\n".join(
                         [
-                            f"{i+1}. {self._format_persona_info_with_custom(p)}"
-                            for i, p in enumerate(session.selected_personas)
+                            f"{i+1}. {expert.emoji} **{expert.name}** - {expert.description}"
+                            for i, expert in enumerate(recommendation.experts)
                         ]
                     )
 
-                    result = f"""🎯 **动态专家推荐系统已启动！**
+                    result = f"""🎯 **智能专家推荐系统 - 候选专家生成完成！**
 
-**会话ID**: `{session.session_id}`
-**问题**: {session.user_question}
-**推荐理由**: 🤖 智能分析问题特征后推荐
-**辩论模式**: {session.debate_mode.value}
-**预期轮次**: {session.max_rounds}轮
+**问题**: {question}
+**推荐理由**: {recommendation.recommendation_reason}
 
-**推荐的三位专家**：
-{personas_info}
+**📋 五位候选专家**：
+{candidates_info}
 
-📍 **当前状态**: {session.get_round_description()}
-👤 **即将发言**: {self._format_persona_info_with_custom(session.get_current_persona())}
+**🎯 下一步操作**：
+请从上述5位专家中选择3位来参与辩论，使用以下命令：
 
-💡 **下一步**: 使用 `get_persona_prompt` 工具获取当前专家的角色提示。
+```javascript
+select_experts_and_start_session({{"selected_experts": ["专家1", "专家2", "专家3"]}})
+```
 
-📈 **高级功能**: 使用 `get_expert_insights` 查看专家关系图谱和推荐详情。"""
+💡 **建议**: 选择不同背景和观点的专家以获得更丰富的辩论视角。"""
 
                     return [TextContent(type="text", text=result)]
 
@@ -547,6 +573,85 @@ class GuruPKServer:
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 启动会话失败: {str(e)}")]
+
+    async def _handle_select_experts_and_start_session(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """从候选专家中选择3位并启动辩论会话"""
+        try:
+            selected_experts = arguments.get("selected_experts", [])
+
+            if not selected_experts or len(selected_experts) != 3:
+                return [
+                    TextContent(
+                        type="text",
+                        text='❌ 请选择恰好3位专家。\n\n📋 **使用方式**：\n```javascript\nselect_experts_and_start_session({"selected_experts": ["专家1", "专家2", "专家3"]})\n```',
+                    )
+                ]
+
+            # 检查是否有待选择的推荐
+            if not self.pending_recommendation:
+                return [
+                    TextContent(
+                        type="text",
+                        text="❌ 没有待选择的专家推荐。请先调用 `start_pk_session` 生成候选专家。",
+                    )
+                ]
+
+            recommendation = self.pending_recommendation["recommendation"]
+            question = self.pending_recommendation["question"]
+
+            # 验证选择的专家是否在候选列表中
+            candidate_names = [expert.name for expert in recommendation.experts]
+            invalid_experts = [
+                name for name in selected_experts if name not in candidate_names
+            ]
+
+            if invalid_experts:
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"❌ 以下专家不在候选列表中: {', '.join(invalid_experts)}\n\n**可选专家**: {', '.join(candidate_names)}",
+                    )
+                ]
+
+            # 创建会话
+            session = self.session_manager.create_dynamic_session(
+                question=question,
+                selected_experts=selected_experts,
+                use_smart_recommendation=False,
+            )
+            self.current_session = session
+
+            # 清除待选择的推荐
+            self.pending_recommendation = None
+
+            # 生成启动信息
+            personas_info = "\n".join(
+                [
+                    f"{i+1}. {self._format_persona_info_with_custom(p)}"
+                    for i, p in enumerate(session.selected_personas)
+                ]
+            )
+
+            result = f"""🎯 **专家辩论会话已启动！**
+
+**会话ID**: `{session.session_id}`
+**问题**: {session.user_question}
+**推荐理由**: 🤖 用户从智能推荐中选择
+
+**选择的三位专家**：
+{personas_info}
+
+📍 **当前状态**: {session.get_round_description()}
+👤 **即将发言**: {self._format_persona_info_with_custom(session.get_current_persona())}
+
+💡 **下一步**: 使用 `get_persona_prompt` 工具获取当前专家的角色提示。"""
+
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 选择专家失败: {str(e)}")]
 
     def _normalize_persona_name(self, name: str) -> str:
         """标准化专家名称，移除常见的差异字符"""
@@ -791,7 +896,9 @@ class GuruPKServer:
                     desc = name
 
                 emoji = getattr(persona, "emoji", "👤")
-                persona_info.append(f"{emoji} **{name}**: {desc}")
+                # Use actual display name from persona object, not dictionary key
+                display_name = getattr(persona, "name", name)
+                persona_info.append(f"{emoji} **{display_name}**: {desc}")
 
             # 构建指导内容
             guidance = f"""# 🎯 智能专家推荐指导
