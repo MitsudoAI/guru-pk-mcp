@@ -327,6 +327,7 @@ class GuruPKServer:
                             }
                         },
                         "required": ["persona_data"],
+                        "additionalProperties": False,
                     },
                 ),
                 types.Tool(
