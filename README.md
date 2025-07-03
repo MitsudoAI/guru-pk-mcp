@@ -56,14 +56,19 @@ pip install uv
 }
 ```
 
+> **更新说明**:
+>
+> - 当需要更新`guru-pk-mcp`到最新版本时，请执行命令：
+>   ```bash
+>   uvx pip install --upgrade guru-pk-mcp
+>   ```
+> - 此命令会从PyPI获取并安装最新发布的版本
+> - 对于本地开发场景，如需刷新uvx缓存，请使用`make refresh-uvx`
+>
 > **注意**:
 >
 > - macOS用户可能需要使用完整路径：`/Users/{用户名}/.local/bin/uvx`
 > - Windows用户：`~`会自动解析为用户主目录（如 `C:\Users\{用户名}`），无需手动修改
-> - 如果遇到路径问题，可以使用绝对路径替代，例如：
->   - Windows: `"DATA_DIR": "C:\\Users\\{用户名}\\.guru-pk-data"`
->   - macOS: `"DATA_DIR": "/Users/{用户名}/.guru-pk-data"`
->   - Linux: `"DATA_DIR": "/home/{用户名}/.guru-pk-data"`
 
 **开发方式：从源码安装**
 
@@ -385,7 +390,7 @@ create_custom_persona_from_description({
 **🔧 Agent框架开发**
 
 - ✅ 功能强大，可集成多个LLM API
-- ✅ 前端交互灵活，控制性强
+- ✅ 前端交互灵活，控制强劲
 - ❌ 开发复杂度高
 - ❌ API调用成本高昂
 
