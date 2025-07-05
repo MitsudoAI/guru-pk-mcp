@@ -177,9 +177,10 @@ def format_persona_info(
         else:
             person_type = "🎭 虚拟专家"
 
-        return f"{persona['emoji']} **{persona['name']}** ({person_type}) - {persona['description']}"
+        # 使用字符串连接避免f-string中的花括号格式化问题
+        return persona['emoji'] + " **" + persona['name'] + "** (" + person_type + ") - " + persona['description']
     else:
-        return f"未知专家: {persona_name}"
+        return "未知专家: " + str(persona_name)
 
 
 def _is_likely_real_person(expert: dict[str, Any]) -> bool:
