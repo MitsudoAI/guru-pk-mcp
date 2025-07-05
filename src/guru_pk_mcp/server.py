@@ -148,19 +148,6 @@ class GuruPKServer:
                     },
                 ),
                 types.Tool(
-                    name="get_session_quality_analysis",
-                    description="获取会话质量分析和改进建议",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "session_id": {
-                                "type": "string",
-                                "description": "会话ID（可选，默认当前会话）",
-                            }
-                        },
-                    },
-                ),
-                types.Tool(
                     name="get_expert_insights",
                     description="获取专家洞察和关系分析",
                     inputSchema={
@@ -360,8 +347,6 @@ class GuruPKServer:
                 return await self._handle_analyze_question_profile(arguments)
             elif name == "generate_dynamic_experts":
                 return await self._handle_generate_dynamic_experts(arguments)
-            elif name == "get_session_quality_analysis":
-                return await self._handle_get_session_quality_analysis(arguments)
             elif name == "get_expert_insights":
                 return await self._handle_get_expert_insights(arguments)
             elif name == "export_enhanced_session":
@@ -1997,91 +1982,6 @@ start_pk_session({{
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 专家推荐生成失败: {str(e)}")]
 
-    async def _handle_get_session_quality_analysis(
-        self, arguments: dict[str, Any]
-    ) -> list[TextContent]:
-        """获取会话质量分析"""
-        try:
-            session_id = arguments.get("session_id")
-
-            if session_id:
-                session = self.session_manager.load_session(session_id)
-                if not session:
-                    return [
-                        TextContent(type="text", text=f"❌ 未找到会话 {session_id}")
-                    ]
-            else:
-                if not self.current_session:
-                    return [
-                        TextContent(
-                            type="text",
-                            text="❌ 没有活跃的会话。请提供 session_id 参数。",
-                        )
-                    ]
-                session = self.current_session
-
-            # 更新质量分析
-            # 新架构中不支持此功能
-            suggestions = "新架构中已简化质量监控功能"
-
-            # 检查自适应流程
-            # 新架构中不支持此功能
-            adaptive_check = {"current_quality": 0.0, "quality_suggestions": []}
-
-            if not session.quality_metrics:
-                return [
-                    TextContent(
-                        type="text", text="📊 当前会话暂无足够数据进行质量分析。"
-                    )
-                ]
-
-            metrics = session.quality_metrics
-            result = f"""📊 **会话质量分析报告**
-
-**会话ID**: `{session.session_id}`
-**问题**: {session.user_question}
-**当前轮次**: {session.current_round}/{session.max_rounds}
-
-## 🎯 质量指标
-
-- **📈 总体评分**: {metrics.overall_score:.1f}/10 - {self._get_score_level(metrics.overall_score)}
-- **💡 新颖度**: {metrics.novelty_score:.1f}/10
-- **🔍 深度**: {metrics.depth_score:.1f}/10
-- **🤝 互动质量**: {metrics.interaction_score:.1f}/10
-- **⚡ 实用性**: {metrics.practicality_score:.1f}/10
-
-## 💬 质量反馈
-{metrics.feedback}
-
-## 🔄 自适应建议"""
-
-            if adaptive_check["should_extend"]:
-                result += "\n- ⏯️ **建议延长**: 当前质量不足，已自动增加1轮讨论"
-            elif adaptive_check["should_end_early"]:
-                result += "\n- ⏭️ **可提前结束**: 讨论质量已达到优秀水平"
-            else:
-                result += "\n- ✅ **正常进行**: 保持当前讨论节奏"
-
-            if suggestions:
-                result += f"\n\n## 📈 改进建议\n{suggestions}"
-
-            result += f"\n\n## 📊 统计信息\n- **质量检测时间**: {metrics.timestamp[:19].replace('T', ' ')}"
-
-            return [TextContent(type="text", text=result)]
-
-        except Exception as e:
-            return [TextContent(type="text", text=f"❌ 质量分析失败: {str(e)}")]
-
-    def _get_score_level(self, score: float) -> str:
-        """获取评分等级"""
-        if score >= 8.5:
-            return "🌟 优秀"
-        elif score >= 7.0:
-            return "✅ 良好"
-        elif score >= 5.5:
-            return "⚠️ 一般"
-        else:
-            return "❌ 需改进"
 
     async def _handle_get_expert_insights(
         self, arguments: dict[str, Any]
