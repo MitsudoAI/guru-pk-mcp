@@ -168,132 +168,18 @@ def format_persona_info(
     if dynamic_personas and persona_name in dynamic_personas:
         persona = dynamic_personas[persona_name]
 
-        # 检测是否为真实人物
-        is_real = _is_likely_real_person(persona)
-
-        # 添加标识符
-        if is_real:
-            person_type = "📚 真实人物"
-        else:
-            person_type = "🎭 虚拟专家"
+        # 不再在MCP Server端判断真实人物，统一显示为专家
+        person_type = "🎭 专家"
 
         # 使用字符串连接避免f-string中的花括号格式化问题
-        return persona['emoji'] + " **" + persona['name'] + "** (" + person_type + ") - " + persona['description']
+        return (
+            str(persona["emoji"])
+            + " **"
+            + str(persona["name"])
+            + "** ("
+            + person_type
+            + ") - "
+            + str(persona["description"])
+        )
     else:
         return "未知专家: " + str(persona_name)
-
-
-def _is_likely_real_person(expert: dict[str, Any]) -> bool:
-    """检测专家是否可能是真实人物（与 dynamic_experts.py 中的逻辑保持一致）"""
-    name = expert.get("name", "")
-    description = expert.get("description", "")
-
-    # 检查名字特征
-    real_person_indicators = [
-        # 常见的真实人物名字特征
-        "苏格拉底",
-        "柏拉图",
-        "亚里士多德",
-        "孔子",
-        "老子",
-        "庄子",
-        "孟子",
-        "王阳明",
-        "尼采",
-        "康德",
-        "黑格尔",
-        "笛卡尔",
-        "罗素",
-        "维特根斯坦",
-        "萨特",
-        "福柯",
-        "德鲁克",
-        "波特",
-        "克里斯滕森",
-        "乔布斯",
-        "马斯克",
-        "比尔·盖茨",
-        "贝佐斯",
-        "巴菲特",
-        "芒格",
-        "马云",
-        "任正非",
-        "雷军",
-        "马化腾",
-        "张一鸣",
-        "爱因斯坦",
-        "费曼",
-        "霍金",
-        "图灵",
-        "冯·诺依曼",
-        "香农",
-        "杨振宁",
-        "弗洛伊德",
-        "荣格",
-        "马斯洛",
-        "卡尼曼",
-        "塔勒布",
-        "辛顿",
-        "本吉奥",
-        "杜威",
-        "蒙台梭利",
-        "陶行知",
-        "苏霍姆林斯基",
-        "肯·罗宾逊",
-        "达芬奇",
-        "爱迪生",
-        "特斯拉",
-        "牛顿",
-        "达尔文",
-        "居里夫人",
-        "Gandhi",
-        "Steve Jobs",
-        "Elon Musk",
-        "Bill Gates",
-        "Warren Buffett",
-        "Einstein",
-        "Feynman",
-        "Hawking",
-        "Turing",
-        "Drucker",
-        "Nietzsche",
-        "Socrates",
-        "Plato",
-        "Aristotle",
-        "Confucius",
-        "Lao Tzu",
-    ]
-
-    # 检查是否包含真实人物名字
-    for indicator in real_person_indicators:
-        if indicator.lower() in name.lower():
-            return True
-
-    # 检查描述中是否包含真实人物的标识
-    real_person_patterns = [
-        "哲学家",
-        "思想家",
-        "科学家",
-        "企业家",
-        "经济学家",
-        "心理学家",
-        "物理学家",
-        "数学家",
-        "发明家",
-        "教育家",
-        "管理学大师",
-        "philosopher",
-        "scientist",
-        "entrepreneur",
-        "economist",
-        "psychologist",
-    ]
-
-    for pattern in real_person_patterns:
-        if pattern.lower() in description.lower():
-            # 如果描述中包含职业标识，且名字不是明显的虚拟名字，则认为是真实人物
-            virtual_name_patterns = ["专家", "大师", "顾问", "导师", "达人", "老师"]
-            if not any(pattern in name for pattern in virtual_name_patterns):
-                return True
-
-    return False
