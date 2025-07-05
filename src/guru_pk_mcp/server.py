@@ -15,6 +15,7 @@ from .dynamic_experts import (
     DynamicExpertManager,
     get_expert_recommendation_guidance,
     get_question_analysis_guidance,
+    should_trigger_smart_recommendation,
 )
 from .models import PKSession
 from .personas import (
@@ -93,7 +94,7 @@ class GuruPKServer:
                                         "base_prompt",
                                     ],
                                 },
-                                "description": "参与讨论的三位专家完整数据（必须包含name, emoji, description, core_traits, speaking_style, base_prompt字段）",
+                                "description": "参与讨论的三位专家完整数据（可选）。如果不提供，系统将基于问题内容和专家偏好自动推荐",
                                 "minItems": 3,
                                 "maxItems": 3,
                             },
@@ -102,7 +103,7 @@ class GuruPKServer:
                                 "description": "是否由MCP Host端智能推荐（内部使用）",
                             },
                         },
-                        "required": ["question", "personas"],
+                        "required": ["question"],
                     },
                 ),
                 types.Tool(
@@ -114,7 +115,11 @@ class GuruPKServer:
                             "question": {
                                 "type": "string",
                                 "description": "要分析的问题内容",
-                            }
+                            },
+                            "expert_preferences": {
+                                "type": "string",
+                                "description": "用户对专家的偏好描述（可选），例如：'我想要三名人工智能方面的顶级专家'、'希望有哲学家和科学家参与'等",
+                            },
                         },
                         "required": ["question"],
                     },
@@ -393,17 +398,14 @@ class GuruPKServer:
                 return [
                     TextContent(
                         type="text",
-                        text='❌ 请提供一个问题来启动PK会话。\n\n📋 **新的使用方式**：\n\n**动态专家推荐**：\n```javascript\n// 步骤1: 获取推荐指导\nget_smart_recommendation_guidance({"question": "你的问题"})\n\n// 步骤2: MCP Host端LLM根据指导生成专家，然后启动会话\nstart_pk_session({"question": "你的问题", "personas": [专家数据1, 专家数据2, 专家数据3], "recommended_by_host": true})\n```\n\n💡 **说明**: 新系统采用完全动态生成专家，每次都会为问题定制最合适的专家组合。',
+                        text='❌ 请提供一个问题来启动PK会话。\n\n📋 **使用方式**：\n\n**方式1: 自动专家推荐**\n```javascript\nstart_pk_session({"question": "如何在AI时代实现个人突破？请两位人工智能领域的专家和一位心理学方面的专家参与辩论"})\n```\n\n**方式2: 完整专家数据**\n```javascript\nstart_pk_session({"question": "你的问题", "personas": [专家数据1, 专家数据2, 专家数据3]})\n```\n\n💡 **说明**: 系统会自动检测问题中的专家偏好，智能推荐最合适的专家组合。',
                     )
                 ]
 
-            if not personas or len(personas) != 3:
-                return [
-                    TextContent(
-                        type="text",
-                        text="❌ 需要提供恰好3位专家数据。请先使用 get_smart_recommendation_guidance 获取指导，然后由MCP Host端LLM生成专家数据。",
-                    )
-                ]
+            # 检查是否需要触发智能推荐
+            if should_trigger_smart_recommendation(personas):
+                # 触发智能专家推荐流程
+                return await self._handle_smart_expert_recommendation(question)
 
             # 验证专家数据格式
             expert_dict = {}
@@ -497,6 +499,58 @@ start_pk_session({{
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 启动会话失败: {str(e)}")]
+
+    async def _handle_smart_expert_recommendation(
+        self, question: str
+    ) -> list[TextContent]:
+        """处理智能专家推荐流程"""
+        try:
+            # 生成专家推荐指导（让MCP Host端LLM做偏好分析）
+            guidance = get_expert_recommendation_guidance(question)
+
+            # 构建给MCP Host端LLM的消息
+            recommendation_prompt = f"""
+🤖 **智能专家推荐系统**
+
+系统检测到您需要专家推荐。请根据以下指导原则，分析用户问题并生成最合适的专家组合。
+
+---
+
+## 📋 MCP Host端操作指引
+
+{guidance}
+
+---
+
+## 🎯 下一步操作
+
+请完成以下步骤：
+
+1. **分析用户问题中的专家偏好**（按照上述第一步指导）
+2. **选择3位最合适的专家**（优先真实人物）
+3. **生成完整的专家数据**
+4. **重新调用 start_pk_session**：
+
+```javascript
+start_pk_session({{
+  "question": "{question}",
+  "personas": [
+    // 3位专家的完整数据，每个包含：name, emoji, description, core_traits, speaking_style, base_prompt
+  ],
+  "recommended_by_host": true
+}})
+```
+
+💡 **关键提醒**:
+- 首先从问题中提取专家偏好
+- 优先选择真实历史人物和当代名人
+- 确保专家组合多样化且能产生有价值的思辨
+"""
+
+            return [TextContent(type="text", text=recommendation_prompt)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 智能推荐失败: {str(e)}")]
 
     async def _handle_select_experts_and_start_session(
         self, arguments: dict[str, Any]
@@ -765,11 +819,13 @@ start_pk_session({{
         """获取专家推荐的原则性指导（MCP Host端LLM使用）"""
         try:
             question = arguments.get("question", "")
+            expert_preferences = arguments.get("expert_preferences", "")
+
             if not question:
                 return [TextContent(type="text", text="❌ 请提供要分析的问题")]
 
-            # 返回原则性指导，供MCP Host端LLM使用
-            guidance = get_expert_recommendation_guidance()
+            # 返回原则性指导，包含用户的专家偏好，供MCP Host端LLM使用
+            guidance = get_expert_recommendation_guidance(question, expert_preferences)
 
             return [TextContent(type="text", text=guidance)]
         except Exception as e:

@@ -7,6 +7,7 @@ from guru_pk_mcp.dynamic_experts import (
     DynamicExpertManager,
     get_question_analysis_guidance,
     get_expert_recommendation_guidance,
+    should_trigger_smart_recommendation,
 )
 
 
@@ -114,16 +115,82 @@ def test_get_question_analysis_guidance():
 
 def test_get_expert_recommendation_guidance():
     """测试专家推荐指导获取"""
+    # 测试无参数调用
     guidance = get_expert_recommendation_guidance()
     
     assert isinstance(guidance, str)
     assert len(guidance) > 0
     assert "专家推荐指导原则" in guidance
-    assert "推荐策略" in guidance
+    assert "真实人物优先" in guidance
+    assert "专家选择优先级" in guidance
+    assert "真实人物推荐指南" in guidance
+    assert "专家组合策略" in guidance
     assert "多样性原则" in guidance
     assert "互补性原则" in guidance
     assert "针对性原则" in guidance
     assert "平衡性原则" in guidance
+
+def test_get_expert_recommendation_guidance_with_preferences():
+    """测试带专家偏好的推荐指导获取"""
+    question = "如何在AI时代实现个人突破？"
+    expert_preferences = "我想要三名人工智能方面的顶级专家"
+    
+    guidance = get_expert_recommendation_guidance(question, expert_preferences)
+    
+    assert isinstance(guidance, str)
+    assert len(guidance) > 0
+    assert question in guidance
+    assert expert_preferences in guidance
+    assert "分析问题中的专家偏好" in guidance
+    assert "偏好提取要点" in guidance
+
+def test_get_expert_recommendation_guidance_with_question_only():
+    """测试只有问题没有偏好的情况"""
+    question = "如何提高团队效率？"
+    
+    guidance = get_expert_recommendation_guidance(question)
+    
+    assert isinstance(guidance, str)
+    assert question in guidance
+    assert "分析问题中的专家偏好" in guidance
+
+def test_should_trigger_smart_recommendation():
+    """测试智能推荐触发条件"""
+    # 测试空列表
+    assert should_trigger_smart_recommendation([]) == True
+    
+    # 测试不完整的列表
+    assert should_trigger_smart_recommendation([{"name": "test"}]) == True
+    
+    # 测试完整的专家数据
+    complete_personas = [
+        {
+            "name": "测试专家1",
+            "emoji": "🧠",
+            "description": "测试描述",
+            "core_traits": ["特质1", "特质2"],
+            "speaking_style": "测试风格",
+            "base_prompt": "测试提示"
+        },
+        {
+            "name": "测试专家2",
+            "emoji": "💡",
+            "description": "测试描述",
+            "core_traits": ["特质1", "特质2"],
+            "speaking_style": "测试风格",
+            "base_prompt": "测试提示"
+        },
+        {
+            "name": "测试专家3",
+            "emoji": "🎯",
+            "description": "测试描述",
+            "core_traits": ["特质1", "特质2"],
+            "speaking_style": "测试风格",
+            "base_prompt": "测试提示"
+        }
+    ]
+    
+    assert should_trigger_smart_recommendation(complete_personas) == False
 
 
 
@@ -149,12 +216,12 @@ def test_guidance_content_structure():
     
     # 应该包含主要的推荐策略
     expected_expert_sections = [
-        "推荐策略",
+        "专家组合策略",
         "多样性原则",
         "互补性原则", 
         "针对性原则",
         "平衡性原则",
-        "专家类型推荐",
+        "专家组合示例",
         "质量检查"
     ]
     
