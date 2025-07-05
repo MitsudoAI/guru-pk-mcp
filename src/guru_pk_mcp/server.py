@@ -318,23 +318,6 @@ class GuruPKServer:
                         "additionalProperties": False,
                     },
                 ),
-                types.Tool(
-                    name="select_experts_and_start_session",
-                    description="从候选专家中选择3位并启动辩论会话",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "selected_experts": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                                "description": "选择的3位专家名称",
-                                "minItems": 3,
-                                "maxItems": 3,
-                            }
-                        },
-                        "required": ["selected_experts"],
-                    },
-                ),
             ]
 
         # 统一工具处理器
@@ -380,8 +363,6 @@ class GuruPKServer:
                 return await self._handle_set_language(arguments)
             elif name == "get_language_settings":
                 return await self._handle_get_language_settings(arguments)
-            elif name == "select_experts_and_start_session":
-                return await self._handle_select_experts_and_start_session(arguments)
             else:
                 return [TextContent(type="text", text=f"❌ 未知工具: {name}")]
 
@@ -555,56 +536,6 @@ start_pk_session({{
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 智能推荐失败: {str(e)}")]
 
-    async def _handle_select_experts_and_start_session(
-        self, arguments: dict[str, Any]
-    ) -> list[TextContent]:
-        """从候选专家中选择3位并启动辩论会话"""
-        try:
-            selected_experts = arguments.get("selected_experts", [])
-
-            if not selected_experts or len(selected_experts) != 3:
-                return [
-                    TextContent(
-                        type="text",
-                        text='❌ 请选择恰好3位专家。\n\n📋 **使用方式**：\n```javascript\nselect_experts_and_start_session({"selected_experts": ["专家1", "专家2", "专家3"]})\n```',
-                    )
-                ]
-
-            # 检查是否有待选择的推荐
-            if not self.pending_recommendation:
-                return [
-                    TextContent(
-                        type="text",
-                        text="❌ 没有待选择的专家推荐。请先调用 `start_pk_session` 生成候选专家。",
-                    )
-                ]
-
-            recommendation = self.pending_recommendation["recommendation"]
-
-            # 验证选择的专家是否在候选列表中
-            candidate_names = [expert.name for expert in recommendation.experts]
-            invalid_experts = [
-                name for name in selected_experts if name not in candidate_names
-            ]
-
-            if invalid_experts:
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"❌ 以下专家不在候选列表中: {', '.join(invalid_experts)}\n\n**可选专家**: {', '.join(candidate_names)}",
-                    )
-                ]
-
-            # 新架构：此功能已简化，直接返回错误
-            return [
-                TextContent(
-                    type="text",
-                    text="❌ 此功能在新架构中已被简化。请使用 start_pk_session 进行专家辩论。",
-                )
-            ]
-
-        except Exception as e:
-            return [TextContent(type="text", text=f"❌ 选择专家失败: {str(e)}")]
 
     def _normalize_persona_name(self, name: str) -> str:
         """标准化专家名称，移除常见的差异字符"""
