@@ -106,11 +106,19 @@ class SessionManager:
         self,
         question: str,
         personas: list[str],
+        expert_profiles: dict[str, Any] | None = None,
+        is_recommended_by_host: bool = False,
     ) -> PKSession:
         """创建新的会话"""
         session = PKSession.create_new(
-            user_question=question, selected_personas=personas
+            user_question=question,
+            selected_personas=personas,
+            is_recommended_by_host=is_recommended_by_host,
         )
+
+        # 如果提供了专家详细信息，保存到会话中
+        if expert_profiles:
+            session.expert_profiles = expert_profiles
 
         # 保存会话
         self.save_session(session)

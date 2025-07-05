@@ -462,9 +462,12 @@ start_pk_session({{
             # 设置当前专家到专家管理器
             self.expert_manager.set_current_experts(expert_dict)
 
-            # 创建新会话
+            # 创建新会话，保存专家信息
             session = self.session_manager.create_session(
-                question=question, personas=list(expert_dict.keys())
+                question=question,
+                personas=list(expert_dict.keys()),
+                expert_profiles=expert_dict,
+                is_recommended_by_host=recommended_by_host,
             )
             self.current_session = session
 
@@ -2136,11 +2139,267 @@ start_pk_session({{
                     return [TextContent(type="text", text="❌ 没有活跃的会话。")]
                 session = self.current_session
 
-            # 导出增强报告
-            # 新架构中不支持此功能
-            export_file = None
+            # 生成增强版Markdown内容
+            md_content = f"""# 📊 专家PK讨论 - 增强分析报告
 
-            result = f"""📄 **增强会话报告导出成功！**
+**会话ID**: {session.session_id}
+**问题**: {session.user_question}
+**创建时间**: {session.created_at}
+**最后更新**: {session.updated_at}
+**参与专家**: {", ".join(session.selected_personas)}
+
+---
+
+## 📈 会话概览
+
+### 基本统计
+- **总轮次**: {len(session.responses)} 轮
+- **总发言数**: {len([r for round_responses in session.responses.values() for r in round_responses.values()])}
+- **字数统计**: {sum(len(r) for round_responses in session.responses.values() for r in round_responses.values()):,} 字符
+- **平均每轮发言**: {len([r for round_responses in session.responses.values() for r in round_responses.values()]) / len(session.responses) if session.responses else 0:.1f} 次
+
+### 讨论结构
+- **独立思考阶段**: {"✅" if 1 in session.responses else "❌"}
+- **交叉辩论阶段**: {"✅" if 2 in session.responses else "❌"}
+- **最终立场阶段**: {"✅" if 3 in session.responses else "❌"}
+- **智慧综合阶段**: {"✅" if 4 in session.responses else "❌"}
+- **最终综合方案**: {"✅" if session.final_synthesis else "❌"}
+
+---
+
+## 👥 专家档案分析
+
+"""
+
+            # 获取专家信息：优先使用会话中保存的，其次使用当前专家管理器的
+            expert_profiles = (
+                session.expert_profiles or self.expert_manager.get_current_experts()
+            )
+
+            for persona_name in session.selected_personas:
+                md_content += f"### {persona_name}\n\n"
+
+                if expert_profiles and persona_name in expert_profiles:
+                    expert_info = expert_profiles[persona_name]
+
+                    # 确保expert_info是字典类型（兼容ExpertProfile对象）
+                    if hasattr(expert_info, "__dict__"):
+                        # 如果是对象，转换为字典
+                        expert_dict = (
+                            expert_info.__dict__
+                            if hasattr(expert_info, "__dict__")
+                            else {}
+                        )
+                    else:
+                        # 如果已经是字典，直接使用
+                        expert_dict = expert_info
+
+                    person_type = (
+                        "📚 真实人物"
+                        if self.expert_manager._is_likely_real_person(expert_dict)
+                        else "🎭 虚拟专家"
+                    )
+                    md_content += f"**专家类型**: {person_type}\n"
+                    md_content += (
+                        f"**专业描述**: {expert_dict.get('description', '未知')}\n"
+                    )
+
+                    if "core_traits" in expert_dict:
+                        md_content += (
+                            f"**核心特质**: {', '.join(expert_dict['core_traits'])}\n"
+                        )
+
+                    if "speaking_style" in expert_dict:
+                        md_content += f"**表达风格**: {expert_dict['speaking_style']}\n"
+
+                    # 添加更多信息
+                    if "base_prompt" in expert_dict:
+                        # 从base_prompt中提取一些关键信息作为背景
+                        prompt_preview = (
+                            expert_dict["base_prompt"][:200] + "..."
+                            if len(expert_dict["base_prompt"]) > 200
+                            else expert_dict["base_prompt"]
+                        )
+                        md_content += f"**角色背景**: {prompt_preview}\n"
+                else:
+                    md_content += "**专家信息**: 暂无详细档案\n"
+
+                # 统计该专家的发言情况
+                total_words = 0
+                total_rounds = 0
+                for _round_num, round_responses in session.responses.items():
+                    if persona_name in round_responses:
+                        total_rounds += 1
+                        total_words += len(round_responses[persona_name])
+
+                md_content += f"**参与轮次**: {total_rounds}/{len(session.responses)}\n"
+                md_content += f"**发言字数**: {total_words:,} 字符\n"
+                md_content += f"**平均发言长度**: {total_words / total_rounds if total_rounds > 0 else 0:.0f} 字符/轮\n\n"
+
+            md_content += """---
+
+## 💬 完整讨论记录
+
+"""
+
+            round_names = {
+                1: "🤔 第1轮：独立思考",
+                2: "💬 第2轮：交叉辩论",
+                3: "🎯 第3轮：最终立场",
+                4: "🧠 第4轮：智慧综合",
+            }
+
+            round_descriptions = {
+                1: "各专家基于自己的知识体系和思维方式，独立分析问题并提出初步观点。",
+                2: "专家们审视其他人的观点，进行批判性思考，完善自己的方案。",
+                3: "经过前两轮深入思考和辩论，专家们给出最终的、最完善的解决方案。",
+                4: "综合大师整合三位专家的方案，形成融合各方精华的终极解决方案。",
+            }
+
+            for round_num in sorted(session.responses.keys()):
+                md_content += f"## {round_names.get(round_num, f'第{round_num}轮')}\n\n"
+                md_content += f"**阶段说明**: {round_descriptions.get(round_num, '该轮次的详细说明')}\n\n"
+
+                round_responses = session.responses[round_num]
+                md_content += f"**本轮参与**: {len(round_responses)} 位专家\n"
+                md_content += f"**本轮字数**: {sum(len(r) for r in round_responses.values()):,} 字符\n\n"
+
+                for persona, response in round_responses.items():
+                    word_count = len(response)
+                    md_content += f"### {persona} ({word_count:,} 字符)\n\n"
+                    md_content += f"{response}\n\n---\n\n"
+
+            # 添加最终综合方案（如果有且不重复）
+            if session.final_synthesis:
+                round_4_responses = session.responses.get(4, {})
+                is_duplicate = any(
+                    session.final_synthesis == response
+                    for response in round_4_responses.values()
+                )
+
+                if not is_duplicate:
+                    md_content += f"""## 🌟 最终综合方案
+
+**字数**: {len(session.final_synthesis):,} 字符
+
+{session.final_synthesis}
+
+---
+
+"""
+
+            md_content += f"""## 📊 深度分析
+
+### 讨论质量指标
+- **讨论完整度**: {len(session.responses)}/4 轮次 ({len(session.responses)/4*100:.0f}%)
+- **专家参与度**: {len([r for round_responses in session.responses.values() for r in round_responses.values()])/len(session.selected_personas)/len(session.responses)*100 if session.responses else 0:.0f}%
+- **内容丰富度**: {sum(len(r) for round_responses in session.responses.values() for r in round_responses.values())/len(session.responses) if session.responses else 0:.0f} 字符/轮
+
+### 专家贡献分析
+"""
+
+            # 分析每位专家的贡献
+            for persona_name in session.selected_personas:
+                total_words = 0
+                total_rounds = 0
+                rounds: list[str] = []
+
+                for round_num, round_responses in session.responses.items():
+                    if persona_name in round_responses:
+                        words = len(round_responses[persona_name])
+                        total_words += words
+                        total_rounds += 1
+                        rounds.append(f"第{round_num}轮({words}字)")
+
+                participation_rate = (
+                    total_rounds / len(session.responses) * 100
+                    if session.responses
+                    else 0
+                )
+                avg_words = total_words / total_rounds if total_rounds > 0 else 0
+                md_content += f"- **{persona_name}**: 参与{total_rounds}轮 ({participation_rate:.0f}%), 贡献{total_words:,}字符, 平均{avg_words:.0f}字/轮\n"
+
+            md_content += f"""
+
+### 时间轴分析
+- **创建时间**: {session.created_at}
+- **最后更新**: {session.updated_at}
+- **讨论时长**: 会话期间
+- **完成状态**: {"✅ 已完成" if session.final_synthesis else "🔄 进行中"}
+
+---
+
+## 📈 改进建议
+
+### 讨论优化建议
+"""
+
+            # 根据统计数据提供建议
+            total_rounds = len(session.responses)
+            if total_rounds < 4:
+                md_content += (
+                    "- 🔄 **完整性提升**: 建议完成全部4轮讨论，以获得更深入的思辨效果\n"
+                )
+
+            avg_words_per_response = (
+                sum(
+                    len(r)
+                    for round_responses in session.responses.values()
+                    for r in round_responses.values()
+                )
+                / len(
+                    [
+                        r
+                        for round_responses in session.responses.values()
+                        for r in round_responses.values()
+                    ]
+                )
+                if session.responses
+                else 0
+            )
+
+            if avg_words_per_response < 200:
+                md_content += (
+                    "- 📝 **深度增强**: 专家发言相对简短，可以鼓励更深入的分析和阐述\n"
+                )
+            elif avg_words_per_response > 800:
+                md_content += "- ✂️ **精炼表达**: 专家发言较长，可以适当精炼核心观点\n"
+
+            if not session.final_synthesis:
+                md_content += (
+                    "- 🎯 **综合完善**: 建议添加最终综合方案，整合各专家观点\n"
+                )
+
+            md_content += """
+### 专家组合评估
+- **多样性**: 专家背景和观点的多元化程度
+- **互补性**: 专家知识结构的互补效果
+- **权威性**: 专家在各自领域的认可度
+- **思辨性**: 专家间观点碰撞的价值
+
+---
+
+## 🔗 相关工具
+
+- 📄 **标准导出**: 使用 `export_session` 获取简化版报告
+- 📊 **统计信息**: 使用 `get_usage_statistics` 查看系统使用统计
+- 📋 **会话历史**: 使用 `view_session_history` 浏览历史会话
+
+---
+
+*📅 报告生成时间: {session.updated_at}*
+*🤖 由 Guru-PK MCP 增强分析系统生成*
+"""
+
+            # 保存到文件
+            export_file = (
+                self.session_manager.data_dir
+                / f"enhanced_export_{session.session_id}.md"
+            )
+            with open(export_file, "w", encoding="utf-8") as f:
+                f.write(md_content)
+
+            result = f"""📊 **增强会话报告导出成功！**
 
 **文件路径**: `{export_file}`
 **格式**: Enhanced Markdown Report
@@ -2148,15 +2407,15 @@ start_pk_session({{
 
 ## 📊 报告内容
 - ✅ 完整讨论记录
-- ✅ 质量分析指标
-- ✅ 专家档案信息
-- ✅ 关系图谱分析
-- ✅ 推荐详情记录
-- ✅ 互动模式分析
+- ✅ 专家档案分析
+- ✅ 统计数据洞察
+- ✅ 质量指标评估
+- ✅ 贡献度分析
+- ✅ 时间轴记录
 - ✅ 改进建议总结
 
 ## 💡 使用说明
-该报告包含比标准导出更丰富的分析信息，适合深度复盘和研究使用。
+该增强报告包含详细的数据分析和专家档案信息，适合深度复盘和研究使用。
 
 🔗 **对比**: 使用 `export_session` 获取标准格式报告。"""
 
