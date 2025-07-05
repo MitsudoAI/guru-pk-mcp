@@ -59,9 +59,11 @@ pip install uv
 > **更新说明**:
 >
 > - 当需要更新`guru-pk-mcp`到最新版本时，请执行命令：
+>
 >   ```bash
 >   uvx pip install --upgrade guru-pk-mcp
 >   ```
+>
 > - 此命令会从PyPI获取并安装最新发布的版本
 > - 对于本地开发场景，如需刷新uvx缓存，请使用`make refresh-uvx`
 >
@@ -155,7 +157,7 @@ select_experts_and_start_session({
 
 ### 专家管理
 
-- `list_available_personas` - 查看所有专家
+- `list_available_personas` - 了解动态专家系统说明
 - `recommend_personas` - 传统关键词推荐
 - `create_custom_persona_from_description` - 智能创建自定义专家
 - `save_custom_persona` - 保存自定义专家数据
@@ -373,7 +375,7 @@ create_custom_persona_from_description({
 
 - 🤖 **直接提问** - 最简单的使用方式，自动智能推荐专家
 - 📋 `guru_pk_help` - 获取系统介绍和详细帮助
-- 👥 `list_available_personas` - 查看所有可用专家
+- 👥 `list_available_personas` - 了解动态专家系统
 - 📊 `get_usage_statistics` - 查看使用统计和分析
 - 📄 `export_session` - 导出会话记录为Markdown
 - 🌍 `set_language` - 设置专家回复语言

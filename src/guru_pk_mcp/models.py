@@ -345,13 +345,13 @@ class PKSession:
         return cls(**data)
 
     def get_current_persona(self) -> str:
-        """获取当前应该发言的思想家"""
+        """获取当前应该发言的专家"""
         if self.current_persona_index < len(self.selected_personas):
             return self.selected_personas[self.current_persona_index]
         return ""
 
     def advance_to_next_persona(self) -> bool:
-        """切换到下一个思想家，返回是否还有下一个"""
+        """切换到下一个专家，返回是否还有下一个"""
         self.current_persona_index += 1
         self.updated_at = datetime.now().isoformat()
 
@@ -363,7 +363,7 @@ class PKSession:
         return True
 
     def record_response(self, persona: str, response: str) -> None:
-        """记录某个思想家的回答"""
+        """记录某个专家的回答"""
         if self.current_round not in self.responses:
             self.responses[self.current_round] = {}
 

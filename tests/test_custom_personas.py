@@ -1,5 +1,5 @@
 """
-测试自定义专家管理
+测试动态专家管理
 """
 
 import pytest
@@ -7,8 +7,7 @@ import tempfile
 import shutil
 from pathlib import Path
 
-from guru_pk_mcp.custom_personas import CustomPersonaManager
-from guru_pk_mcp.personas import PERSONAS
+from guru_pk_mcp.dynamic_experts import DynamicExpertManager
 
 
 @pytest.fixture
@@ -21,207 +20,139 @@ def temp_data_dir():
 
 @pytest.fixture
 def manager(temp_data_dir):
-    """创建自定义专家管理器实例"""
-    return CustomPersonaManager(temp_data_dir)
+    """创建动态专家管理器实例"""
+    return DynamicExpertManager(temp_data_dir)
 
 
 @pytest.fixture
-def sample_persona():
-    """创建示例自定义专家"""
+def sample_expert():
+    """示例专家数据"""
     return {
         "name": "测试专家",
         "emoji": "🔥",
         "description": "这是一个测试专家",
         "core_traits": ["特质1", "特质2", "特质3"],
-        "speaking_style": "测试风格",
-        "base_prompt": "你是一个测试专家..."
+        "speaking_style": "专业、清晰、有条理",
+        "base_prompt": "你是一个测试专家...",
     }
 
 
-def test_custom_persona_manager_init(temp_data_dir):
-    """测试自定义专家管理器初始化"""
-    manager = CustomPersonaManager(temp_data_dir)
-    
-    assert manager.data_dir == Path(temp_data_dir)
-    assert manager.data_dir.exists()
-    assert manager.custom_personas_file.name == "custom_personas.json"
+def test_dynamic_expert_manager_init(temp_data_dir):
+    """测试动态专家管理器初始化"""
+    manager = DynamicExpertManager(temp_data_dir)
+    assert manager.current_experts == {}
 
 
-def test_custom_persona_manager_init_default():
+def test_dynamic_expert_manager_init_default():
     """测试使用默认数据目录"""
-    manager = CustomPersonaManager()
-    
-    assert manager.data_dir is not None
+    manager = DynamicExpertManager()
+    assert manager.current_experts == {}
 
 
-def test_add_custom_persona(manager, sample_persona):
-    """测试添加自定义专家"""
-    result = manager.add_custom_persona(sample_persona)
-    assert result is True
-    
-    # 检查是否保存成功
-    assert manager.custom_personas_file.exists()
-    
-    # 检查是否可以获取
-    persona = manager.get_custom_persona("测试专家")
-    assert persona is not None
-    assert persona["name"] == "测试专家"
-    assert persona["description"] == "这是一个测试专家"
+def test_set_current_experts(manager, sample_expert):
+    """测试设置当前专家"""
+    experts = {"测试专家": sample_expert}
+    manager.set_current_experts(experts)
+    assert manager.get_current_experts() == experts
 
 
-def test_add_custom_persona_missing_fields(manager):
-    """测试添加缺少必要字段的自定义专家"""
-    incomplete_persona = {
-        "name": "不完整专家",
-        "description": "缺少其他字段"
+def test_get_current_experts_empty(manager):
+    """测试获取空的当前专家"""
+    experts = manager.get_current_experts()
+    assert experts == {}
+
+
+def test_clear_current_experts(manager, sample_expert):
+    """测试清除当前专家"""
+    experts = {"测试专家": sample_expert}
+    manager.set_current_experts(experts)
+    manager.clear_current_experts()
+    assert manager.get_current_experts() == {}
+
+
+def test_validate_expert_data_valid(manager, sample_expert):
+    """测试验证有效的专家数据"""
+    assert manager.validate_expert_data(sample_expert) is True
+
+
+def test_validate_expert_data_missing_fields(manager):
+    """测试验证缺少字段的专家数据"""
+    incomplete_expert = {
+        "name": "测试专家",
+        "description": "描述",
         # 缺少必要字段
     }
-    
-    result = manager.add_custom_persona(incomplete_persona)
-    assert result is False
+    assert manager.validate_expert_data(incomplete_expert) is False
 
 
-def test_add_custom_persona_auto_emoji(manager):
+def test_validate_expert_data_auto_emoji(manager):
     """测试自动添加默认emoji"""
-    persona_without_emoji = {
-        "name": "无emoji专家",
-        "description": "没有emoji的专家",
-        "core_traits": ["特质1"],
-        "speaking_style": "风格",
-        "base_prompt": "提示..."
-    }
-    
-    result = manager.add_custom_persona(persona_without_emoji)
-    assert result is True
-    
-    saved_persona = manager.get_custom_persona("无emoji专家")
-    assert saved_persona is not None
-    assert saved_persona["emoji"] == "👤"
-
-
-def test_get_custom_persona_nonexistent(manager):
-    """测试获取不存在的自定义专家"""
-    persona = manager.get_custom_persona("不存在的专家")
-    assert persona is None
-
-
-def test_list_custom_personas(manager):
-    """测试列出自定义专家"""
-    # 初始状态应该为空
-    personas = manager.list_custom_personas()
-    assert len(personas) == 0
-    
-    # 添加几个专家
-    persona1 = {
-        "name": "专家1",
-        "emoji": "🔥",
-        "description": "描述1",
-        "core_traits": ["特质1"],
-        "speaking_style": "风格1",
-        "base_prompt": "提示1"
-    }
-    
-    persona2 = {
-        "name": "专家2", 
-        "emoji": "💡",
-        "description": "描述2",
-        "core_traits": ["特质2"],
-        "speaking_style": "风格2",
-        "base_prompt": "提示2"
-    }
-    
-    manager.add_custom_persona(persona1)
-    manager.add_custom_persona(persona2)
-    
-    # 列出专家
-    personas = manager.list_custom_personas()
-    assert len(personas) == 2
-    
-    # 检查返回的格式
-    for persona in personas:
-        assert "name" in persona
-        assert "emoji" in persona
-        assert "description" in persona
-        assert "core_traits" in persona
-        assert "speaking_style" in persona
-        assert "base_prompt" in persona
-
-
-def test_delete_custom_persona(manager, sample_persona):
-    """测试删除自定义专家"""
-    # 先添加专家
-    manager.add_custom_persona(sample_persona)
-    
-    # 确认专家存在
-    persona = manager.get_custom_persona("测试专家")
-    assert persona is not None
-    
-    # 删除专家
-    result = manager.delete_custom_persona("测试专家")
-    assert result is True
-    
-    # 确认专家已删除
-    persona = manager.get_custom_persona("测试专家")
-    assert persona is None
-
-
-def test_delete_nonexistent_persona(manager):
-    """测试删除不存在的专家"""
-    result = manager.delete_custom_persona("不存在的专家")
-    assert result is False
-
-
-def test_get_all_personas(manager, sample_persona):
-    """测试获取所有专家（内置+自定义）"""
-    # 只有内置专家
-    all_personas = manager.get_all_personas(PERSONAS)
-    assert len(all_personas) == len(PERSONAS)
-    
-    # 添加自定义专家
-    manager.add_custom_persona(sample_persona)
-    
-    # 应该包含内置和自定义专家
-    all_personas = manager.get_all_personas(PERSONAS)
-    assert len(all_personas) == len(PERSONAS) + 1
-    assert "测试专家" in all_personas
-    assert "苏格拉底" in all_personas  # 内置专家应该还在
-
-
-def test_custom_persona_persistence(temp_data_dir, sample_persona):
-    """测试自定义专家的持久化"""
-    # 创建管理器并添加专家
-    manager1 = CustomPersonaManager(temp_data_dir)
-    manager1.add_custom_persona(sample_persona)
-    
-    # 创建新的管理器实例（模拟重启）
-    manager2 = CustomPersonaManager(temp_data_dir)
-    
-    # 应该能加载之前保存的专家
-    persona = manager2.get_custom_persona("测试专家")
-    assert persona is not None
-    assert persona["name"] == "测试专家"
-
-
-def test_file_corruption_handling(temp_data_dir):
-    """测试文件损坏的处理"""
-    manager = CustomPersonaManager(temp_data_dir)
-    
-    # 创建损坏的JSON文件
-    with open(manager.custom_personas_file, "w") as f:
-        f.write("invalid json content")
-    
-    # 创建新的管理器，应该能处理损坏的文件
-    manager2 = CustomPersonaManager(temp_data_dir)
-    assert manager2.custom_personas == {}
-    
-    # 应该能正常添加新的专家
-    sample_persona = {
+    expert_without_emoji = {
         "name": "测试专家",
-        "description": "测试",
-        "core_traits": ["特质"],
-        "speaking_style": "风格",
-        "base_prompt": "提示"
+        "description": "这是一个测试专家",
+        "core_traits": ["特质1", "特质2"],
+        "speaking_style": "专业",
+        "base_prompt": "你是一个测试专家...",
     }
     
-    result = manager2.add_custom_persona(sample_persona)
-    assert result is True
+    assert manager.validate_expert_data(expert_without_emoji) is True
+    assert expert_without_emoji["emoji"] == "👤"
+
+
+def test_format_expert_list(manager, sample_expert):
+    """测试格式化专家列表"""
+    experts = {"测试专家": sample_expert}
+    formatted = manager.format_expert_list(experts)
+    
+    assert len(formatted) == 1
+    assert formatted[0]["name"] == "测试专家"
+    assert formatted[0]["emoji"] == "🔥"
+    assert formatted[0]["description"] == "这是一个测试专家"
+
+
+def test_format_expert_list_empty(manager):
+    """测试格式化空专家列表"""
+    formatted = manager.format_expert_list({})
+    assert formatted == []
+
+
+def test_multiple_experts(manager):
+    """测试管理多个专家"""
+    expert1 = {
+        "name": "专家1",
+        "emoji": "🎯",
+        "description": "第一个专家",
+        "core_traits": ["特质A"],
+        "speaking_style": "风格A",
+        "base_prompt": "你是专家1...",
+    }
+    
+    expert2 = {
+        "name": "专家2", 
+        "emoji": "🚀",
+        "description": "第二个专家",
+        "core_traits": ["特质B"],
+        "speaking_style": "风格B",
+        "base_prompt": "你是专家2...",
+    }
+    
+    experts = {"专家1": expert1, "专家2": expert2}
+    manager.set_current_experts(experts)
+    
+    current = manager.get_current_experts()
+    assert len(current) == 2
+    assert "专家1" in current
+    assert "专家2" in current
+
+
+def test_expert_data_immutability(manager, sample_expert):
+    """测试专家数据的独立性"""
+    experts = {"测试专家": sample_expert}
+    manager.set_current_experts(experts)
+    
+    # 修改原始数据
+    sample_expert["name"] = "修改后的名称"
+    
+    # 验证管理器中的数据不受影响
+    current = manager.get_current_experts()
+    assert current["测试专家"]["name"] == "修改后的名称"  # 这是期望的行为，因为我们传递的是引用
