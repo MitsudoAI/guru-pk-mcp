@@ -2,14 +2,13 @@
 质量监控和评分系统 - 监控辩论质量并提供评分
 """
 
-import re
 from datetime import datetime
 
 from .models import DebateQualityMetrics, PKSession
 
 
 class DebateQualityAnalyzer:
-    """辩论质量分析器"""
+    """辩论质量分析器 - 简化版，基于基本指标"""
 
     def __init__(self) -> None:
         # 质量指标权重
@@ -20,83 +19,23 @@ class DebateQualityAnalyzer:
             "practicality": 0.20,  # 实用价值
         }
 
-        # 新颖度关键词
-        self.novelty_indicators = [
-            "创新",
-            "突破",
-            "颠覆",
-            "新颖",
-            "独特",
-            "原创",
-            "前所未有",
-            "革命性",
-            "开创性",
-            "与众不同",
-            "别出心裁",
-            "另辟蹊径",
-        ]
-
-        # 深度指标
-        self.depth_indicators = [
-            "深层",
-            "本质",
-            "根本",
-            "核心",
-            "内在",
-            "深入",
-            "透彻",
-            "系统性",
-            "全面",
-            "详细",
-            "具体",
-            "深度",
-            "深刻",
-        ]
-
-        # 互动指标
-        self.interaction_indicators = [
-            "回应",
-            "批评",
-            "质疑",
-            "补充",
-            "完善",
-            "借鉴",
-            "吸收",
-            "反驳",
-            "赞同",
-            "结合",
-            "融合",
-            "对话",
-            "交流",
-        ]
-
-        # 实用性指标
-        self.practicality_indicators = [
-            "实用",
-            "可行",
-            "具体",
-            "操作",
-            "实施",
-            "执行",
-            "应用",
-            "方案",
-            "步骤",
-            "措施",
-            "建议",
-            "指导",
-            "实际",
-        ]
-
     def analyze_session_quality(self, session: PKSession) -> DebateQualityMetrics:
-        """分析整个会话的质量"""
+        """分析整个会话的质量 - 基于基本指标"""
         if not session.responses:
             return DebateQualityMetrics.create_initial()
 
-        # 分析各项指标
-        novelty_score = self._analyze_novelty(session)
-        depth_score = self._analyze_depth(session)
-        interaction_score = self._analyze_interaction(session)
-        practicality_score = self._analyze_practicality(session)
+        # 基于简单指标计算评分
+        total_responses = sum(
+            len(round_responses) for round_responses in session.responses.values()
+        )
+        average_length = self._calculate_average_response_length(session)
+        round_count = len(session.responses)
+
+        # 基础评分（基于响应数量、长度、轮次等基本指标）
+        novelty_score = min(5.0 + (total_responses * 0.3), 10.0)
+        depth_score = min(5.0 + (average_length / 100), 10.0)
+        interaction_score = min(5.0 + (round_count * 0.8), 10.0)
+        practicality_score = min(5.0 + (total_responses * 0.2), 10.0)
 
         # 计算总体评分
         overall_score = (
@@ -106,9 +45,9 @@ class DebateQualityAnalyzer:
             + practicality_score * self.weights["practicality"]
         )
 
-        # 生成反馈
-        feedback = self._generate_quality_feedback(
-            novelty_score, depth_score, interaction_score, practicality_score
+        # 生成基本反馈
+        feedback = self._generate_basic_feedback(
+            overall_score, total_responses, round_count
         )
 
         return DebateQualityMetrics(
@@ -121,374 +60,136 @@ class DebateQualityAnalyzer:
             timestamp=datetime.now().isoformat(),
         )
 
-    def _analyze_novelty(self, session: PKSession) -> float:
-        """分析观点新颖度"""
-        novelty_score = 0.0
+    def _calculate_average_response_length(self, session: PKSession) -> float:
+        """计算平均回答长度"""
+        total_length = 0
         total_responses = 0
 
         for round_responses in session.responses.values():
             for response in round_responses.values():
-                response_novelty = self._calculate_text_novelty(response)
-                novelty_score += response_novelty
+                total_length += len(response)
                 total_responses += 1
 
-        if total_responses == 0:
-            return 5.0
+        return total_length / total_responses if total_responses > 0 else 0
 
-        return min(novelty_score / total_responses, 10.0)
-
-    def _calculate_text_novelty(self, text: str) -> float:
-        """计算文本的新颖度评分"""
-        text_lower = text.lower()
-
-        # 基础评分
-        score = 5.0
-
-        # 检查新颖度关键词
-        novelty_keywords_found = sum(
-            1 for keyword in self.novelty_indicators if keyword in text_lower
-        )
-        score += min(novelty_keywords_found * 0.5, 2.0)
-
-        # 检查独特表达
-        unique_expressions = self._count_unique_expressions(text)
-        score += min(unique_expressions * 0.3, 1.5)
-
-        # 检查创新性思维模式
-        if any(
-            pattern in text_lower
-            for pattern in ["第一性原理", "反向思考", "跨界思维", "系统重构"]
-        ):
-            score += 1.0
-
-        # 检查具体案例和类比
-        if re.search(r"比如|例如|类似|好比|就像", text):
-            score += 0.5
-
-        return min(score, 10.0)
-
-    def _count_unique_expressions(self, text: str) -> int:
-        """统计独特表达的数量"""
-        unique_patterns = [
-            r"换句话说",
-            r"从另一个角度",
-            r"不妨[想想|考虑|试试]",
-            r"或许|也许|可能",
-            r"突然想到",
-            r"有趣的是",
-            r"令人惊讶的是",
-        ]
-
-        count = 0
-        for pattern in unique_patterns:
-            if re.search(pattern, text):
-                count += 1
-
-        return count
-
-    def _analyze_depth(self, session: PKSession) -> float:
-        """分析论证深度"""
-        depth_score = 0.0
-        total_responses = 0
-
-        for round_responses in session.responses.values():
-            for response in round_responses.values():
-                response_depth = self._calculate_text_depth(response)
-                depth_score += response_depth
-                total_responses += 1
-
-        if total_responses == 0:
-            return 5.0
-
-        return min(depth_score / total_responses, 10.0)
-
-    def _calculate_text_depth(self, text: str) -> float:
-        """计算文本的深度评分"""
-        text_lower = text.lower()
-
-        # 基础评分
-        score = 5.0
-
-        # 检查深度关键词
-        depth_keywords_found = sum(
-            1 for keyword in self.depth_indicators if keyword in text_lower
-        )
-        score += min(depth_keywords_found * 0.4, 2.0)
-
-        # 检查逻辑结构
-        logical_structures = self._count_logical_structures(text)
-        score += min(logical_structures * 0.5, 1.5)
-
-        # 检查论证深度
-        if self._has_multi_layer_reasoning(text):
-            score += 1.0
-
-        # 检查具体论据
-        evidence_count = self._count_evidence(text)
-        score += min(evidence_count * 0.3, 1.0)
-
-        # 文本长度奖励（较长的回答通常更深入）
-        length_bonus = min(len(text) / 500, 0.5)
-        score += length_bonus
-
-        return min(score, 10.0)
-
-    def _count_logical_structures(self, text: str) -> int:
-        """统计逻辑结构数量"""
-        structures = [
-            r"首先|第一",
-            r"其次|第二|然后",
-            r"最后|最终|总之",
-            r"因为|由于|因此|所以",
-            r"但是|然而|不过|可是",
-            r"另一方面|与此同时",
-            r"综合来看|整体而言",
-        ]
-
-        count = 0
-        for pattern in structures:
-            if re.search(pattern, text):
-                count += 1
-
-        return count
-
-    def _has_multi_layer_reasoning(self, text: str) -> bool:
-        """检查是否有多层次推理"""
-        multi_layer_patterns = [
-            r"进一步[说|讲|分析|思考]",
-            r"深入[分析|探讨|思考]",
-            r"更深层[次|面]的",
-            r"背后的[原因|逻辑|机制]",
-            r"根本[原因|问题|所在]",
-        ]
-
-        return any(re.search(pattern, text) for pattern in multi_layer_patterns)
-
-    def _count_evidence(self, text: str) -> int:
-        """统计论据数量"""
-        evidence_patterns = [
-            r"研究[表明|显示|发现]",
-            r"数据[显示|表明]",
-            r"例子|案例|实例",
-            r"历史[上|经验|教训]",
-            r"事实[是|上|证明]",
-            r"调查[显示|表明]",
-        ]
-
-        count = 0
-        for pattern in evidence_patterns:
-            count += len(re.findall(pattern, text))
-
-        return count
-
-    def _analyze_interaction(self, session: PKSession) -> float:
-        """分析互动质量"""
-        if len(session.responses) <= 1:
-            return 5.0  # 只有一轮，无法评估互动
-
-        interaction_score = 0.0
-        interaction_count = 0
-
-        # 分析第2轮开始的互动质量
-        for round_num in range(2, len(session.responses) + 1):
-            if round_num in session.responses:
-                round_score = self._analyze_round_interaction(session, round_num)
-                interaction_score += round_score
-                interaction_count += 1
-
-        if interaction_count == 0:
-            return 5.0
-
-        return min(interaction_score / interaction_count, 10.0)
-
-    def _analyze_round_interaction(self, session: PKSession, round_num: int) -> float:
-        """分析特定轮次的互动质量"""
-        current_round = session.responses.get(round_num, {})
-        previous_round = session.responses.get(round_num - 1, {})
-
-        if not current_round or not previous_round:
-            return 5.0
-
-        interaction_score = 0.0
-        response_count = 0
-
-        for persona, response in current_round.items():
-            # 检查是否引用了其他专家的观点
-            reference_score = self._calculate_reference_score(
-                response, previous_round, persona
-            )
-            interaction_score += reference_score
-            response_count += 1
-
-        return interaction_score / response_count if response_count > 0 else 5.0
-
-    def _calculate_reference_score(
-        self, response: str, previous_round: dict[str, str], current_persona: str
-    ) -> float:
-        """计算回应的互动评分"""
-        response_lower = response.lower()
-
-        # 基础评分
-        score = 5.0
-
-        # 检查互动关键词
-        interaction_keywords_found = sum(
-            1 for keyword in self.interaction_indicators if keyword in response_lower
-        )
-        score += min(interaction_keywords_found * 0.5, 2.0)
-
-        # 检查是否引用了其他专家
-        other_personas = [
-            name for name in previous_round.keys() if name != current_persona
-        ]
-        references = sum(1 for name in other_personas if name in response)
-        score += min(references * 1.0, 2.0)
-
-        # 检查批判性回应
-        critical_patterns = [
-            r"我认为.*不够",
-            r"存在.*问题",
-            r"需要.*补充",
-            r"忽略了",
-            r"过于.*化",
-        ]
-        critical_responses = sum(
-            1 for pattern in critical_patterns if re.search(pattern, response)
-        )
-        score += min(critical_responses * 0.5, 1.0)
-
-        return min(score, 10.0)
-
-    def _analyze_practicality(self, session: PKSession) -> float:
-        """分析实用价值"""
-        practicality_score = 0.0
-        total_responses = 0
-
-        for round_responses in session.responses.values():
-            for response in round_responses.values():
-                response_practicality = self._calculate_text_practicality(response)
-                practicality_score += response_practicality
-                total_responses += 1
-
-        if total_responses == 0:
-            return 5.0
-
-        return min(practicality_score / total_responses, 10.0)
-
-    def _calculate_text_practicality(self, text: str) -> float:
-        """计算文本的实用性评分"""
-        text_lower = text.lower()
-
-        # 基础评分
-        score = 5.0
-
-        # 检查实用性关键词
-        practicality_keywords_found = sum(
-            1 for keyword in self.practicality_indicators if keyword in text_lower
-        )
-        score += min(practicality_keywords_found * 0.4, 2.0)
-
-        # 检查具体步骤
-        steps = self._count_actionable_steps(text)
-        score += min(steps * 0.5, 1.5)
-
-        # 检查可操作性
-        if self._has_actionable_advice(text):
-            score += 1.0
-
-        # 检查具体工具或方法
-        tools_mentioned = self._count_tools_and_methods(text)
-        score += min(tools_mentioned * 0.3, 1.0)
-
-        return min(score, 10.0)
-
-    def _count_actionable_steps(self, text: str) -> int:
-        """统计可执行步骤数量"""
-        step_patterns = [
-            r"第[一二三四五六七八九十\d]+步",
-            r"步骤[一二三四五六七八九十\d]+",
-            r"首先.*[，。]",
-            r"然后.*[，。]",
-            r"接下来.*[，。]",
-            r"最后.*[，。]",
-        ]
-
-        count = 0
-        for pattern in step_patterns:
-            count += len(re.findall(pattern, text))
-
-        return count
-
-    def _has_actionable_advice(self, text: str) -> bool:
-        """检查是否包含可执行的建议"""
-        actionable_patterns = [
-            r"建议.*[进行|采用|使用|实施]",
-            r"可以[尝试|试试|考虑|采用]",
-            r"应该[立即|马上|尽快]",
-            r"具体[做法|方法|操作]",
-            r"实际[应用|操作|执行]",
-        ]
-
-        return any(re.search(pattern, text) for pattern in actionable_patterns)
-
-    def _count_tools_and_methods(self, text: str) -> int:
-        """统计提到的工具和方法数量"""
-        tool_patterns = [
-            r"[工具|方法|技术|系统|平台|软件]",
-            r"使用.*[来|进行|实现]",
-            r"通过.*[方式|手段|途径]",
-            r"借助.*[实现|完成|解决]",
-        ]
-
-        count = 0
-        for pattern in tool_patterns:
-            count += len(re.findall(pattern, text))
-
-        return min(count, 5)  # 限制最大数量
-
-    def _generate_quality_feedback(
-        self, novelty: float, depth: float, interaction: float, practicality: float
+    def _generate_basic_feedback(
+        self, overall_score: float, total_responses: int, round_count: int
     ) -> str:
-        """生成质量反馈"""
+        """生成基本质量反馈"""
         feedback_parts = []
 
         # 总体评价
-        overall = (novelty + depth + interaction + practicality) / 4
-        if overall >= 8.0:
+        if overall_score >= 8.0:
             feedback_parts.append("🌟 辩论质量优秀")
-        elif overall >= 6.5:
+        elif overall_score >= 6.5:
             feedback_parts.append("✅ 辩论质量良好")
-        elif overall >= 5.0:
+        elif overall_score >= 5.0:
             feedback_parts.append("⚠️ 辩论质量一般")
         else:
             feedback_parts.append("❌ 辩论质量需要改进")
 
-        # 各项具体评价
-        if novelty >= 7.5:
-            feedback_parts.append("观点新颖独特")
-        elif novelty < 5.0:
-            feedback_parts.append("缺乏创新思维")
+        # 基于基本指标的评价
+        if total_responses >= 6:
+            feedback_parts.append("专家参与度较高")
+        elif total_responses < 3:
+            feedback_parts.append("建议增加专家回应")
 
-        if depth >= 7.5:
-            feedback_parts.append("论证深入透彻")
-        elif depth < 5.0:
-            feedback_parts.append("分析深度不够")
-
-        if interaction >= 7.5:
-            feedback_parts.append("专家互动充分")
-        elif interaction < 5.0:
-            feedback_parts.append("缺乏有效互动")
-
-        if practicality >= 7.5:
-            feedback_parts.append("建议实用可行")
-        elif practicality < 5.0:
-            feedback_parts.append("实用性有待提升")
+        if round_count >= 3:
+            feedback_parts.append("讨论轮次充分")
+        elif round_count < 2:
+            feedback_parts.append("建议增加讨论深度")
 
         return "，".join(feedback_parts)
 
 
+def get_quality_evaluation_guidance() -> str:
+    """获取质量评估指导原则（供MCP Host端LLM使用）"""
+    return """
+# 辩论质量评估指导原则
+
+## 评估维度
+
+### 1. 观点新颖度 (25%)
+- 优秀 (8-10分)：观点独特、有创新性、提供新视角
+- 良好 (6-8分)：观点有一定新意、不完全遵循传统思路
+- 一般 (4-6分)：观点较为常见、缺乏亮点
+- 不足 (0-4分)：观点老套、没有新意
+
+### 2. 论证深度 (30%)
+- 优秀 (8-10分)：深入分析、逻辑清晰、有理论支撑
+- 良好 (6-8分)：分析较为充分、有一定理论深度
+- 一般 (4-6分)：分析较为表面、缺乏深度
+- 不足 (0-4分)：分析浅显、逻辑混乱
+
+### 3. 互动质量 (25%)
+- 优秀 (8-10分)：专家间积极互动、有效回应、有建设性争论
+- 良好 (6-8分)：有一定互动、部分回应其他观点
+- 一般 (4-6分)：互动较少、主要是各自表达
+- 不足 (0-4分)：缺乏互动、像独立发言
+
+### 4. 实用价值 (20%)
+- 优秀 (8-10分)：提供具体可行的解决方案和操作步骤
+- 良好 (6-8分)：有一定实用性建议
+- 一般 (4-6分)：建议较为抽象、可操作性不强
+- 不足 (0-4分)：缺乏实用性建议、纯理论讨论
+
+## 评估原则
+
+### 1. 客观性原则
+- 基于内容质量而非个人偏好
+- 考虑不同观点的合理性
+- 避免立场偏见影响判断
+
+### 2. 全面性原则
+- 综合考虑所有维度的表现
+- 不因某一方面突出而忽略其他方面
+- 平衡理论与实践的价值
+
+### 3. 发展性原则
+- 考虑讨论随轮次的发展和深入
+- 充分考虑不同阶段的目标和重点
+- 认可进步和改善的过程
+
+### 4. 适应性原则
+- 根据问题类型调整评估模式
+- 考虑参与者的背景和特长
+- 适应不同的讨论模式和目标
+
+## 评分标准
+
+### 总体评估
+- 优秀 (8.0-10.0)：辩论质量高，各维度表现均衡
+- 良好 (6.5-8.0)：辩论质量较好，大部分方面表现不错
+- 一般 (5.0-6.5)：辩论质量一般，有提升空间
+- 不足 (0-5.0)：辩论质量不足，需要明显改进
+
+### 具体评估指导
+- 每个维度都应有具体的评分理由
+- 提供建设性的改进建议
+- 突出亮点和值得学习的地方
+- 指出需要改进的具体方面
+
+## 注意事项
+
+### 评估范围
+- 主要评估内容质量和讨论效果
+- 不过度关注文字表达和语言风格
+- 重点关注观点的价值和贡献
+
+### 评估偏见
+- 避免因为个人偏好影响评估
+- 不因为观点不同而降低评分
+- 公平对待不同风格的表达方式
+
+### 评估反馈
+- 提供具体可行的改进建议
+- 鼓励正面的方面和亮点
+- 保持建设性和指导性的语调
+"""
+
+
 class DebateQualityMonitor:
-    """辩论质量监控器"""
+    """辩论质量监控器 - 提供基本的质量监控框架"""
 
     def __init__(self) -> None:
         self.analyzer = DebateQualityAnalyzer()
@@ -500,7 +201,7 @@ class DebateQualityMonitor:
         }
 
     def monitor_session(self, session: PKSession) -> str | None:
-        """监控会话质量，返回建议"""
+        """监控会话质量，返回基本建议"""
         if not session.responses or len(session.responses) < 2:
             return None
 
@@ -510,69 +211,135 @@ class DebateQualityMonitor:
         # 更新会话质量指标
         session.update_quality_metrics(current_metrics)
 
-        # 生成改进建议
-        suggestions = self._generate_improvement_suggestions(current_metrics, session)
+        # 生成基本建议
+        suggestions = self._generate_basic_suggestions(current_metrics, session)
 
         return suggestions
 
-    def _generate_improvement_suggestions(
+    def _generate_basic_suggestions(
         self, metrics: DebateQualityMetrics, session: PKSession
     ) -> str | None:
-        """生成改进建议"""
+        """生成基本的改进建议"""
         suggestions = []
 
-        # 基于当前质量指标生成建议
-        if metrics.novelty_score < 6.0:
-            suggestions.append("建议专家们提供更多创新性观点和独特见解")
+        # 基于轮次进度的简单建议
+        if session.current_round == 1:
+            suggestions.append("当前是独立思考阶段，建议专家们充分表达自己的观点")
+        elif session.current_round == 2:
+            suggestions.append("当前是交叉辩论阶段，建议专家们积极互动和回应")
+        elif session.current_round == 3:
+            suggestions.append("当前是最终阶段，建议专家们总结观点并提供实用建议")
+        elif session.current_round == 4:
+            suggestions.append("当前是智慧综合阶段，建议整合各方观点形成最终智慧")
 
-        if metrics.depth_score < 6.0:
-            suggestions.append("建议深入分析问题的根本原因和内在机制")
-
-        if metrics.interaction_score < 6.0:
-            suggestions.append("建议专家们更多地回应和批评其他人的观点")
-
-        if metrics.practicality_score < 6.0:
-            suggestions.append("建议提供更多具体可行的解决方案和操作步骤")
-
-        # 基于轮次进度给出建议
-        if session.current_round == 2 and metrics.interaction_score < 5.0:
-            suggestions.append("当前是交叉辩论阶段，建议专家们积极回应其他人的观点")
-
-        if (
-            session.current_round == session.max_rounds - 1
-            and metrics.practicality_score < 6.0
-        ):
-            suggestions.append("即将进入最终阶段，建议专家们提供更多实用性建议")
-
-        # 动态轮次调整建议（自由辩论模式）
-        if session.debate_mode.value == "free":
-            if metrics.overall_score < 5.0 and session.current_round >= 3:
-                suggestions.append("建议增加轮次，以提升讨论质量")
-            elif metrics.overall_score >= 8.0 and session.current_round >= 2:
-                suggestions.append("讨论质量已达到优秀水平，可考虑提前结束")
+        # 基于质量指标的简单建议
+        if metrics.overall_score < 5.0:
+            suggestions.append("当前讨论质量需要提升，建议增加内容深度和互动频率")
+        elif metrics.overall_score >= 8.0:
+            suggestions.append("讨论质量较高，建议继续保持当前水平")
 
         return "；".join(suggestions) if suggestions else None
 
     def should_extend_debate(self, session: PKSession) -> bool:
-        """判断是否应该延长辩论"""
+        """简单判断是否应该延长辩论"""
         if session.debate_mode.value != "free":
             return False
 
-        if not session.quality_metrics:
-            return False
-
-        # 质量不足且未达到最大轮数时，建议延长
-        return session.quality_metrics.overall_score < 6.0 and session.current_round < 6
+        # 简单的判断逻辑：轮次较少且未达到最大限制
+        return session.current_round < 4 and session.current_round < 6
 
     def should_end_debate_early(self, session: PKSession) -> bool:
-        """判断是否应该提前结束辩论"""
+        """简单判断是否应该提前结束辩论"""
         if session.debate_mode.value != "free":
             return False
 
-        if not session.quality_metrics:
-            return False
+        # 简单的判断逻辑：至少完成基本轮次
+        return session.current_round >= 4
 
-        # 质量优秀且至少完成2轮时，可以提前结束
-        return (
-            session.quality_metrics.overall_score >= 8.5 and session.current_round >= 2
-        )
+
+def get_improvement_suggestions_guidance() -> str:
+    """获取改进建议指导原则（供MCP Host端LLM使用）"""
+    return """
+# 辩论改进建议指导原则
+
+## 改进建议类型
+
+### 1. 内容改进建议
+- **增加创新性**：提供新颖视角、创新思路、独特见解
+- **深化分析**：深入探讨问题根源、内在机制、系统性分析
+- **丰富论据**：提供具体案例、数据支撑、实证分析
+- **增强实用性**：提供具体建议、可操作步骤、实施方案
+
+### 2. 互动改进建议
+- **积极回应**：主动回应其他专家的观点和建议
+- **建设性批评**：提出建设性的不同意见和补充
+- **观点融合**：尝试结合不同观点的优势
+- **深入对话**：就关键问题进行深入交流和讨论
+
+### 3. 结构改进建议
+- **逻辑清晰**：理清论证结构、增强论证链条
+- **层次分明**：明确区分不同层次的问题和分析
+- **重点突出**：突出关键观点和核心建议
+- **表达清晰**：提高表达的清晰度和准确性
+
+## 分阶段建议
+
+### 第一轮：独立思考
+- 充分表达个人观点和立场
+- 提供清晰的问题分析和判断
+- 给出初步的解决思路和建议
+
+### 第二轮：交叉辩论
+- 积极回应其他专家的观点
+- 指出不同意见和需要补充的地方
+- 尝试寻找共同点和结合点
+
+### 第三轮：最终立场
+- 总结和完善自己的观点
+- 吸取其他专家的有益建议
+- 提供最终的实用建议和解决方案
+
+### 第四轮：智慧综合
+- 整合各方观点的优势
+- 形成更加全面和深入的见解
+- 提供综合性的实施建议
+
+## 建议原则
+
+### 1. 具体性原则
+- 提供具体、可操作的建议
+- 避免空泛和抽象的指导
+- 给出明确的改进方向
+
+### 2. 建设性原则
+- 采用积极正面的语言
+- 鼓励和指导并重
+- 充分认可已有的优点
+
+### 3. 针对性原则
+- 根据具体情况提供对应建议
+- 考虑不同专家的特长和背景
+- 适应不同阶段的需要和目标
+
+### 4. 平衡性原则
+- 平衡各个维度的改进需要
+- 不过度偏重某一个方面
+- 综合考虑整体效果和平衡
+
+## 实施指导
+
+### 建议表达
+- 使用积极正面的语言
+- 给出具体的改进建议
+- 提供必要的理由和解释
+
+### 优先级排序
+- 优先解决最突出的问题
+- 先解决影响整体质量的问题
+- 再考虑局部优化和细节改进
+
+### 持续改进
+- 鼓励持续的反思和改进
+- 提供阶段性的改进目标
+- 建立持续改进的意识和习惯
+"""

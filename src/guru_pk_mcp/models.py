@@ -69,55 +69,10 @@ class ExpertProfile:
     knowledge_domains: list[str]  # 知识领域
     personality_traits: list[str]  # 个性特质
     potential_biases: list[str]  # 潜在偏见
-    source: str  # 来源（"builtin", "custom", "generated"）
+    source: str  # 来源（"generated" - 动态生成）
     base_prompt: str  # 基础提示词
     generation_timestamp: str | None = None  # 生成时间戳
     relevance_score: float | None = None  # 与问题的相关性评分
-
-    @classmethod
-    def from_builtin_persona(cls, persona_data: dict[str, Any]) -> "ExpertProfile":
-        """从内置专家数据创建档案"""
-        return cls(
-            name=persona_data["name"],
-            emoji=persona_data["emoji"],
-            description=persona_data["description"],
-            background=persona_data["description"],
-            thinking_style=persona_data["speaking_style"],
-            debate_strategy="基于专业背景进行分析",
-            knowledge_domains=persona_data.get("domains", []),
-            personality_traits=persona_data["core_traits"],
-            potential_biases=[],
-            source="builtin",
-            base_prompt=persona_data["base_prompt"],
-            relevance_score=0.8,
-        )
-
-    @classmethod
-    def from_custom_persona(cls, persona_data: dict[str, Any]) -> "ExpertProfile":
-        """从自定义专家数据创建档案"""
-        try:
-            return cls(
-                name=persona_data["name"],
-                emoji=persona_data.get("emoji", "👤"),
-                description=persona_data["description"],
-                background=persona_data["description"],
-                thinking_style=persona_data["speaking_style"],
-                debate_strategy="基于自定义设定进行分析",
-                knowledge_domains=persona_data.get("domains", []),
-                personality_traits=persona_data["core_traits"],
-                potential_biases=[],
-                source="custom",
-                base_prompt=persona_data["base_prompt"],
-                relevance_score=0.7,
-            )
-        except KeyError as e:
-            raise ValueError(
-                f"Missing required field in custom persona data: {e}"
-            ) from e
-        except Exception as e:
-            raise ValueError(
-                f"Failed to create expert profile from custom persona: {e}"
-            ) from e
 
     @classmethod
     def create_generated_expert(cls, expert_data: dict[str, Any]) -> "ExpertProfile":
@@ -179,14 +134,14 @@ class ExpertRecommendation:
         if not experts:
             return 0.0
 
-        # 简化的多样性计算：基于不同来源和领域的数量
-        sources = {expert.source for expert in experts}
+        # 基于不同知识领域和思维风格的多样性计算
         domains = {domain for expert in experts for domain in expert.knowledge_domains}
+        thinking_styles = {expert.thinking_style for expert in experts}
 
-        source_diversity = len(sources) / 3  # 最多3种来源
         domain_diversity = min(len(domains) / len(experts), 1.0)
+        style_diversity = len(thinking_styles) / len(experts)
 
-        return (source_diversity + domain_diversity) / 2
+        return (domain_diversity + style_diversity) / 2
 
     @staticmethod
     def _calculate_relevance_score(experts: list[ExpertProfile]) -> float:

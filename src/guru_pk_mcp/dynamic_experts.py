@@ -1,5 +1,5 @@
 """
-动态专家生成系统
+动态专家生成系统 - 提供专家推荐的原则性指导
 """
 
 from typing import Any
@@ -24,8 +24,11 @@ class DynamicExpertManager:
         """清除当前专家"""
         self.current_experts = {}
 
-    def validate_expert_data(self, expert_data: dict[str, Any]) -> bool:
+    def validate_expert_data(self, expert_data: dict[str, Any] | None) -> bool:
         """验证专家数据完整性"""
+        if expert_data is None:
+            return False
+
         required_fields = [
             "name",
             "description",
@@ -58,167 +61,110 @@ class DynamicExpertManager:
         ]
 
 
-def analyze_question_profile(question: str) -> dict[str, Any]:
-    """分析问题特征和复杂度"""
+def get_question_analysis_guidance() -> str:
+    """获取问题分析指导原则（供MCP Host端LLM使用）"""
+    return """
+# 问题分析指导原则
 
-    # 处理None输入
-    if question is None:
-        question = ""
+## 分析维度
+请从以下维度分析问题：
 
-    # 问题长度分析
-    word_count = len(question.split())
-    char_count = len(question)
+### 1. 问题复杂度
+- 简单问题：表述清晰、答案相对明确
+- 中等复杂度：涉及多个因素、需要权衡
+- 高复杂度：多领域交叉、存在争议、需要深度思考
 
-    # 简单的复杂度评估 - 考虑中文文本特点
-    base_score = 1
-    # 对于中文，主要看字符数
-    if char_count > 20:
-        base_score += min(6, char_count // 15)
-    # 英文看词数
-    if word_count > 5:
-        base_score += min(3, word_count // 3)
-    complexity_score = min(10, base_score)
+### 2. 问题类型
+- 方法咨询："如何"、"怎么"类问题
+- 原因分析："为什么"、"原因"类问题
+- 决策支持："选择"、"决策"类问题
+- 趋势预测："未来"、"趋势"类问题
+- 对比分析："比较"、"对比"类问题
 
-    # 领域识别关键词
-    domains = {
-        "商业": [
-            "商业",
-            "创业",
-            "企业",
-            "管理",
-            "营销",
-            "投资",
-            "公司",
-            "市场",
-            "经营",
-        ],
-        "科技": ["科技", "技术", "AI", "人工智能", "软件", "互联网", "数据", "算法"],
-        "哲学": ["哲学", "思维", "价值观", "道德", "伦理", "真理", "存在", "意义"],
-        "心理": ["心理", "情绪", "行为", "认知", "感情", "压力", "焦虑", "自我"],
-        "教育": ["教育", "学习", "教学", "知识", "成长", "培养", "发展"],
-        "社会": ["社会", "文化", "政治", "制度", "法律", "公共", "社区"],
-        "健康": ["健康", "医疗", "身体", "养生", "运动", "营养", "心理健康"],
-        "创新": ["创新", "创造", "发明", "变革", "突破", "改进", "设计"],
-        "领导": ["领导", "管理", "团队", "组织", "决策", "影响力", "沟通"],
-        "战略": ["战略", "规划", "目标", "竞争", "优势", "布局", "发展"],
-    }
+### 3. 领域识别
+识别问题所涉及的主要领域：
+- 商业管理：企业经营、投资、市场营销
+- 科技创新：技术发展、人工智能、数字化
+- 哲学思辨：价值观、道德伦理、存在意义
+- 心理行为：情绪管理、认知偏差、人际关系
+- 教育成长：学习方法、知识体系、能力培养
+- 社会文化：制度设计、文化传承、公共政策
+- 健康生活：身心健康、生活方式、养生保健
+- 创新设计：创意思维、产品设计、用户体验
+- 领导管理：团队建设、决策制定、沟通协调
+- 战略规划：长期发展、竞争优势、资源配置
 
-    identified_domains = []
-    for domain, keywords in domains.items():
-        if any(keyword in question for keyword in keywords):
-            identified_domains.append(domain)
-
-    # 问题类型分析
-    question_types = []
-    if "如何" in question or "怎么" in question:
-        question_types.append("方法咨询")
-    if "为什么" in question or "原因" in question:
-        question_types.append("原因分析")
-    if "选择" in question or "决策" in question:
-        question_types.append("决策支持")
-    if "未来" in question or "趋势" in question:
-        question_types.append("趋势预测")
-    if "比较" in question or "对比" in question:
-        question_types.append("对比分析")
-
-    return {
-        "question": question,
-        "word_count": word_count,
-        "char_count": char_count,
-        "complexity_score": complexity_score,
-        "identified_domains": identified_domains,
-        "question_types": question_types,
-        "analysis_timestamp": "2024-01-01T00:00:00Z",  # 实际应该使用真实时间
-    }
+## 分析要求
+- 准确识别问题的核心要素
+- 判断问题的复杂程度和讨论深度需求
+- 识别相关的知识领域和专业背景
+- 考虑不同视角和观点的价值
+"""
 
 
-def get_recommendation_strategy(question_profile: dict[str, Any]) -> str:
-    """根据问题特征生成推荐策略"""
+def get_expert_recommendation_guidance() -> str:
+    """获取专家推荐指导原则（供MCP Host端LLM使用）"""
+    return """
+# 专家推荐指导原则
 
-    domains = question_profile.get("identified_domains", [])
-    question_types = question_profile.get("question_types", [])
-    complexity = question_profile.get("complexity_score", 5)
+## 推荐策略
 
-    strategy = "# 专家推荐策略\n\n"
+### 1. 多样性原则
+- 确保专家背景多元化，避免观点单一
+- 平衡理论专家与实践专家
+- 考虑不同文化背景和思维方式
 
-    # 基于领域的推荐
-    if domains:
-        strategy += f"## 领域分析\n识别到的相关领域：{', '.join(domains)}\n\n"
+### 2. 互补性原则
+- 选择能够相互补充的专家组合
+- 确保覆盖问题的主要方面
+- 避免专家之间过度重叠
 
-        if "商业" in domains:
-            strategy += "- 建议包含商业实践专家（如企业家、投资人、管理大师）\n"
-        if "哲学" in domains:
-            strategy += "- 建议包含哲学思辨专家（如古代哲学家、现代专家）\n"
-        if "科技" in domains:
-            strategy += "- 建议包含科技创新专家（如技术领袖、科学家）\n"
-        if "心理" in domains:
-            strategy += "- 建议包含心理学专家（如心理学家、行为学家）\n"
+### 3. 针对性原则
+- 根据问题类型选择合适的专家
+- 考虑问题的复杂度和深度需求
+- 匹配专家的专业能力与问题需求
 
-    # 基于问题类型的推荐
-    if question_types:
-        strategy += (
-            f"\n## 问题类型分析\n识别到的问题类型：{', '.join(question_types)}\n\n"
-        )
+### 4. 平衡性原则
+- 避免某一种观点过于主导
+- 确保不同立场都有代表
+- 维持讨论的客观性和公正性
 
-        if "方法咨询" in question_types:
-            strategy += "- 需要实践型专家，能提供具体可行的方法\n"
-        if "原因分析" in question_types:
-            strategy += "- 需要分析型专家，善于深度思考和因果分析\n"
-        if "决策支持" in question_types:
-            strategy += "- 需要决策型专家，具有丰富的决策经验\n"
-        if "趋势预测" in question_types:
-            strategy += "- 需要前瞻型专家，具有未来洞察力\n"
+## 专家类型推荐
 
-    # 基于复杂度的推荐
-    strategy += f"\n## 复杂度分析\n问题复杂度：{complexity}/10\n\n"
+### 按问题类型推荐
+- **方法咨询**：实践型专家，具有丰富实操经验
+- **原因分析**：分析型专家，善于深度思考和逻辑推理
+- **决策支持**：决策型专家，具有丰富的决策经验和框架
+- **趋势预测**：前瞻型专家，具有未来洞察力和预判能力
+- **对比分析**：综合型专家，能够客观比较不同方案
 
-    if complexity >= 8:
-        strategy += "- 高复杂度问题，建议选择理论深度强的专家\n"
-        strategy += "- 需要多元化视角，确保全面性\n"
-    elif complexity >= 5:
-        strategy += "- 中等复杂度问题，平衡理论与实践\n"
-        strategy += "- 需要互补性强的专家组合\n"
-    else:
-        strategy += "- 相对简单问题，注重实用性和可操作性\n"
-        strategy += "- 选择表达清晰、善于简化的专家\n"
+### 按复杂度推荐
+- **高复杂度**：理论深度强的专家，能够处理复杂问题
+- **中等复杂度**：理论与实践并重的专家
+- **低复杂度**：实用性强、表达清晰的专家
 
-    return strategy
+### 按领域推荐
+- **商业管理**：企业家、投资人、管理学者
+- **科技创新**：技术领袖、科学家、创新思想家
+- **哲学思辨**：哲学家、思想家、伦理学者
+- **心理行为**：心理学家、行为学家、认知专家
+- **教育成长**：教育家、学习专家、发展心理学家
+- **社会文化**：社会学家、文化学者、政策专家
+- **健康生活**：医学专家、健康管理专家、生活方式专家
+- **创新设计**：设计师、创意专家、用户体验专家
+- **领导管理**：领导力专家、组织行为专家、沟通专家
+- **战略规划**：战略专家、管理咨询专家、商业分析师
 
+## 质量检查
 
-def validate_expert_selection(experts: list[dict[str, Any]]) -> dict[str, Any]:
-    """验证专家选择的质量"""
+### 必要条件
+- 每位专家都有明确的专业背景
+- 专家之间具有差异化的观点
+- 专家组合能够覆盖问题的主要方面
 
-    if len(experts) != 3:
-        return {"valid": False, "reason": "必须选择3位专家"}
-
-    required_fields = [
-        "name",
-        "emoji",
-        "description",
-        "core_traits",
-        "speaking_style",
-        "base_prompt",
-    ]
-
-    for expert in experts:
-        for field in required_fields:
-            if field not in expert or not expert[field]:
-                return {
-                    "valid": False,
-                    "reason": f"专家 {expert.get('name', '未知')} 缺少必要字段: {field}",
-                }
-
-    # 检查专家名称是否重复
-    names = [expert["name"] for expert in experts]
-    if len(set(names)) != len(names):
-        return {"valid": False, "reason": "专家名称不能重复"}
-
-    # 检查多样性（简单检查）
-    all_traits = []
-    for expert in experts:
-        all_traits.extend(expert["core_traits"])
-
-    if len(set(all_traits)) < len(all_traits) * 0.7:  # 70%的特质应该是独特的
-        return {"valid": False, "reason": "专家特质重复度过高，缺乏多样性"}
-
-    return {"valid": True, "reason": "专家选择质量良好"}
+### 优化建议
+- 避免专家名称重复
+- 确保专家特质的多样性
+- 平衡不同思维方式和方法论
+- 考虑性别、年龄、文化背景的多元化
+"""

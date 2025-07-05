@@ -13,14 +13,13 @@ from mcp.types import TextContent
 from .config import ConfigManager
 from .dynamic_experts import (
     DynamicExpertManager,
-    analyze_question_profile,
-    get_recommendation_strategy,
+    get_expert_recommendation_guidance,
+    get_question_analysis_guidance,
 )
 from .models import PKSession
 from .personas import (
     format_persona_info,
     generate_round_prompt,
-    get_expert_selection_guidance,
 )
 from .session_manager import SessionManager
 
@@ -108,7 +107,7 @@ class GuruPKServer:
                 ),
                 types.Tool(
                     name="get_smart_recommendation_guidance",
-                    description="获取智能专家推荐指导（MCP Host端LLM使用）",
+                    description="获取专家推荐的原则性指导（MCP Host端LLM使用）",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -122,7 +121,7 @@ class GuruPKServer:
                 ),
                 types.Tool(
                     name="analyze_question_profile",
-                    description="深度分析问题特征和复杂度（新功能）",
+                    description="获取问题分析的原则性指导（MCP Host端LLM使用）",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -429,7 +428,7 @@ class GuruPKServer:
                     if not self.expert_manager.validate_expert_data(persona):
                         return [
                             TextContent(
-                                type="text", text=f"❌ 专家 {i+1} 数据格式不完整"
+                                type="text", text=f"❌ 专家 {i + 1} 数据格式不完整"
                             )
                         ]
                     expert_dict[persona["name"]] = persona
@@ -469,7 +468,7 @@ start_pk_session({{
                     return [
                         TextContent(
                             type="text",
-                            text=f"❌ 专家 {i+1} 必须是包含完整专家信息的字典",
+                            text=f"❌ 专家 {i + 1} 必须是包含完整专家信息的字典",
                         )
                     ]
 
@@ -485,7 +484,7 @@ start_pk_session({{
             # 生成启动信息
             personas_info = "\n".join(
                 [
-                    f"{i+1}. {format_persona_info(p, expert_dict)}"
+                    f"{i + 1}. {format_persona_info(p, expert_dict)}"
                     for i, p in enumerate(session.selected_personas)
                 ]
             )
@@ -778,14 +777,14 @@ start_pk_session({{
     async def _handle_get_smart_recommendation_guidance(
         self, arguments: dict[str, Any]
     ) -> list[TextContent]:
-        """获取智能专家推荐指导（MCP Host端LLM使用）"""
+        """获取专家推荐的原则性指导（MCP Host端LLM使用）"""
         try:
             question = arguments.get("question", "")
             if not question:
                 return [TextContent(type="text", text="❌ 请提供要分析的问题")]
 
-            # 使用新的专家选择指导系统
-            guidance = get_expert_selection_guidance(question)
+            # 返回原则性指导，供MCP Host端LLM使用
+            guidance = get_expert_recommendation_guidance()
 
             return [TextContent(type="text", text=guidance)]
         except Exception as e:
@@ -945,7 +944,7 @@ start_pk_session({{
 🎉 **三位专家的讨论已经结束**
 📊 **最终统计**:
 - 总回答数: {len([r for round_responses in session.responses.values() for r in round_responses.values()])}
-- 参与专家: {', '.join(session.selected_personas)}
+- 参与专家: {", ".join(session.selected_personas)}
 
 使用 `view_session_history` 查看完整讨论记录。""",
                     )
@@ -1009,17 +1008,17 @@ start_pk_session({{
 
 📊 **会话状态报告**
 
-**会话ID**: `{status['session_id']}`
-**问题**: {status['question']}
+**会话ID**: `{status["session_id"]}`
+**问题**: {status["question"]}
 
 **当前进展**:
-- 🎯 **当前轮次**: {status['round_name']}
-- 👤 **当前发言者**: {self._format_expert_info(status['current_persona']) if status['current_persona'] else '已完成'}
+- 🎯 **当前轮次**: {status["round_name"]}
+- 👤 **当前发言者**: {self._format_expert_info(status["current_persona"]) if status["current_persona"] else "已完成"}
 - 📈 **完成进度**: {progress}
 
-**参与专家**: {', '.join([self._format_expert_info(p) for p in status['personas']])}
+**参与专家**: {", ".join([self._format_expert_info(p) for p in status["personas"]])}
 
-**状态**: {'✅ 已完成' if status['is_completed'] else '🔄 进行中'}"""
+**状态**: {"✅ 已完成" if status["is_completed"] else "🔄 进行中"}"""
 
             return [TextContent(type="text", text=result)]
 
@@ -1099,7 +1098,7 @@ start_pk_session({{
 **会话ID**: `{session.session_id}`
 **问题**: {session.user_question}
 **创建时间**: {session.created_at}
-**参与专家**: {', '.join([self._format_expert_info(p) for p in session.selected_personas])}
+**参与专家**: {", ".join([self._format_expert_info(p) for p in session.selected_personas])}
 
 ---
 
@@ -1195,7 +1194,7 @@ start_pk_session({{
 **会话**: {session.session_id}
 **问题**: {session.user_question}
 **当前轮次**: 第{round_num}轮
-**当前专家**: {self._format_expert_info(current_persona) if current_persona else '已完成'}
+**当前专家**: {self._format_expert_info(current_persona) if current_persona else "已完成"}
 
 ---
 
@@ -1387,7 +1386,7 @@ start_pk_session({{
 📍 **当前状态**:
 - **轮次**: {round_names.get(session.current_round, f"第{session.current_round}轮")}
 - **待发言**: {self._format_expert_info(current_persona)}
-- **进度**: {status['completed_responses']}/{len(session.selected_personas) * 3 + 1}
+- **进度**: {status["completed_responses"]}/{len(session.selected_personas) * 3 + 1}
 
 💡 使用 `get_persona_prompt` 获取当前专家的角色提示。"""
 
@@ -1426,7 +1425,7 @@ start_pk_session({{
 **会话ID**: {session.session_id}
 **问题**: {session.user_question}
 **创建时间**: {session.created_at}
-**参与专家**: {', '.join(session.selected_personas)}
+**参与专家**: {", ".join(session.selected_personas)}
 
 ---
 
@@ -1596,7 +1595,7 @@ start_pk_session({{"question": "{question}"}})
 1. **启动PK会话**：
 ```
 start_pk_session({
-  "question": "如何在AI时代保持竞争力？",
+            "question": "如何在AI时代保持竞争力？",
   "personas": ["苏格拉底", "埃隆马斯克", "查理芒格"]
 })
 ```
@@ -1604,7 +1603,7 @@ start_pk_session({
 2. **获取智能推荐**：
 ```
 recommend_personas({
-  "question": "我想创业，但不知道选什么方向"
+            "question": "我想创业，但不知道选什么方向"
 })
 ```
 
@@ -1785,7 +1784,7 @@ set_language({"language": "english"})
 - **总讨论字数**: {total_chars:,} 字符
 
 ## 📅 活跃度
-- **最近会话**: {sessions[0]['created_at'][:19].replace('T', ' ')}
+- **最近会话**: {sessions[0]["created_at"][:19].replace("T", " ")}
 - **本周会话**: {len(recent_sessions)}个"""
 
             result += """
@@ -1903,29 +1902,20 @@ set_language({"language": "english"})
     async def _handle_analyze_question_profile(
         self, arguments: dict[str, Any]
     ) -> list[TextContent]:
-        """深度分析问题特征和复杂度"""
+        """获取问题分析的原则性指导"""
         try:
             question = arguments.get("question", "").strip()
             if not question:
                 return [TextContent(type="text", text="❌ 请提供要分析的问题")]
 
-            # 使用dynamic_experts模块进行分析
-            profile = analyze_question_profile(question)
-            strategy = get_recommendation_strategy(profile)
+            # 返回问题分析的原则性指导，供MCP Host端LLM使用
+            guidance = get_question_analysis_guidance()
 
-            result = f"""📊 **问题特征分析报告**
+            result = f"""📊 **问题分析指导**
 
-**问题**: {profile['question']}
+**待分析问题**: {question}
 
-## 🎯 基本特征
-- **字数**: {profile['word_count']} 字
-- **字符数**: {profile['char_count']} 字符
-- **复杂度评分**: {profile['complexity_score']}/10
-- **涉及领域**: {', '.join(profile['identified_domains']) if profile['identified_domains'] else '通用领域'}
-- **问题类型**: {', '.join(profile['question_types']) if profile['question_types'] else '一般咨询'}
-
-## 📋 推荐策略
-{strategy}
+{guidance}
 
 ## 💡 建议
 基于分析结果，建议使用 `generate_dynamic_experts` 工具生成专门的专家推荐。"""
@@ -1950,14 +1940,8 @@ set_language({"language": "english"})
                     )
                 ]
 
-            # 分析问题特征
-            from .dynamic_experts import (
-                analyze_question_profile,
-                get_recommendation_strategy,
-            )
-
-            question_profile = analyze_question_profile(question)
-            strategy = get_recommendation_strategy(question_profile)
+            # 获取动态专家生成指导
+            guidance = get_expert_recommendation_guidance()
 
             return [
                 TextContent(
@@ -1966,12 +1950,11 @@ set_language({"language": "english"})
 
 **问题**: {question}
 
-## 📊 **问题分析**
-{strategy}
+{guidance}
 
 ## 🎯 **MCP Host端LLM任务**
 
-请根据以上分析，为这个问题直接生成 **3位专家**，然后立即调用 start_pk_session 启动辩论。
+请根据以上指导原则，为这个问题直接生成 **3位专家**，然后立即调用 start_pk_session 启动辩论。
 
 ### 专家数据格式：
 ```json
@@ -2136,12 +2119,12 @@ start_pk_session({{
                     result += f"""
 
 ### {name}
-- **专业背景**: {profile['background']}
-- **思维风格**: {profile['thinking_style']}
-- **知识领域**: {', '.join(profile['knowledge_domains'])}
-- **核心特质**: {', '.join(profile['personality_traits'])}
-- **来源**: {profile['source']}
-- **相关度**: {profile['relevance_score']:.2f}"""
+- **专业背景**: {profile["background"]}
+- **思维风格**: {profile["thinking_style"]}
+- **知识领域**: {", ".join(profile["knowledge_domains"])}
+- **核心特质**: {", ".join(profile["personality_traits"])}
+- **来源**: {profile["source"]}
+- **相关度**: {profile["relevance_score"]:.2f}"""
             else:
                 result += "\n暂无专家档案信息。"
 
@@ -2151,12 +2134,12 @@ start_pk_session({{
                 result += f"""
 
 ## 🎯 推荐分析
-- **推荐理由**: {details['reason']}
-- **多样性评分**: {details['diversity_score']:.2f}
-- **相关性评分**: {details['relevance_score']:.2f}
+- **推荐理由**: {details["reason"]}
+- **多样性评分**: {details["diversity_score"]:.2f}
+- **相关性评分**: {details["relevance_score"]:.2f}
 
 ### 🔮 预期视角
-{chr(10).join(['- ' + p for p in details['expected_perspectives']]) if details['expected_perspectives'] else '- 暂无预期视角信息'}"""
+{chr(10).join(["- " + p for p in details["expected_perspectives"]]) if details["expected_perspectives"] else "- 暂无预期视角信息"}"""
 
             # 专家关系
             if insights["relationships"]:
