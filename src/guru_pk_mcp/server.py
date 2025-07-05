@@ -536,33 +536,6 @@ start_pk_session({{
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 智能推荐失败: {str(e)}")]
 
-
-    def _normalize_persona_name(self, name: str) -> str:
-        """标准化专家名称，移除常见的差异字符"""
-        # 移除中文标点符号和空格，统一为标准格式
-        import re
-
-        # 移除中文句号、英文句号、空格、全角空格等
-        normalized = re.sub(r"[·\.\s\u3000]", "", name.strip())
-        return normalized
-
-    def _find_matching_persona(
-        self, input_name: str, all_personas: dict[str, Any]
-    ) -> str | None:
-        """智能匹配专家名称，容忍常见的格式差异"""
-        input_normalized = self._normalize_persona_name(input_name)
-
-        # 首先尝试精确匹配
-        if input_name in all_personas:
-            return input_name
-
-        # 然后尝试标准化匹配
-        for persona_name in all_personas:
-            if self._normalize_persona_name(persona_name) == input_normalized:
-                return persona_name
-
-        return None
-
     def _get_smart_recommendation(self, question: str) -> dict[str, Any] | None:
         """根据问题内容智能推荐专家组合"""
         try:
@@ -1561,7 +1534,6 @@ start_pk_session({{"question": "{question}"}})
 ### 🔧 专家管理
 - `generate_dynamic_experts` - 动态生成专家候选
 - `analyze_question_profile` - 深度分析问题特征
-- `save_custom_persona` - 保存自定义专家数据
 
 ### 📊 会话管理
 - `view_session_history` - 查看历史会话记录
@@ -1646,7 +1618,9 @@ set_language: english
 ---
 *由 Guru-PK MCP 智能专家生成系统提供 - 让思想碰撞，让智慧闪光！*"""
 
-        return [TextContent(type="text", text=help_text)]
+        # 使用预格式化文本确保原始格式显示
+        formatted_help = f"```\n{help_text}\n```"
+        return [TextContent(type="text", text=formatted_help)]
 
         # Phase 3 工具: 统计分析
 
