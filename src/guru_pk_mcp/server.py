@@ -1982,7 +1982,6 @@ start_pk_session({{
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 专家推荐生成失败: {str(e)}")]
 
-
     async def _handle_get_expert_insights(
         self, arguments: dict[str, Any]
     ) -> list[TextContent]:

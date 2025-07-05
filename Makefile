@@ -6,7 +6,8 @@ help:
 	@echo "可用命令:"
 	@echo "  install     - 安装项目依赖"
 	@echo "  dev-install - 安装开发依赖"
-	@echo "  refresh-uvx - 刷新UVX缓存"
+	@echo "  refresh-uvx - 刷新UVX缓存（本地开发）"
+	@echo "  refresh-uvx-pypi - 刷新UVX缓存（PyPI安装）"
 	@echo "  install-and-refresh - 安装并刷新UVX缓存"
 	@echo "  format      - 格式化代码"
 	@echo "  lint        - 代码质量检查"
@@ -26,8 +27,12 @@ install:
 	uv pip install -e .
 
 refresh-uvx:
-	@echo "🔄 刷新UVX缓存..."
+	@echo "🔄 刷新UVX缓存（本地开发）..."
 	uvx --refresh-package guru-pk-mcp --from . python -c "print('✅ UVX缓存已刷新')"
+
+refresh-uvx-pypi:
+	@echo "🔄 刷新UVX缓存（PyPI安装）..."
+	uvx --refresh-package guru-pk-mcp --from guru-pk-mcp python -c "print('✅ UVX缓存已刷新')"
 
 install-and-refresh: install refresh-uvx
 

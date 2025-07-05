@@ -65,7 +65,11 @@ pip install uv
 >   ```
 >
 > - 此命令会从PyPI获取并安装最新发布的版本
-> - 对于本地开发场景，如需刷新uvx缓存，请使用`make refresh-uvx`
+> - 如果遇到缓存问题，可以强制刷新：
+>
+>   ```bash
+>   uvx --refresh-package guru-pk-mcp --from guru-pk-mcp python -c "print('✅ UVX缓存已刷新')"
+>   ```
 >
 > **注意**:
 >
@@ -87,6 +91,11 @@ pip install uv
   }
 }
 ```
+
+> **本地开发说明**:
+>
+> - 对于本地开发场景，如需刷新uvx缓存，请使用`make refresh-uvx`
+> - 此命令强制UVX重新安装本地包，确保使用最新的代码更改
 
 ### 3. 开始使用
 
