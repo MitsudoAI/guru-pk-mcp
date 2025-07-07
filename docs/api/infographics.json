@@ -1,0 +1,99 @@
+{
+  "infographics": [
+    {
+      "id": "0eb08d91",
+      "title": "AI时代开发模式专家辩论",
+      "question": "专家辩论问题",
+      "date": "2025-07-07",
+      "created": "2025-07-07T21:26:18.068518Z",
+      "updated": "2025-07-07T21:25:21.074196Z",
+      "filename": "infographic_0eb08d91.html",
+      "path": "infographics/infographic_0eb08d91.html",
+      "experts": [
+        {
+          "name": "Kent Beck",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "Dan North",
+          "emoji": "🎯",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "Robert C. Martin",
+          "emoji": "🏗",
+          "role": "领域专家",
+          "category": "philosophy"
+        }
+      ],
+      "summary": "Kent Beck、Dan North等3位专家就AI时代开发模式专家辩论展开深入讨论，探讨相关领域的核心问题与解决方案。",
+      "category": "philosophy",
+      "tags": [
+        "AI",
+        "开发"
+      ],
+      "rounds": 4,
+      "wordCount": 440,
+      "status": "completed",
+      "featured": false
+    },
+    {
+      "id": "sample",
+      "title": "四轮专家辩论：Prompt模板优化的设计智慧",
+      "question": "专家辩论问题",
+      "date": "2025-07-07",
+      "created": "2025-07-07T13:16:10.540528Z",
+      "updated": "2025-07-07T13:12:43.160932Z",
+      "filename": "expert_debate_infographic_sample.html",
+      "path": "infographics/expert_debate_infographic_sample.html",
+      "experts": [
+        {
+          "name": "爱德华·塔夫特",
+          "emoji": "📊",
+          "role": "信息设计大师",
+          "category": "design"
+        },
+        {
+          "name": "原研哉",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "大卫·麦坎德利斯",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        }
+      ],
+      "summary": "爱德华·塔夫特、原研哉等3位专家就四轮专家辩论：Prompt模板优化的设计智慧展开深入讨论，探讨相关领域的核心问题与解决方案。",
+      "category": "philosophy",
+      "tags": [
+        "设计"
+      ],
+      "rounds": 4,
+      "wordCount": 245,
+      "status": "completed",
+      "featured": true
+    }
+  ],
+  "metadata": {
+    "total": 2,
+    "lastUpdated": "2025-07-07T22:45:51.613660Z",
+    "categories": {
+      "philosophy": 2
+    },
+    "experts": {
+      "total": 6,
+      "unique": 6
+    },
+    "tags": [
+      "AI",
+      "开发",
+      "设计"
+    ]
+  }
+}

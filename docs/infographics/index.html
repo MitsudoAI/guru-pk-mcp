@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信息图浏览 - 专家辩论可视化</title>
+    <meta name="description" content="浏览所有专家辩论信息图，探索AI智能体的思维碰撞过程。">
+    <link rel="stylesheet" href="../assets/css/tufte.css">
+    <style>
+        /* 信息图浏览专用样式 */
+        .browse-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .browse-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        .browse-subtitle {
+            font-size: 1.125rem;
+            text-align: center;
+            opacity: 0.9;
+        }
+        
+        .breadcrumb {
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: #666;
+        }
+        
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        
+        .view-modes {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .view-mode {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e5e5;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .view-mode:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .view-mode.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .grid-view .infographics-grid {
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        }
+        
+        .list-view .infographics-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .list-view .infographic-card {
+            display: flex;
+            padding: 1rem;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .list-view .card-content {
+            flex: 1;
+        }
+        
+        .list-view .card-title {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .list-view .card-summary {
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sort-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .sort-label {
+            font-size: 0.875rem;
+            color: #666;
+        }
+        
+        .sort-select {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 浏览页面头部 -->
+    <header class="browse-header">
+        <div class="container">
+            <h1 class="browse-title">信息图浏览</h1>
+            <p class="browse-subtitle">探索AI智能体的思维碰撞与智慧综合</p>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="main">
+        <div class="container">
+            <!-- 面包屑导航 -->
+            <nav class="breadcrumb">
+                <a href="../index.html">首页</a> / 信息图浏览
+            </nav>
+
+            <!-- 视图控制 -->
+            <div class="controls">
+                <div class="left-controls">
+                    <div class="view-modes">
+                        <button class="view-mode active" data-view="grid">网格视图</button>
+                        <button class="view-mode" data-view="list">列表视图</button>
+                    </div>
+                </div>
+                
+                <div class="right-controls">
+                    <div class="sort-controls">
+                        <span class="sort-label">排序：</span>
+                        <select class="sort-select" id="sortSelect">
+                            <option value="date-desc">最新优先</option>
+                            <option value="date-asc">最旧优先</option>
+                            <option value="title-asc">标题A-Z</option>
+                            <option value="title-desc">标题Z-A</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 搜索和过滤 -->
+            <div class="search-filter">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索问题、专家或关键词..." class="search-input">
+                    <button class="search-button" onclick="performSearch()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">全部</button>
+                    <button class="filter-tab" data-filter="recent">最新</button>
+                    <button class="filter-tab" data-filter="tech">技术</button>
+                    <button class="filter-tab" data-filter="business">商业</button>
+                    <button class="filter-tab" data-filter="philosophy">哲学</button>
+                </div>
+            </div>
+
+            <!-- 信息图网格 -->
+            <div class="infographics-grid grid-view" id="infographicsGrid">
+                <!-- 信息图卡片将通过JavaScript动态加载 -->
+            </div>
+
+            <!-- 加载状态 -->
+            <div class="loading" id="loading">
+                <div class="loading-text">正在加载信息图...</div>
+            </div>
+
+            <!-- 空状态 -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-icon">📊</div>
+                <div class="empty-text">暂无符合条件的信息图</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页面底部 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p class="footer-text">
+                    遵循 <a href="https://www.edwardtufte.com/tufte/" target="_blank" rel="noopener">爱德华·塔夫特</a> 设计原则 | 
+                    由 <a href="https://github.com/MitsudoAI/guru-pk-mcp" target="_blank" rel="noopener">GURU-PK MCP</a> 生成
+                </p>
+                <div class="footer-stats">
+                    <span id="totalCount">0</span> 个信息图
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+    <script>
+        // 浏览页面特定功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 视图模式切换
+            const viewModes = document.querySelectorAll('.view-mode');
+            const grid = document.getElementById('infographicsGrid');
+            
+            viewModes.forEach(mode => {
+                mode.addEventListener('click', function() {
+                    viewModes.forEach(m => m.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const viewType = this.dataset.view;
+                    grid.className = `infographics-grid ${viewType}-view`;
+                });
+            });
+            
+            // 排序功能
+            const sortSelect = document.getElementById('sortSelect');
+            sortSelect.addEventListener('change', function() {
+                sortInfographics(this.value);
+            });
+        });
+        
+        function sortInfographics(sortBy) {
+            // 排序逻辑将在main.js中实现
+            if (window.sortInfographicsBy) {
+                window.sortInfographicsBy(sortBy);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+# GitHub Pages 配置文件
+# 专家辩论信息图展示网站
+
+# 网站基本信息
+title: "专家辩论信息图"
+description: "基于爱德华·塔夫特设计原则的AI智能体思维可视化"
+author: "Guru-PK MCP System"
+url: ""  # GitHub Pages 会自动设置
+baseurl: ""  # 如果不是根目录，请设置子路径
+
+# 网站设置
+lang: zh-CN
+timezone: Asia/Shanghai
+
+# GitHub Pages 设置
+source: "."
+destination: "_site"
+exclude:
+  - "*.md"
+  - "*.json"
+  - "*.py"
+  - "*.sh"
+  - ".git*"
+  - "Gemfile*"
+  - "node_modules"
+  - "package*.json"
+  - "scripts"
+  - "data"
+  - "src"
+  - "tests"
+  - "uv.lock"
+  - "pyproject.toml"
+  - "Makefile"
+  - "LICENSE"
+
+# 包含的文件
+include:
+  - "_*"
+  - "api"
+  - "assets"
+  - "infographics"
+
+# 主题设置
+theme: null  # 使用自定义样式，不使用 Jekyll 主题
+
+# Jekyll 插件
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# 网站元数据
+metadata:
+  keywords: 
+    - "信息图"
+    - "数据可视化" 
+    - "专家辩论"
+    - "AI智能体"
+    - "塔夫特设计"
+    - "思维可视化"
+  
+  social:
+    github: "anthropics/claude-code"
+    
+  contact:
+    email: "noreply@anthropic.com"
+
+# SEO 设置
+seo:
+  name: "专家辩论信息图"
+  type: "WebSite"
+  links:
+    - "https://claude.ai/code"
+
+# 网站结构
+collections:
+  infographics:
+    output: true
+    permalink: /infographics/:name/
+
+# 页面默认设置
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "infographics"
+      type: "pages"
+    values:
+      layout: "infographic"
+
+# 构建设置
+markdown: kramdown
+highlighter: rouge
+incremental: false
+safe: true
+lsi: false
+
+# Kramdown 设置
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+
+# 性能优化
+compress_html:
+  clippings: all
+  comments: ["<!-- ", " -->"]
+  endings: all
+  ignore:
+    envs: [development]
+  blanklines: false
+  profile: false
+  startings: []
+
+# 静态文件设置
+static_files:
+  - "*.html"
+  - "*.css"
+  - "*.js"
+  - "*.json"
+  - "*.png"
+  - "*.jpg"
+  - "*.jpeg"
+  - "*.gif"
+  - "*.svg"
+  - "*.ico"
+
+# MIME 类型
+mime_types:
+  html: text/html
+  css: text/css
+  js: application/javascript
+  json: application/json
+
+# 开发设置
+livereload: false
+port: 4000
+host: 127.0.0.1
+
+# 备注
+# 本配置文件用于 GitHub Pages 静态网站生成
+# 遵循塔夫特设计原则：简洁、功能性、信息密度高
+# 支持响应式设计和无障碍访问

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专家辩论信息图 - 塔夫特风格可视化</title>
+    <meta name="description" content="基于爱德华·塔夫特设计原则的专家辩论信息图集合，展示AI智能体四轮PK的思维碰撞与智慧综合。">
+    <link rel="stylesheet" href="assets/css/tufte.css">
+</head>
+<body>
+    <!-- 页面头部 -->
+    <header class="header">
+        <div class="container">
+            <h1 class="title">专家辩论信息图</h1>
+            <p class="subtitle">基于爱德华·塔夫特设计原则的AI智能体思维可视化</p>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="main">
+        <div class="container">
+            <!-- 搜索和过滤区域 -->
+            <div class="controls">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索问题、专家或关键词..." class="search-input">
+                    <button class="search-button" onclick="performSearch()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">全部</button>
+                    <button class="filter-tab" data-filter="recent">最新</button>
+                    <button class="filter-tab" data-filter="tech">技术</button>
+                    <button class="filter-tab" data-filter="business">商业</button>
+                    <button class="filter-tab" data-filter="philosophy">哲学</button>
+                </div>
+            </div>
+
+            <!-- 信息图网格 -->
+            <div class="infographics-grid" id="infographicsGrid">
+                <!-- 信息图卡片将通过JavaScript动态加载 -->
+            </div>
+
+            <!-- 加载状态 -->
+            <div class="loading" id="loading">
+                <div class="loading-text">正在加载信息图...</div>
+            </div>
+
+            <!-- 空状态 -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-icon">📊</div>
+                <div class="empty-text">暂无符合条件的信息图</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页面底部 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p class="footer-text">
+                    遵循 <a href="https://www.edwardtufte.com/tufte/" target="_blank" rel="noopener">爱德华·塔夫特</a> 设计原则 | 
+                    由 <a href="https://github.com/MitsudoAI/guru-pk-mcp" target="_blank" rel="noopener">GURU-PK MCP</a> 生成
+                </p>
+                <div class="footer-stats">
+                    <span id="totalCount">0</span> 个信息图
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
