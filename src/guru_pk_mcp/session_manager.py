@@ -123,3 +123,101 @@ class SessionManager:
         # 保存会话
         self.save_session(session)
         return session
+
+    async def export_session_as_infographic(self, session: PKSession) -> str:
+        """导出会话为塔夫特风格的单页动态信息图"""
+
+        # 生成Markdown内容（复用现有逻辑）
+        md_content = self._generate_session_markdown(session)
+
+        # 保存Markdown文件
+        md_file = self.data_dir / f"export_{session.session_id}.md"
+        with open(md_file, "w", encoding="utf-8") as f:
+            f.write(md_content)
+
+        # 读取信息图prompt模板
+        # 统一使用包内的模板文件
+        try:
+            from importlib import resources
+
+            prompt_template = resources.read_text(
+                "guru_pk_mcp.templates", "infographic_spa_prompt.md"
+            )
+        except (ImportError, FileNotFoundError) as e:
+            raise FileNotFoundError(f"信息图prompt模板未找到: {e}") from e
+
+        # 生成HTML信息图文件路径
+        html_file = self.data_dir / f"infographic_{session.session_id}.html"
+
+        # 构造完整的指令内容，直接返回给MCP Host端LLM处理
+        full_prompt = f"""{prompt_template}
+
+{md_content}
+
+---
+
+**重要指令**: 请根据上述塔夫特风格信息图生成指令和专家辩论内容，生成一个完整的HTML文件。HTML文件要求：
+
+1. **单文件形式**: 所有CSS、JavaScript都内联到HTML中
+2. **文件保存**: 将生成的HTML内容保存到文件: `{html_file}`
+3. **自动打开**: 保存完成后使用以下Python代码打开浏览器:
+   ```python
+   import webbrowser
+   webbrowser.open("file://{html_file.absolute()}")
+   ```
+4. **遵循塔夫特原则**: 严格按照上述设计原则实现数据可视化
+5. **响应式设计**: 确保在不同屏幕尺寸下都能正常显示
+
+请立即开始生成HTML信息图文件。"""
+
+        return full_prompt
+
+    def _generate_session_markdown(self, session: PKSession) -> str:
+        """生成会话的Markdown内容（从export_session方法提取）"""
+        md_content = f"""# 专家PK讨论记录
+
+**会话ID**: {session.session_id}
+**问题**: {session.user_question}
+**创建时间**: {session.created_at}
+**参与专家**: {", ".join(session.selected_personas)}
+
+---
+
+"""
+
+        round_names = {
+            1: "🤔 第1轮：独立思考",
+            2: "💬 第2轮：交叉辩论",
+            3: "🎯 第3轮：最终立场",
+            4: "🧠 第4轮：智慧综合",
+        }
+
+        for round_num in sorted(session.responses.keys()):
+            md_content += f"## {round_names.get(round_num, f'第{round_num}轮')}\n\n"
+
+            for persona, response in session.responses[round_num].items():
+                md_content += f"### {persona}\n\n"
+                md_content += f"{response}\n\n---\n\n"
+
+        # Only add final_synthesis if it's different from round 4 content
+        if session.final_synthesis:
+            # Check if final_synthesis is identical to any round 4 response
+            round_4_responses = session.responses.get(4, {})
+            is_duplicate = any(
+                session.final_synthesis == response
+                for response in round_4_responses.values()
+            )
+
+            if not is_duplicate:
+                md_content += f"## 🌟 最终综合方案\n\n{session.final_synthesis}\n\n"
+
+        md_content += f"""## 📊 统计信息
+
+- **总发言数**: {len([r for round_responses in session.responses.values() for r in round_responses.values()])}
+- **字数统计**: {sum(len(r) for round_responses in session.responses.values() for r in round_responses.values()):,} 字符
+- **最后更新**: {session.updated_at}
+
+---
+*由 Guru-PK MCP 系统生成*"""
+
+        return md_content

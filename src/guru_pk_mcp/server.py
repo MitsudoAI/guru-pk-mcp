@@ -278,6 +278,19 @@ class GuruPKServer:
                     },
                 ),
                 types.Tool(
+                    name="export_session_as_infographic",
+                    description="生成塔夫特风格单页动态信息图的完整LLM指令",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "session_id": {
+                                "type": "string",
+                                "description": "会话ID（可选，默认导出当前会话）",
+                            }
+                        },
+                    },
+                ),
+                types.Tool(
                     name="advance_to_next_round",
                     description="手动进入下一轮或下一个专家",
                     inputSchema={
@@ -355,6 +368,8 @@ class GuruPKServer:
                 return await self._handle_view_session_history(arguments)
             elif name == "export_session":
                 return await self._handle_export_session(arguments)
+            elif name == "export_session_as_infographic":
+                return await self._handle_export_session_as_infographic(arguments)
             elif name == "advance_to_next_round":
                 return await self._handle_advance_to_next_round(arguments)
             elif name == "get_usage_statistics":
@@ -1434,6 +1449,35 @@ start_pk_session({{
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 导出失败: {str(e)}")]
 
+    async def _handle_export_session_as_infographic(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """导出会话为塔夫特风格的单页动态信息图"""
+        try:
+            session_id = arguments.get("session_id")
+            if session_id:
+                session = self.session_manager.load_session(session_id)
+                if not session:
+                    return [
+                        TextContent(type="text", text=f"❌ 未找到会话 {session_id}")
+                    ]
+            else:
+                if not self.current_session:
+                    return [
+                        TextContent(
+                            type="text",
+                            text="❌ 没有活跃的会话。请提供 session_id 参数。",
+                        )
+                    ]
+                session = self.current_session
+
+            # 生成信息图内容
+            result = await self.session_manager.export_session_as_infographic(session)
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 信息图导出失败: {str(e)}")]
+
         # Phase 3 工具: 智能推荐专家
 
     async def _handle_recommend_personas(
@@ -1538,6 +1582,7 @@ start_pk_session({{"question": "{question}"}})
 ### 📊 会话管理
 - `view_session_history` - 查看历史会话记录
 - `export_session` - 导出会话为Markdown文件
+- `export_session_as_infographic` - 生成塔夫特风格单页动态信息图的完整指令
 - `export_enhanced_session` - 导出增强分析报告
 - `advance_to_next_round` - 手动进入下一轮/专家
 
