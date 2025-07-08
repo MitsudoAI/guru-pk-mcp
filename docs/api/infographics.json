@@ -1,6 +1,43 @@
 {
   "infographics": [
     {
+      "id": "4fc0e89d",
+      "title": "专家PK辩论：2025大阪万博亲子体验方案",
+      "question": "专家辩论问题",
+      "date": "2025-07-08",
+      "created": "2025-07-08T23:20:45.532255Z",
+      "updated": "2025-07-08T23:20:45.532255Z",
+      "filename": "infographic_4fc0e89d.html",
+      "path": "infographics/infographic_4fc0e89d.html",
+      "experts": [
+        {
+          "name": "玛丽亚·蒙台梭利",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "华特·迪士尼",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "杜威",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        }
+      ],
+      "summary": "玛丽亚·蒙台梭利、华特·迪士尼等3位专家就专家PK辩论：2025大阪万博亲子体验方案展开深入讨论，探讨相关领域的核心问题与解决方案。",
+      "category": "philosophy",
+      "tags": [],
+      "rounds": 4,
+      "wordCount": 225,
+      "status": "completed",
+      "featured": false
+    },
+    {
       "id": "0eb08d91",
       "title": "AI时代开发模式专家辩论",
       "question": "专家辩论问题",
@@ -32,8 +69,8 @@
       "summary": "Kent Beck、Dan North等3位专家就AI时代开发模式专家辩论展开深入讨论，探讨相关领域的核心问题与解决方案。",
       "category": "philosophy",
       "tags": [
-        "AI",
-        "开发"
+        "教育",
+        "旅行"
       ],
       "rounds": 4,
       "wordCount": 440,
@@ -81,14 +118,14 @@
     }
   ],
   "metadata": {
-    "total": 2,
-    "lastUpdated": "2025-07-07T22:53:11.739232Z",
+    "total": 3,
+    "lastUpdated": "2025-07-08T23:23:26.290416Z",
     "categories": {
-      "philosophy": 2
+      "philosophy": 3
     },
     "experts": {
-      "total": 6,
-      "unique": 6
+      "total": 9,
+      "unique": 9
     },
     "tags": [
       "AI",
