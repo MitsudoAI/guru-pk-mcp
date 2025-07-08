@@ -156,7 +156,7 @@ def generate_round_prompt(
 - 体现创新性和突破性思维
 - 为用户提供真正有价值的指导
 
-💡 **提示**：这次精彩的专家辩论结束后，你可以使用 `export_session` 功能将整个讨论过程导出为Markdown文件，方便保存和分享这些宝贵的思维碰撞！"""
+💡 **提示**：这次精彩的专家辩论结束后，你可以使用 `export_enhanced_session` 功能将整个讨论过程导出为Markdown文件，方便保存和分享这些宝贵的思维碰撞！"""
 
     return f"无效的轮次: {round_num}"
 

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI时代开发模式专家辩论 - 塔夫特风格信息图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #333;
+            line-height: 1.4;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 顶部信息条 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .question {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .experts {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .expert {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .expert:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .expert-emoji {
+            font-size: 24px;
+        }
+        
+        .expert-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        /* 主体时间线 */
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .round {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .round:hover {
+            border-color: #667eea;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+        }
+        
+        .round-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .viewpoint {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .viewpoint:hover {
+            background: #f8f9ff;
+            border-left-color: #667eea;
+        }
+        
+        .viewpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .viewpoint-emoji {
+            font-size: 16px;
+        }
+        
+        .viewpoint-author {
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .viewpoint-summary {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .viewpoint-strength {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        
+        /* 强度指示器 */
+        .strength-high { background: #ff6b6b; opacity: 1.0; }
+        .strength-medium { background: #ffa726; opacity: 0.8; }
+        .strength-low { background: #66bb6a; opacity: 0.6; }
+        
+        /* 专家颜色编码 */
+        .kent { border-left-color: #ff6b6b !important; }
+        .dan { border-left-color: #4ecdc4 !important; }
+        .bob { border-left-color: #45b7d1 !important; }
+        
+        /* 详细信息面板 */
+        .detail-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 3px solid #667eea;
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+            transform: translateY(100%);
+            transition: transform 0.4s ease;
+            z-index: 1000;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .detail-panel.active {
+            transform: translateY(0);
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9ff;
+        }
+        
+        .detail-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            flex: 1;
+        }
+        
+        .close-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: #5a6fd8;
+            transform: scale(1.05);
+        }
+        
+        .detail-content {
+            padding: 30px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #444;
+        }
+        
+        .detail-content h3 {
+            color: #667eea;
+            margin: 20px 0 10px 0;
+            font-size: 18px;
+        }
+        
+        .detail-content ul {
+            margin: 10px 0 10px 20px;
+        }
+        
+        .detail-content li {
+            margin-bottom: 8px;
+        }
+        
+        .detail-content strong {
+            color: #333;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .timeline {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .timeline {
+                grid-template-columns: 1fr;
+            }
+            
+            .experts {
+                gap: 20px;
+            }
+            
+            .question {
+                font-size: 20px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+        
+        /* 连接线动画 */
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .expert.highlighted .connection-line {
+            opacity: 1;
+        }
+        
+        /* 最终方案高亮 */
+        .final-solution {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .final-solution h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .final-solution p {
+            font-size: 18px;
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部信息条 -->
+        <div class="header">
+            <div class="question">
+                用AI coding Agent工具比如 Claude Code开发的时候，最推荐的开发模式是TDD还是BDD，还是其他呢？
+            </div>
+            <div class="experts">
+                <div class="expert" data-expert="kent">
+                    <span class="expert-emoji">🧪</span>
+                    <span class="expert-name">Kent Beck</span>
+                </div>
+                <div class="expert" data-expert="dan">
+                    <span class="expert-emoji">🎯</span>
+                    <span class="expert-name">Dan North</span>
+                </div>
+                <div class="expert" data-expert="bob">
+                    <span class="expert-emoji">🏗️</span>
+                    <span class="expert-name">Robert C. Martin</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主体时间线 -->
+        <div class="timeline">
+            <!-- 第1轮：独立思考 -->
+            <div class="round" data-round="1">
+                <div class="round-title">🤔 第1轮：独立思考</div>
+                
+                <div class="viewpoint kent" data-viewpoint="kent-1">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🧪</span>
+                        <span class="viewpoint-author">Kent Beck</span>
+                        <span class="viewpoint-strength strength-high"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        AI增强的TDD：测试是与AI沟通的设计语言，红-绿-重构循环在AI时代更加重要
+                    </div>
+                </div>
+                
+                <div class="viewpoint dan" data-viewpoint="dan-1">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🎯</span>
+                        <span class="viewpoint-author">Dan North</span>
+                        <span class="viewpoint-strength strength-high"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        BDD驱动的AI协作：Given-When-Then为AI提供业务上下文，确保构建正确的东西
+                    </div>
+                </div>
+                
+                <div class="viewpoint bob" data-viewpoint="bob-1">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🏗️</span>
+                        <span class="viewpoint-author">Robert C. Martin</span>
+                        <span class="viewpoint-strength strength-high"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        综合实践模式：架构先行，永远不要让工具降低专业标准，工匠精神是核心
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第2轮：交叉辩论 -->
+            <div class="round" data-round="2">
+                <div class="round-title">💬 第2轮：交叉辩论</div>
+                
+                <div class="viewpoint kent" data-viewpoint="kent-2">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🧪</span>
+                        <span class="viewpoint-author">Kent Beck</span>
+                        <span class="viewpoint-strength strength-medium"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        渐进式TDD-BDD融合：分层协作，BDD描述"什么"，TDD验证"如何"，简单设计胜过复杂架构
+                    </div>
+                </div>
+                
+                <div class="viewpoint dan" data-viewpoint="dan-2">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🎯</span>
+                        <span class="viewpoint-author">Dan North</span>
+                        <span class="viewpoint-strength strength-medium"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        对话驱动开发(CDD)：四层对话模式，AI时代是协商解决方案而非指挥代码
+                    </div>
+                </div>
+                
+                <div class="viewpoint bob" data-viewpoint="bob-2">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🏗️</span>
+                        <span class="viewpoint-author">Robert C. Martin</span>
+                        <span class="viewpoint-strength strength-medium"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        工匠精神驱动开发：AI是挑战不是解决方案，需要更高专业标准，先做得对再做得好最后做得快
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第3轮：最终立场 -->
+            <div class="round" data-round="3">
+                <div class="round-title">🎯 第3轮：最终立场</div>
+                
+                <div class="viewpoint kent" data-viewpoint="kent-3">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🧪</span>
+                        <span class="viewpoint-author">Kent Beck</span>
+                        <span class="viewpoint-strength strength-high"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        适应性测试驱动开发(ATDD)：AI改变时间维度，80%思考20%编码，测试是人类与AI的桥梁
+                    </div>
+                </div>
+                
+                <div class="viewpoint dan" data-viewpoint="dan-3">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🎯</span>
+                        <span class="viewpoint-author">Dan North</span>
+                        <span class="viewpoint-strength strength-high"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        价值驱动AI协作开发(VDAC)：三层协作模式，AI是"如何"工具，"为什么"和"什么"需要人类智慧
+                    </div>
+                </div>
+                
+                <div class="viewpoint bob" data-viewpoint="bob-3">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🏗️</span>
+                        <span class="viewpoint-author">Robert C. Martin</span>
+                        <span class="viewpoint-strength strength-high"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        工匠精神驱动质量体系(CLQS)：四层质量保证，AI是放大器不是替代品，工匠精神永恒
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第4轮：智慧综合 -->
+            <div class="round" data-round="4">
+                <div class="round-title">🌟 第4轮：智慧综合</div>
+                
+                <div class="viewpoint" data-viewpoint="synthesis">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🧠</span>
+                        <span class="viewpoint-author">智慧综合</span>
+                        <span class="viewpoint-strength strength-high"></span>
+                    </div>
+                    <div class="viewpoint-summary">
+                        智能协作开发框架(ICDF)：三维质量模型，技术正确性×业务价值性×长期优雅性
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 最终方案 -->
+        <div class="final-solution">
+            <h2>🌈 终极答案</h2>
+            <p>
+                在AI时代，最推荐的开发模式不是TDD、BDD或Clean Code中的任何一个，而是它们的智能融合：
+                <strong>以价值为导向，以测试为驱动，以质量为底线，以AI为工具，以工匠精神为灵魂的智能协作开发模式。</strong>
+            </p>
+        </div>
+    </div>
+    
+    <!-- 详细信息面板 -->
+    <div class="detail-panel" id="detailPanel">
+        <div class="detail-header">
+            <div class="detail-title" id="detailTitle">观点详情</div>
+            <button class="close-btn" onclick="closeDetail()">关闭</button>
+        </div>
+        <div class="detail-content" id="detailContent">
+            <!-- 动态内容 -->
+        </div>
+    </div>
+    
+    <script>
+        // 观点详细内容数据
+        const viewpointDetails = {
+            'kent-1': {
+                title: '🧪 Kent Beck - AI增强的TDD',
+                content: `
+                    <h3>核心观点</h3>
+                    <p>TDD在AI时代更加重要，因为AI是一个黑盒，测试是你意图的最精确表达。</p>
+                    
+                    <h3>关键洞察</h3>
+                    <ul>
+                        <li><strong>测试即文档</strong>：对AI来说，你写的测试告诉AI"这就是我想要的行为"</li>
+                        <li><strong>红-绿-重构循环</strong>：写失败测试→让AI实现→重构代码</li>
+                        <li><strong>质量提升</strong>：给AI提供测试用例时，生成的代码质量显著提高</li>
+                    </ul>
+                    
+                    <h3>实践建议</h3>
+                    <p>1. 先写测试，明确意图<br>
+                    2. 让AI基于测试生成实现<br>
+                    3. 运行测试，快速验证<br>
+                    4. 重构代码，保持简洁</p>
+                    
+                    <p><strong>"好的测试是好代码的开始，无论是人写的还是AI写的。"</strong></p>
+                `
+            },
+            'dan-1': {
+                title: '🎯 Dan North - BDD驱动的AI协作',
+                content: `
+                    <h3>核心观点</h3>
+                    <p>BDD的核心价值在AI时代被放大，它关于理解而非测试，为AI提供业务上下文。</p>
+                    
+                    <h3>关键优势</h3>
+                    <ul>
+                        <li><strong>共同语言</strong>：BDD使用自然语言，AI更容易理解业务意图</li>
+                        <li><strong>需求澄清</strong>：Given-When-Then迫使思考边界条件和业务规则</li>
+                        <li><strong>验收标准</strong>：明确的行为描述让AI知道"完成"的定义</li>
+                    </ul>
+                    
+                    <h3>实践模式</h3>
+                    <p>1. 从故事开始："作为...我想要...以便..."<br>
+                    2. 定义行为：用Given-When-Then描述场景<br>
+                    3. 让AI实现：基于清晰行为描述生成代码<br>
+                    4. 验证价值：确保解决真实业务问题</p>
+                    
+                    <p><strong>"最好的代码是解决真实问题的代码，无论是谁写的。"</strong></p>
+                `
+            },
+            'bob-1': {
+                title: '🏗️ Robert C. Martin - 综合实践模式',
+                content: `
+                    <h3>核心观点</h3>
+                    <p>问题的重点不是TDD还是BDD，而是如何在AI时代保持专业精神和代码工艺。</p>
+                    
+                    <h3>关键原则</h3>
+                    <ul>
+                        <li><strong>AI是工具不是工匠</strong>：AI不理解SOLID原则、设计模式等</li>
+                        <li><strong>永不妥协质量</strong>：不要因为"AI写得够快"就接受糟糕代码</li>
+                        <li><strong>纪律至上</strong>：AI时代需要更强纪律抵抗"够用就行"诱惑</li>
+                    </ul>
+                    
+                    <h3>综合实践</h3>
+                    <p>1. 架构先行：设计好整体架构<br>
+                    2. TDD保证内部质量：测试驱动确保组件正确性<br>
+                    3. BDD确保外部价值：行为驱动确保解决真实问题<br>
+                    4. 持续重构：AI代码需要重构符合Clean Code原则<br>
+                    5. 代码审查：像审查人类代码一样审查AI代码</p>
+                    
+                    <p><strong>"我们是软件工匠，不是代码工厂的工人。"</strong></p>
+                `
+            },
+            'kent-2': {
+                title: '🧪 Kent Beck - 渐进式TDD-BDD融合',
+                content: `
+                    <h3>升华方案</h3>
+                    <p>经过思考，我们需要的不是选择，而是分层协作。</p>
+                    
+                    <h3>分层协作模式</h3>
+                    <ul>
+                        <li><strong>BDD层面</strong>：用Given-When-Then描述用户价值</li>
+                        <li><strong>TDD层面</strong>：用单元测试驱动具体实现</li>
+                        <li><strong>重构层面</strong>：持续改进代码质量</li>
+                    </ul>
+                    
+                    <h3>实施顺序</h3>
+                    <p>1. 先写简单验收测试（从BDD场景来）<br>
+                    2. 用TDD分解实现验收测试<br>
+                    3. 让AI帮助快速实现<br>
+                    4. 重构保持简洁</p>
+                    
+                    <h3>为什么TDD仍是核心</h3>
+                    <p>因为它提供最快反馈循环。在AI时代，快速反馈比完美计划更重要。</p>
+                `
+            },
+            'dan-2': {
+                title: '🎯 Dan North - 对话驱动开发(CDD)',
+                content: `
+                    <h3>新开发模式</h3>
+                    <p>AI时代需要对话驱动开发，因为AI改变了开发本质：从"指挥"代码变成与AI"协商"解决方案。</p>
+                    
+                    <h3>四层对话模式</h3>
+                    <ul>
+                        <li><strong>业务对话层</strong>：与利益相关者对话，理解真实需求</li>
+                        <li><strong>行为对话层</strong>：用BDD场景与AI对话，传达业务意图</li>
+                        <li><strong>代码对话层</strong>：用TDD与代码对话，确保实现质量</li>
+                        <li><strong>架构对话层</strong>：用设计原则与系统对话，保持长期健康</li>
+                    </ul>
+                    
+                    <h3>关键洞察</h3>
+                    <p>• Kent的TDD确保"做对事情"的技术层面<br>
+                    • Bob的工艺精神确保"做好事情"的质量层面<br>
+                    • 我的BDD确保"做正确的事情"的价值层面</p>
+                    
+                    <p>在AI时代，这三者必须是<strong>并行对话</strong>，而不是串行流程。</p>
+                `
+            },
+            'bob-2': {
+                title: '🏗️ Robert C. Martin - 工匠精神驱动开发',
+                content: `
+                    <h3>根本认知</h3>
+                    <p>你们把AI当成了解决方案，而不是挑战。AI时代需要更高专业标准，不是更多方法论。</p>
+                    
+                    <h3>核心原则</h3>
+                    <ul>
+                        <li><strong>架构意识</strong>：写代码前先思考在整个系统中的位置</li>
+                        <li><strong>质量门槛</strong>：设定明确标准，AI代码必须达到要求</li>
+                        <li><strong>持续审视</strong>：像审查初级开发者代码一样审查AI代码</li>
+                        <li><strong>原则坚持</strong>：SOLID、DRY、KISS在AI时代更重要</li>
+                    </ul>
+                    
+                    <h3>优先级重新定义</h3>
+                    <p>Kent关注"做得快"，Dan关注"做得对"，我关注"做得好"。</p>
+                    <p>在AI时代，优先级应该是：<strong>先做得对，再做得好，最后做得快</strong>。</p>
+                    
+                    <p><strong>"优秀的软件不是写出来的，而是雕琢出来的。"</strong></p>
+                `
+            },
+            'kent-3': {
+                title: '🧪 Kent Beck - 适应性测试驱动开发(ATDD)',
+                content: `
+                    <h3>核心洞察</h3>
+                    <p>AI改变了编程的时间维度：传统80%写代码20%思考 → AI时代20%写代码80%思考</p>
+                    <p><strong>思考的质量决定了最终的质量</strong></p>
+                    
+                    <h3>ATDD三大支柱</h3>
+                    <ul>
+                        <li><strong>意图驱动的测试设计</strong>：测试作为与AI沟通的"设计语言"</li>
+                        <li><strong>分层验证策略</strong>：验收层(BDD) + 单元层(TDD) + 架构层(设计原则)</li>
+                        <li><strong>AI协作的新节奏</strong>：红-绿-重构-反思</li>
+                    </ul>
+                    
+                    <h3>关键原则</h3>
+                    <p>• 测试先行：测试是最好的设计工具<br>
+                    • 简单设计：让AI处理复杂实现，人类专注简洁设计<br>
+                    • 持续重构：AI代码是原材料，不是最终产品<br>
+                    • 快速反馈：用测试快速验证AI理解是否正确</p>
+                    
+                    <p><strong>"好的测试不仅验证代码，更塑造思维。"</strong></p>
+                `
+            },
+            'dan-3': {
+                title: '🎯 Dan North - 价值驱动AI协作开发(VDAC)',
+                content: `
+                    <h3>核心认知</h3>
+                    <p>AI时代的开发是协作，不是自动化。需要为AI时代开发提供价值锚点。</p>
+                    
+                    <h3>三层协作架构</h3>
+                    <ul>
+                        <li><strong>价值发现层</strong>：用户故事映射、影响映射、假设驱动</li>
+                        <li><strong>行为定义层</strong>：可执行规格、实例化需求、验收标准</li>
+                        <li><strong>技术实现层</strong>：AI协作实现、TDD验证、质量把关</li>
+                    </ul>
+                    
+                    <h3>AI改变了"谁做什么"</h3>
+                    <p><strong>人类负责</strong>：理解问题、定义价值、设计行为、评估质量<br>
+                    <strong>AI负责</strong>：快速实现、处理细节、生成代码、执行重复任务</p>
+                    
+                    <h3>三层对话模式</h3>
+                    <p>• 业务对话："作为...我想要...以便..."<br>
+                    • 行为对话："Given...When...Then..."<br>
+                    • 技术对话：TDD循环 + Clean Code标准</p>
+                    
+                    <p><strong>"最好的软件不是代码写得最快的，而是价值交付最准确的。"</strong></p>
+                `
+            },
+            'bob-3': {
+                title: '🏗️ Robert C. Martin - 工匠精神驱动质量体系(CLQS)',
+                content: `
+                    <h3>核心觉悟</h3>
+                    <p>AI时代需要更高专业标准，不是更低的。三者必须同时达成：正确性+价值性+优雅性。</p>
+                    
+                    <h3>四层质量体系</h3>
+                    <ul>
+                        <li><strong>架构思维层</strong>：设计意图、依赖管理、边界定义</li>
+                        <li><strong>价值验证层</strong>：业务理解、用户价值、验收标准</li>
+                        <li><strong>技术保证层</strong>：测试驱动、持续重构、质量门槛</li>
+                        <li><strong>工艺精神层</strong>：代码审查、持续学习、责任感</li>
+                    </ul>
+                    
+                    <h3>关键洞察：AI是放大器</h3>
+                    <p>• 设计思维混乱 → AI帮你更快创造混乱<br>
+                    • 质量标准低下 → AI帮你更快产生技术债务<br>
+                    • 专业精神缺失 → AI让你更快成为代码工厂工人</p>
+                    
+                    <h3>综合实践模式</h3>
+                    <p>用架构思维指导设计 + BDD确保业务价值 + TDD保证技术质量 + Clean Code维护健康 + 专业精神统领全局</p>
+                    
+                    <p><strong>"工具会过时，但工匠精神永恒。"</strong></p>
+                `
+            },
+            'synthesis': {
+                title: '🧠 智慧综合 - 智能协作开发框架(ICDF)',
+                content: `
+                    <h3>终极发现</h3>
+                    <p>三位专家并非在争论不同方法，而是在描述同一个完整解决方案的不同维度。</p>
+                    
+                    <h3>三维质量模型</h3>
+                    <ul>
+                        <li><strong>X轴：技术正确性</strong> (Kent的TDD)</li>
+                        <li><strong>Y轴：业务价值性</strong> (Dan的BDD)</li>
+                        <li><strong>Z轴：长期优雅性</strong> (Bob的Clean Code)</li>
+                    </ul>
+                    
+                    <h3>ICDF三层架构</h3>
+                    <ul>
+                        <li><strong>意图设计层</strong>：价值发现 + 架构思维 + 测试意图</li>
+                        <li><strong>智能协作层</strong>：对话驱动 + 分层验证 + 质量门槛</li>
+                        <li><strong>持续进化层</strong>：反馈循环 + 价值评估 + 工艺提升</li>
+                    </ul>
+                    
+                    <h3>ICDF五步法</h3>
+                    <p>1. 价值澄清：明确业务价值和用户需求<br>
+                    2. 行为定义：用BDD场景描述期望行为<br>
+                    3. 测试先行：写表达设计意图的测试<br>
+                    4. AI协作：让AI基于测试和场景生成代码<br>
+                    5. 质量把关：重构、审查、优化生成的代码</p>
+                    
+                    <h3>终极答案</h3>
+                    <p><strong>以价值为导向，以测试为驱动，以质量为底线，以AI为工具，以工匠精神为灵魂的智能协作开发模式。</strong></p>
+                    
+                    <p>让AI成为最好的编程伙伴，而不是替代品。我们用人类智慧指导方向，用AI能力加速实现，用专业标准保证质量。</p>
+                `
+            }
+        };
+        
+        // 显示详细信息
+        function showDetail(viewpointId) {
+            const detail = viewpointDetails[viewpointId];
+            if (detail) {
+                document.getElementById('detailTitle').textContent = detail.title;
+                document.getElementById('detailContent').innerHTML = detail.content;
+                document.getElementById('detailPanel').classList.add('active');
+            }
+        }
+        
+        // 关闭详细信息
+        function closeDetail() {
+            document.getElementById('detailPanel').classList.remove('active');
+        }
+        
+        // 专家高亮
+        function highlightExpert(expertId) {
+            // 移除所有高亮
+            document.querySelectorAll('.expert').forEach(el => el.classList.remove('highlighted'));
+            document.querySelectorAll('.viewpoint').forEach(el => el.style.opacity = '0.3');
+            
+            // 高亮选中专家
+            document.querySelector(`[data-expert="${expertId}"]`).classList.add('highlighted');
+            document.querySelectorAll(`.${expertId}`).forEach(el => el.style.opacity = '1');
+        }
+        
+        // 重置高亮
+        function resetHighlight() {
+            document.querySelectorAll('.expert').forEach(el => el.classList.remove('highlighted'));
+            document.querySelectorAll('.viewpoint').forEach(el => el.style.opacity = '1');
+        }
+        
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            // 观点点击事件
+            document.querySelectorAll('[data-viewpoint]').forEach(el => {
+                el.addEventListener('click', function() {
+                    const viewpointId = this.getAttribute('data-viewpoint');
+                    showDetail(viewpointId);
+                });
+            });
+            
+            // 专家悬停事件
+            document.querySelectorAll('[data-expert]').forEach(el => {
+                el.addEventListener('mouseenter', function() {
+                    const expertId = this.getAttribute('data-expert');
+                    highlightExpert(expertId);
+                });
+                
+                el.addEventListener('mouseleave', function() {
+                    resetHighlight();
+                });
+            });
+            
+            // 点击外部关闭详情面板
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('detail-panel')) {
+                    closeDetail();
+                }
+            });
+            
+            // ESC键关闭详情面板
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeDetail();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

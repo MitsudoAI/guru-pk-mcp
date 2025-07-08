@@ -175,6 +175,7 @@ $RECYCLE.BIN/
 data/*.json
 data/*.md
 data/*.html
+!data/infographic_*.html
 !data/.gitkeep
 logs/
 *.log

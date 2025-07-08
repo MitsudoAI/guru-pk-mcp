@@ -159,7 +159,7 @@ def test_generate_round_prompt_round4():
     assert "专家B的最终方案" in prompt
     assert "专家C的最终方案" in prompt
     assert "终极解决方案" in prompt
-    assert "export_session" in prompt
+    assert "export_enhanced_session" in prompt
 
 
 def test_generate_round_prompt_unknown_expert():

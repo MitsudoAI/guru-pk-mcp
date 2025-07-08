@@ -159,7 +159,10 @@ class SessionManager:
 **重要指令**: 请根据上述塔夫特风格信息图生成指令和专家辩论内容，生成一个完整的HTML文件。HTML文件要求：
 
 1. **单文件形式**: 所有CSS、JavaScript都内联到HTML中
-2. **文件保存**: 将生成的HTML内容保存到文件: `{html_file}`
+2. **文件保存**: 【必须严格遵循】将生成的HTML内容保存到以下指定路径，不得更改：
+   - 文件路径：`{html_file}`
+   - 绝对路径：`{html_file.absolute()}`
+   - 请确保保存到此路径，不要自动创建其他目录如docs/infographics/
 3. **自动打开**: 保存完成后使用以下Python代码打开浏览器:
    ```python
    import webbrowser
@@ -168,7 +171,7 @@ class SessionManager:
 4. **遵循塔夫特原则**: 严格按照上述设计原则实现数据可视化
 5. **响应式设计**: 确保在不同屏幕尺寸下都能正常显示
 
-请立即开始生成HTML信息图文件。"""
+请立即开始生成HTML信息图文件，确保保存到指定的数据目录路径：{self.data_dir}"""
 
         return full_prompt
 
