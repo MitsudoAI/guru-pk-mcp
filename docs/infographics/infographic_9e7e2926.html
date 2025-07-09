@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专家PK：为什么大部分码农做不了软件架构师？</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 顶部信息条 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .question {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+
+        .experts {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .expert {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.15);
+            padding: 10px 15px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .expert-emoji {
+            font-size: 24px;
+        }
+
+        .expert-name {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        /* 主体时间线 */
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .round {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            border: 1px solid #e1e5e9;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .round:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+        }
+
+        .round-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .round-icon {
+            font-size: 28px;
+        }
+
+        .round-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .viewpoints {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .viewpoint {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .viewpoint:hover {
+            background: #e9ecef;
+            transform: translateX(4px);
+        }
+
+        .viewpoint.drucker {
+            border-left-color: #3498db;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+        }
+
+        .viewpoint.fowler {
+            border-left-color: #e74c3c;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffebee 100%);
+        }
+
+        .viewpoint.kahneman {
+            border-left-color: #f39c12;
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff3e0 100%);
+        }
+
+        .viewpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .viewpoint-expert {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .viewpoint-content {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #555;
+        }
+
+        .intensity-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .intensity-high { opacity: 1.0; }
+        .intensity-medium { opacity: 0.7; }
+        .intensity-low { opacity: 0.4; }
+
+        /* 详细信息视图 */
+        .detail-view {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 2px solid #e1e5e9;
+            display: none;
+            position: relative;
+        }
+
+        .detail-view.active {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .detail-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: #c0392b;
+        }
+
+        .detail-content {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .detail-content h3 {
+            color: #2c3e50;
+            margin: 20px 0 10px 0;
+            font-size: 18px;
+        }
+
+        .detail-content p {
+            margin-bottom: 15px;
+        }
+
+        .detail-content strong {
+            color: #2c3e50;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .timeline {
+                grid-template-columns: 1fr;
+            }
+            
+            .experts {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .question {
+                font-size: 20px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+
+        /* 统计指标 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部信息条 -->
+        <div class="header">
+            <div class="question">
+                为什么大部分码农做不了软件架构师？
+            </div>
+            <div class="detailed-report-link" style="text-align: center; margin: 10px 0;">
+                <a href="https://github.com/a12895/guru-pk-mcp/blob/main/data/enhanced_export_9e7e2926.md" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 14px; border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 20px; transition: all 0.3s ease;">
+                    📄 查看详细辩论报告
+                </a>
+            </div>
+            <div class="experts">
+                <div class="expert">
+                    <span class="expert-emoji">📊</span>
+                    <span class="expert-name">彼得·德鲁克</span>
+                </div>
+                <div class="expert">
+                    <span class="expert-emoji">🏗️</span>
+                    <span class="expert-name">马丁·福勒</span>
+                </div>
+                <div class="expert">
+                    <span class="expert-emoji">🧠</span>
+                    <span class="expert-name">丹尼尔·卡尼曼</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计指标 -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">4</div>
+                <div class="stat-label">讨论轮次</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">专家观点</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">10%</div>
+                <div class="stat-label">架构师占比</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">90%+</div>
+                <div class="stat-label">转换失败率</div>
+            </div>
+        </div>
+
+        <!-- 主体时间线 -->
+        <div class="timeline">
+            <!-- 第1轮：独立思考 -->
+            <div class="round" onclick="toggleRound(1)">
+                <div class="round-header">
+                    <span class="round-icon">🤔</span>
+                    <span class="round-title">第1轮：独立思考</span>
+                </div>
+                <div class="viewpoints">
+                    <div class="viewpoint drucker intensity-high" onclick="showDetail(event, 'drucker-1')">
+                        <div class="intensity-indicator"></div>
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">📊</span>
+                            <span class="viewpoint-expert">德鲁克</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            角色转换的根本性挑战：程序员是专业工作者，架构师是管理型知识工作者
+                        </div>
+                    </div>
+                    <div class="viewpoint fowler intensity-high" onclick="showDetail(event, 'fowler-1')">
+                        <div class="intensity-indicator"></div>
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">🏗️</span>
+                            <span class="viewpoint-expert">福勒</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            技术最牛≠架构能力最强：编程关注"如何实现"，架构关注"为什么设计"
+                        </div>
+                    </div>
+                    <div class="viewpoint kahneman intensity-high" onclick="showDetail(event, 'kahneman-1')">
+                        <div class="intensity-indicator"></div>
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">🧠</span>
+                            <span class="viewpoint-expert">卡尼曼</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            专业知识的诅咒：从系统1思维（快速自动化）转向系统2思维（深思熟虑）
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第2轮：交叉辩论 -->
+            <div class="round" onclick="toggleRound(2)">
+                <div class="round-header">
+                    <span class="round-icon">💬</span>
+                    <span class="round-title">第2轮：交叉辩论</span>
+                </div>
+                <div class="viewpoints">
+                    <div class="viewpoint drucker intensity-medium" onclick="showDetail(event, 'drucker-2')">
+                        <div class="intensity-indicator"></div>
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">📊</span>
+                            <span class="viewpoint-expert">德鲁克</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            整合三层框架：认知基础+技能转换+角色重新定义，强调组织成熟度的关键作用
+                        </div>
+                    </div>
+                    <div class="viewpoint fowler intensity-medium" onclick="showDetail(event, 'fowler-2')">
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">🏗️</span>
+                            <span class="viewpoint-expert">福勒</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            非线性技能跃迁：从"正确性"到"适宜性"，从"技术驱动"到"约束驱动"
+                        </div>
+                    </div>
+                    <div class="viewpoint kahneman intensity-medium" onclick="showDetail(event, 'kahneman-2')">
+                        <div class="intensity-indicator"></div>
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">🧠</span>
+                            <span class="viewpoint-expert">卡尼曼</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            认知模式路径依赖：能力错觉、沉没成本谬误、社会认同偏误的三重障碍
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第3轮：最终立场 -->
+            <div class="round" onclick="toggleRound(3)">
+                <div class="round-header">
+                    <span class="round-icon">🎯</span>
+                    <span class="round-title">第3轮：最终立场</span>
+                </div>
+                <div class="viewpoints">
+                    <div class="viewpoint drucker intensity-high" onclick="showDetail(event, 'drucker-3')">
+                        <div class="intensity-indicator"></div>
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">📊</span>
+                            <span class="viewpoint-expert">德鲁克</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            "三维一体"架构师培养体系：重新定义角色+分层发展路径+组织支持体系
+                        </div>
+                    </div>
+                    <div class="viewpoint fowler intensity-high" onclick="showDetail(event, 'fowler-3')">
+                        <div class="intensity-indicator"></div>
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">🏗️</span>
+                            <span class="viewpoint-expert">福勒</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            "演进式架构师培养生态"：六边形技能模型+实践驱动路径+支持性环境
+                        </div>
+                    </div>
+                    <div class="viewpoint kahneman intensity-high" onclick="showDetail(event, 'kahneman-3')">
+                        <div class="intensity-indicator"></div>
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">🧠</span>
+                            <span class="viewpoint-expert">卡尼曼</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            "认知适应性培养模型"：深度认知诊断+分层认知重构+个性化发展路径
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第4轮：智慧综合 -->
+            <div class="round" onclick="toggleRound(4)">
+                <div class="round-header">
+                    <span class="round-icon">🚀</span>
+                    <span class="round-title">第4轮：智慧综合</span>
+                </div>
+                <div class="viewpoints">
+                    <div class="viewpoint drucker intensity-high" onclick="showDetail(event, 'drucker-4')">
+                        <div class="intensity-indicator"></div>
+                        <div class="viewpoint-header">
+                            <span class="expert-emoji">📊</span>
+                            <span class="viewpoint-expert">德鲁克综合</span>
+                        </div>
+                        <div class="viewpoint-content">
+                            "智慧架构师生态系统"(WISE)：从培养架构师到构建自我进化的生态系统
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细信息视图 -->
+        <div id="detail-view" class="detail-view">
+            <div class="detail-header">
+                <div id="detail-title" class="detail-title"></div>
+                <button class="close-btn" onclick="hideDetail()">关闭</button>
+            </div>
+            <div id="detail-content" class="detail-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // 详细内容数据
+        const detailData = {
+            'drucker-1': {
+                title: '📊 德鲁克：角色转换的根本性挑战',
+                content: `
+                    <h3>核心观点</h3>
+                    <p>程序员和架构师本质上是两种不同类型的知识工作者。程序员是"专业工作者"，专注于具体技术实现；而架构师是"管理型知识工作者"，需要在技术、业务、团队三个维度上进行系统性思考。</p>
+                    
+                    <h3>三大转换障碍</h3>
+                    <p><strong>1. 思维模式的局限性：</strong>从"确定性思维"转向"不确定性管理"，从"操作性思维"转向"战略性思维"。</p>
+                    <p><strong>2. 效能焦点的错位：</strong>从个人效能转向组织效能，理解"通过他人完成工作"的管理本质。</p>
+                    <p><strong>3. 知识结构的单一化：</strong>从"I型结构"转向"T型知识结构"，需要跨领域的广度。</p>
+                    
+                    <h3>组织设计缺陷</h3>
+                    <p>很多公司简单地认为"技术最好的人就应该做架构师"，这是典型的"专业陷阱"。真正的架构师选拔应该基于系统思维能力、跨部门协调能力、技术前瞻性。</p>
+                `
+            },
+            'fowler-1': {
+                title: '🏗️ 福勒：技术最牛≠架构能力最强',
+                content: `
+                    <h3>核心洞察</h3>
+                    <p>编程和架构是两种完全不同的技能集合。编程关注的是"如何实现"(How)，而架构关注的是"为什么这样设计"(Why)和"权衡取舍"(Trade-offs)。</p>
+                    
+                    <h3>程序员缺乏的四大核心能力</h3>
+                    <p><strong>1. 抽象思维能力：</strong>将具体的业务需求抽象为系统设计，在不同抽象层次间自如切换。</p>
+                    <p><strong>2. 系统性思考：</strong>考虑整个系统的健康度：性能、可维护性、可扩展性、团队认知负荷等多个维度的平衡。</p>
+                    <p><strong>3. 沟通和影响力：</strong>让整个团队理解并执行架构决策，这是最被低估的技能。</p>
+                    <p><strong>4. 演进式设计思维：</strong>设计能够适应变化的系统，对"简单设计"和"过度设计"之间的边界有精准把握。</p>
+                    
+                    <h3>角色认知错误</h3>
+                    <p>很多组织把架构师当作"高级程序员"，而不是"技术领导者"。真正的架构师应该花更多时间在理解业务上下文、识别技术风险、指导团队决策、建立技术标准上。</p>
+                `
+            },
+            'kahneman-1': {
+                title: '🧠 卡尼曼：专业知识的诅咒',
+                content: `
+                    <h3>认知模式差异</h3>
+                    <p>程序员主要使用"系统1思维"——快速、自动化、基于模式识别的思维。架构师需要的是"系统2思维"——缓慢、深思熟虑、需要认知资源的思维。</p>
+                    
+                    <h3>认知负荷理论的三大问题</h3>
+                    <p><strong>1. 认知容量的有限性：</strong>人类工作记忆容量约7±2个信息单元，架构师需要同时考虑技术、业务、团队、时间等多个维度。</p>
+                    <p><strong>2. 专业盲点效应：</strong>程序员越专业，越容易陷入"专业盲点"，对技术细节的深度关注限制了对系统整体的认知。</p>
+                    <p><strong>3. 确认偏误的陷阱：</strong>程序员习惯寻找"正确答案"，但架构决策往往没有标准答案，只有权衡取舍。</p>
+                    
+                    <h3>学习模式固化</h3>
+                    <p>程序员的"技能型学习"（通过重复练习达到自动化）需要转向"适应性学习"（在新情境中灵活应用知识），这需要元认知能力。</p>
+                    
+                    <h3>损失厌恶心理</h3>
+                    <p>转向架构师意味着放弃已有的技术优势，承担新的不确定性。人们对损失的敏感度是收益的2-3倍。</p>
+                `
+            },
+            'drucker-2': {
+                title: '📊 德鲁克：三层整合框架',
+                content: `
+                    <h3>整合三人观点的完整框架</h3>
+                    <p><strong>层次一：认知基础（卡尼曼的贡献）</strong><br>
+                    - 从系统1向系统2思维转换<br>
+                    - 克服专业盲点和确认偏误<br>
+                    - 培养元认知能力</p>
+                    
+                    <p><strong>层次二：技能转换（福勒的贡献）</strong><br>
+                    - 从编程技能向架构技能转换<br>
+                    - 掌握抽象思维和系统性思考<br>
+                    - 发展沟通和影响力</p>
+                    
+                    <p><strong>层次三：角色重新定义（我的核心观点）</strong><br>
+                    - 从个人贡献者向团队赋能者转换<br>
+                    - 从技术专家向业务技术桥梁转换<br>
+                    - 从执行者向决策者转换</p>
+                    
+                    <h3>组织成熟度的关键作用</h3>
+                    <p><strong>初级组织：</strong>技术导向，架构师=高级程序员<br>
+                    <strong>中级组织：</strong>开始重视架构，但缺乏系统培养<br>
+                    <strong>高级组织：</strong>有完整的技术领导力发展体系</p>
+                    
+                    <h3>三维发展模型</h3>
+                    <p><strong>个人维度：</strong>认知训练+技能提升+角色认知<br>
+                    <strong>团队维度：</strong>导师制+轮岗制+项目历练<br>
+                    <strong>组织维度：</strong>双轨制职业路径+评价体系重构+文化变革</p>
+                `
+            },
+            'fowler-2': {
+                title: '🏗️ 福勒：非线性技能跃迁',
+                content: `
+                    <h3>技能迁移的非线性特征</h3>
+                    <p>从初级到高级程序员是线性成长，但从程序员到架构师是非线性跃迁——需要完全不同的思维模式和技能集合。</p>
+                    
+                    <h3>三个关键转折点</h3>
+                    <p><strong>1. 从"正确性"到"适宜性"：</strong><br>
+                    程序员追求代码的正确性——能跑、没bug、性能好。架构师要考虑适宜性——这个设计是否适合当前团队、业务发展阶段、技术债务水平。</p>
+                    
+                    <p><strong>2. 从"技术驱动"到"约束驱动"：</strong><br>
+                    程序员喜欢用最新最酷的技术，架构师必须在各种约束中寻找最优解：时间、人员、预算、遗留系统约束。</p>
+                    
+                    <p><strong>3. 从"个人产出"到"团队倍增"：</strong><br>
+                    优秀程序员的价值是1x，架构师的价值应该是团队规模的倍数。要放弃"亲自动手"的满足感，转向"通过他人成功"的成就感。</p>
+                    
+                    <h3>渐进式架构师培养路径</h3>
+                    <p><strong>阶段1：架构感知者</strong> - 参与讨论，学会问"为什么"<br>
+                    <strong>阶段2：局部架构师</strong> - 负责单个模块，学会权衡取舍<br>
+                    <strong>阶段3：系统架构师</strong> - 负责整个系统，具备跨团队影响力</p>
+                `
+            },
+            'kahneman-2': {
+                title: '🧠 卡尼曼：认知模式路径依赖',
+                content: `
+                    <h3>认知模式的路径依赖</h3>
+                    <p>程序员在长期编程实践中，大脑神经网络已经优化为处理确定性、逻辑性、细节性的任务。这种"认知路径依赖"使得转向需要处理不确定性、直觉性、全局性的架构工作变得极其困难。</p>
+                    
+                    <h3>三个被忽视的认知机制</h3>
+                    <p><strong>1. 能力错觉(Illusion of Competence)：</strong><br>
+                    程序员因为在技术领域的成功，会产生"我在其他领域也会成功"的错觉。但专业技能的迁移性远比人们想象的要低。</p>
+                    
+                    <p><strong>2. 沉没成本谬误的变种：</strong><br>
+                    程序员投入大量时间精进技术技能，这些"沉没成本"让他们不愿意转向需要全新技能集的架构师角色。</p>
+                    
+                    <p><strong>3. 社会认同偏误：</strong><br>
+                    程序员的身份认同往往与"写出优雅代码"紧密相关。转向架构师意味着身份重构，会触发强烈的心理阻抗。</p>
+                    
+                    <h3>认知重构训练法</h3>
+                    <p><strong>阶段1：认知解冻</strong> - 意识到技术技能的局限性，重新框定转型的收益和风险<br>
+                    <strong>阶段2：认知重构</strong> - 渐进式认知挑战，建立"实施意图"<br>
+                    <strong>阶段3：认知固化</strong> - 通过成功体验强化新的认知模式</p>
+                `
+            },
+            'drucker-3': {
+                title: '📊 德鲁克："三维一体"架构师培养体系',
+                content: `
+                    <h3>重新定义架构师角色</h3>
+                    <p>架构师不是"高级程序员"，而是"技术型管理者"。核心职能包括：</p>
+                    <p>1. <strong>决策制定：</strong>在不确定性中做出技术决策<br>
+                    2. <strong>团队赋能：</strong>提升整个团队的技术产出<br>
+                    3. <strong>风险管理：</strong>识别和管控技术风险<br>
+                    4. <strong>知识传承：</strong>建立组织的技术能力</p>
+                    
+                    <h3>四阶段发展路径</h3>
+                    <p><strong>阶段1：技术专家</strong> - 在特定技术领域达到专家水平<br>
+                    <strong>阶段2：技术顾问</strong> - 能够为技术决策提供专业建议<br>
+                    <strong>阶段3：解决方案架构师</strong> - 能够设计完整的技术解决方案<br>
+                    <strong>阶段4：企业架构师</strong> - 能够制定企业级技术战略</p>
+                    
+                    <h3>组织支持体系</h3>
+                    <p><strong>1. 评价体系重构：</strong>从"技术能力"导向转向"影响力"导向<br>
+                    <strong>2. 激励机制调整：</strong>建立"双轨制"晋升通道<br>
+                    <strong>3. 培养机制创新：</strong>导师制、轮岗制、项目制、社区制</p>
+                    
+                    <h3>关键成功因素</h3>
+                    <p>高层承诺、文化变革、长期视角、系统思维</p>
+                `
+            },
+            'fowler-3': {
+                title: '🏗️ 福勒："演进式架构师培养生态"',
+                content: `
+                    <h3>"六边形架构师"技能模型</h3>
+                    <p>1. <strong>技术深度：</strong>至少在一个领域有专家级理解<br>
+                    2. <strong>技术广度：</strong>对多种技术栈有基本认知<br>
+                    3. <strong>系统思维：</strong>能够理解复杂系统的交互关系<br>
+                    4. <strong>业务理解：</strong>深刻理解技术服务的业务目标<br>
+                    5. <strong>沟通协作：</strong>能够影响和指导团队<br>
+                    6. <strong>演进设计：</strong>能够设计适应变化的系统</p>
+                    
+                    <h3>实践驱动的培养路径</h3>
+                    <p><strong>阶段1：架构观察者（6-12个月）</strong><br>
+                    - 实践项目：参与现有系统的重构项目<br>
+                    - 核心任务：理解现有架构的设计决策和权衡<br>
+                    - 能力目标：学会"读懂"架构</p>
+                    
+                    <p><strong>阶段2：局部架构师（12-18个月）</strong><br>
+                    - 实践项目：负责单个微服务或模块的架构设计<br>
+                    - 核心任务：在约束条件下做出技术决策<br>
+                    - 能力目标：掌握权衡取舍的艺术</p>
+                    
+                    <p><strong>阶段3：系统架构师（18-36个月）</strong><br>
+                    - 实践项目：负责完整系统的架构演进<br>
+                    - 核心任务：协调多个团队，管理技术债务<br>
+                    - 能力目标：具备跨团队影响力和技术前瞻性</p>
+                    
+                    <h3>支持性环境构建</h3>
+                    <p><strong>工具和实践支持：</strong>ADR、架构review、技术雷达、架构健康度量<br>
+                    <strong>学习和成长支持：</strong>内部分享、外部会议、开源贡献、跨团队轮岗<br>
+                    <strong>心理和认知支持：</strong>失败容忍文化、多元评价体系、身份认同重塑</p>
+                `
+            },
+            'kahneman-3': {
+                title: '🧠 卡尼曼："认知适应性培养模型"',
+                content: `
+                    <h3>深度认知诊断</h3>
+                    <p><strong>1. 认知灵活性测试：</strong><br>
+                    - 任务切换能力：确定性任务与不确定性任务间的切换<br>
+                    - 抽象思维水平：从具体实现跳跃到系统层面思考<br>
+                    - 模糊容忍度：面对不完整信息时的决策能力</p>
+                    
+                    <p><strong>2. 认知偏误识别：</strong><br>
+                    - 确认偏误强度、锚定效应程度、过度自信水平</p>
+                    
+                    <p><strong>3. 学习模式分析：</strong><br>
+                    - 反馈敏感度、元认知水平、认知负荷管理</p>
+                    
+                    <h3>分层认知重构训练</h3>
+                    <p><strong>阶段1：认知解冻（3-6个月）</strong><br>
+                    目标：打破固化的程序员思维模式<br>
+                    训练：错误决策分析、反直觉思维训练、多视角决策练习</p>
+                    
+                    <p><strong>阶段2：认知重构（6-18个月）</strong><br>
+                    目标：建立架构师特有的认知模式<br>
+                    训练：权衡矩阵决策法、场景规划练习、利益相关者分析法</p>
+                    
+                    <p><strong>阶段3：认知固化（12-24个月）</strong><br>
+                    目标：将新的认知模式内化为直觉<br>
+                    训练：快速架构决策练习、架构演进模拟、危机处理训练</p>
+                    
+                    <h3>个性化认知发展路径</h3>
+                    <p><strong>认知类型识别：</strong><br>
+                    - 分析型：适合复杂系统架构<br>
+                    - 直觉型：适合创新架构设计<br>
+                    - 平衡型：适合团队协作架构</p>
+                `
+            },
+            'drucker-4': {
+                title: '🚀 德鲁克："智慧架构师生态系统"(WISE)',
+                content: `
+                    <h3>核心理念：从"培养架构师"到"构建架构师生态"</h3>
+                    <p>传统思维是"如何把程序员培养成架构师"，突破性洞察是：我们需要构建一个能够自我进化、自我优化的架构师生态系统。</p>
+                    
+                    <h3>生态基础设施层</h3>
+                    <p><strong>1. 智能评估平台：</strong><br>
+                    - 整合认知评估、技能评估、角色适配评估<br>
+                    - 使用AI技术进行动态、持续的能力画像<br>
+                    - 建立"架构师潜力指数"</p>
+                    
+                    <p><strong>2. 个性化发展引擎：</strong><br>
+                    - 基于个体特点生成定制化发展路径<br>
+                    - 动态调整培养策略<br>
+                    - 提供多元化的学习资源和实践机会</p>
+                    
+                    <p><strong>3. 智慧导师网络：</strong><br>
+                    - "虚拟+实体"的导师体系<br>
+                    - AI导师提供24/7即时指导<br>
+                    - 人类导师提供深度经验传承</p>
+                    
+                    <h3>四维发展模型</h3>
+                    <p><strong>维度1：认知维度</strong> - 认知觉醒→认知重构→认知固化→认知创新<br>
+                    <strong>维度2：技能维度</strong> - 架构感知→局部设计→系统架构→生态架构<br>
+                    <strong>维度3：影响力维度</strong> - 个人贡献者→团队影响者→组织推动者→行业引领者<br>
+                    <strong>维度4：业务维度</strong> - 技术理解业务→技术服务业务→技术驱动业务→技术创造业务</p>
+                    
+                    <h3>生态化实践平台</h3>
+                    <p><strong>项目孵化器：</strong>专门为架构师培养设计的项目<br>
+                    <strong>挑战竞技场：</strong>通过架构设计竞赛激发潜力<br>
+                    <strong>知识市场：</strong>架构师之间的知识交易和分享平台<br>
+                    <strong>影响力放大器：</strong>帮助架构师扩大技术影响力的平台</p>
+                    
+                    <h3>预期成果</h3>
+                    <p>架构师转换成功率从10%提升到30%以上，培养周期从5-8年缩短到3-5年，培养成本降低40%以上。</p>
+                `
+            }
+        };
+
+        function showDetail(event, key) {
+            event.stopPropagation();
+            const data = detailData[key];
+            if (data) {
+                document.getElementById('detail-title').innerHTML = data.title;
+                document.getElementById('detail-content').innerHTML = data.content;
+                document.getElementById('detail-view').classList.add('active');
+                document.getElementById('detail-view').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function hideDetail() {
+            document.getElementById('detail-view').classList.remove('active');
+        }
+
+        function toggleRound(roundNumber) {
+            // 可以添加轮次展开/收起功能
+            console.log(`Toggle round ${roundNumber}`);
+        }
+
+        // 添加键盘快捷键支持
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                hideDetail();
+            }
+        });
+
+        // 点击详细视图外部区域关闭
+        document.getElementById('detail-view').addEventListener('click', function(event) {
+            if (event.target === this) {
+                hideDetail();
+            }
+        });
+    </script>
+</body>
+</html>

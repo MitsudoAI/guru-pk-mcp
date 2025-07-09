@@ -1,12 +1,88 @@
 {
   "infographics": [
     {
+      "id": "9e7e2926",
+      "title": "专家PK：为什么大部分码农做不了软件架构师？",
+      "question": "专家辩论问题",
+      "date": "2025-07-09",
+      "created": "2025-07-09T22:42:47.588325Z",
+      "updated": "2025-07-09T22:42:47.581668Z",
+      "filename": "infographic_9e7e2926.html",
+      "path": "infographics/infographic_9e7e2926.html",
+      "experts": [
+        {
+          "name": "彼得·德鲁克",
+          "emoji": "📊",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "马丁·福勒",
+          "emoji": "🏗",
+          "role": "软件架构师",
+          "category": "tech"
+        },
+        {
+          "name": "丹尼尔·卡尼曼",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        }
+      ],
+      "summary": "彼得·德鲁克、马丁·福勒等3位专家就专家PK：为什么大部分码农做不了软件架构师？展开深入讨论，探讨相关领域的核心问题与解决方案。",
+      "category": "philosophy",
+      "tags": [
+        "软件"
+      ],
+      "rounds": 4,
+      "wordCount": 413,
+      "status": "completed",
+      "featured": false
+    },
+    {
+      "id": "181954ce",
+      "title": "2025年大阪万博展馆专家辩论",
+      "question": "专家辩论问题",
+      "date": "2025-07-09",
+      "created": "2025-07-09T22:42:24.618132Z",
+      "updated": "2025-07-09T22:42:24.612178Z",
+      "filename": "infographic_181954ce.html",
+      "path": "infographics/infographic_181954ce.html",
+      "experts": [
+        {
+          "name": "安藤忠雄",
+          "emoji": "🏗",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "隈研吾",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "原研哉",
+          "emoji": "🎨",
+          "role": "领域专家",
+          "category": "philosophy"
+        }
+      ],
+      "summary": "安藤忠雄、隈研吾等3位专家就2025年大阪万博展馆专家辩论展开深入讨论，探讨相关领域的核心问题与解决方案。",
+      "category": "philosophy",
+      "tags": [],
+      "rounds": 4,
+      "wordCount": 384,
+      "status": "completed",
+      "featured": false
+    },
+    {
       "id": "4fc0e89d",
       "title": "专家PK辩论：2025大阪万博亲子体验方案",
       "question": "专家辩论问题",
       "date": "2025-07-08",
-      "created": "2025-07-08T23:20:45.532255Z",
-      "updated": "2025-07-08T23:20:45.532255Z",
+      "created": "2025-07-08T23:28:55.222052Z",
+      "updated": "2025-07-08T23:28:55.222052Z",
       "filename": "infographic_4fc0e89d.html",
       "path": "infographics/infographic_4fc0e89d.html",
       "experts": [
@@ -41,9 +117,9 @@
       "id": "0eb08d91",
       "title": "AI时代开发模式专家辩论",
       "question": "专家辩论问题",
-      "date": "2025-07-07",
-      "created": "2025-07-07T21:26:18.068518Z",
-      "updated": "2025-07-07T21:25:21.074196Z",
+      "date": "2025-07-08",
+      "created": "2025-07-08T23:28:55.212750Z",
+      "updated": "2025-07-08T23:28:55.212750Z",
       "filename": "infographic_0eb08d91.html",
       "path": "infographics/infographic_0eb08d91.html",
       "experts": [
@@ -69,8 +145,8 @@
       "summary": "Kent Beck、Dan North等3位专家就AI时代开发模式专家辩论展开深入讨论，探讨相关领域的核心问题与解决方案。",
       "category": "philosophy",
       "tags": [
-        "教育",
-        "旅行"
+        "开发",
+        "AI"
       ],
       "rounds": 4,
       "wordCount": 440,
@@ -118,19 +194,20 @@
     }
   ],
   "metadata": {
-    "total": 3,
-    "lastUpdated": "2025-07-08T23:23:26.290416Z",
+    "total": 5,
+    "lastUpdated": "2025-07-09T22:44:18.270800Z",
     "categories": {
-      "philosophy": 3
+      "philosophy": 5
     },
     "experts": {
-      "total": 9,
-      "unique": 9
+      "total": 15,
+      "unique": 14
     },
     "tags": [
       "AI",
       "开发",
-      "设计"
+      "设计",
+      "软件"
     ]
   }
 }
