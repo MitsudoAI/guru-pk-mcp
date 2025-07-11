@@ -312,26 +312,84 @@ class InfographicsSyncer:
         tags = set()
         text = f"{title} {question}".lower()
         
-        # 技术相关标签
-        tech_keywords = ["ai", "人工智能", "开发", "软件", "程序", "算法", "数据", "技术"]
-        for keyword in tech_keywords:
+        # 建筑与设计相关标签
+        architecture_keywords = {
+            "建筑": "建筑",
+            "设计": "设计", 
+            "展馆": "展馆",
+            "万博": "万博",
+            "空间": "空间设计",
+            "美学": "美学",
+            "艺术": "艺术"
+        }
+        for keyword, tag in architecture_keywords.items():
             if keyword in text:
-                tags.add(keyword.upper() if keyword == "ai" else keyword)
+                tags.add(tag)
+        
+        # 技术相关标签
+        tech_keywords = {
+            "ai": "AI",
+            "人工智能": "AI",
+            "开发": "开发",
+            "软件": "软件",
+            "程序": "编程",
+            "算法": "算法",
+            "数据": "数据",
+            "技术": "技术",
+            "架构": "软件架构",
+            "码农": "程序员"
+        }
+        for keyword, tag in tech_keywords.items():
+            if keyword in text:
+                tags.add(tag)
         
         # 商业相关标签
-        business_keywords = ["企业", "商业", "管理", "战略", "营销", "数字化", "转型"]
-        for keyword in business_keywords:
+        business_keywords = {
+            "企业": "企业",
+            "商业": "商业",
+            "管理": "管理",
+            "战略": "战略",
+            "营销": "营销",
+            "数字化": "数字化",
+            "转型": "转型"
+        }
+        for keyword, tag in business_keywords.items():
             if keyword in text:
-                tags.add(keyword)
+                tags.add(tag)
         
-        # 设计相关标签
-        design_keywords = ["设计", "用户体验", "界面", "可视化", "信息图"]
-        for keyword in design_keywords:
+        # 文化与地域标签
+        culture_keywords = {
+            "日本": "日本",
+            "大阪": "大阪",
+            "中国": "中国",
+            "文化": "文化",
+            "传统": "传统",
+            "现代": "现代"
+        }
+        for keyword, tag in culture_keywords.items():
             if keyword in text:
-                tags.add(keyword)
+                tags.add(tag)
         
-        # 限制标签数量
-        return list(tags)[:8]
+        # 其他专业领域标签
+        other_keywords = {
+            "哲学": "哲学",
+            "心理": "心理学",
+            "经济": "经济",
+            "科学": "科学",
+            "教育": "教育",
+            "创新": "创新"
+        }
+        for keyword, tag in other_keywords.items():
+            if keyword in text:
+                tags.add(tag)
+        
+        # 如果没有找到任何标签，根据问题类型添加默认标签
+        if not tags:
+            if "?" in question or "？" in question:
+                tags.add("专家辩论")
+        
+        # 限制标签数量并排序
+        return sorted(list(tags))[:8]
     
     def count_words(self, content: str) -> int:
         """统计字数"""

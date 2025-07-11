@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本梅雨露营专家辩论 - 塔夫特风格信息图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 顶部信息条 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .question {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .experts-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .expert-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 25px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .expert-card:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .expert-emoji {
+            font-size: 2em;
+        }
+        
+        .expert-info h3 {
+            font-size: 1.1em;
+            color: #2c3e50;
+        }
+        
+        .expert-info p {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        
+        /* 主体四轮时间线 */
+        .timeline {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .timeline-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .timeline-title {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .rounds-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .round {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 5px solid #3498db;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .round:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .round.active {
+            border-left-color: #e74c3c;
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+        }
+        
+        .round-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .round-number {
+            background: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .round-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .viewpoints {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .viewpoint {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            padding: 12px;
+            border-left: 3px solid #95a5a6;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .viewpoint:hover {
+            border-left-color: #e74c3c;
+            background: rgba(255, 255, 255, 1);
+            transform: translateX(5px);
+        }
+        
+        .viewpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .viewpoint-expert {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .viewpoint-preview {
+            font-size: 0.9em;
+            color: #555;
+            line-height: 1.4;
+        }
+        
+        .influence-indicator {
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(to top, #95a5a6, #3498db);
+            border-radius: 2px;
+        }
+        
+        /* 底部详细信息视图 */
+        .detail-view {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .detail-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .close-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+        
+        .detail-content {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #2c3e50;
+        }
+        
+        .detail-content h3 {
+            color: #3498db;
+            margin: 20px 0 10px 0;
+        }
+        
+        .detail-content ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-content li {
+            margin-bottom: 8px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .question {
+                font-size: 1.4em;
+            }
+            
+            .experts-row {
+                gap: 20px;
+            }
+            
+            .expert-card {
+                padding: 8px 15px;
+            }
+            
+            .rounds-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .timeline-title {
+                font-size: 1.8em;
+            }
+        }
+        
+        /* 专家高亮效果 */
+        .expert-bell { border-left-color: #e74c3c !important; }
+        .expert-tanaka { border-left-color: #f39c12 !important; }
+        .expert-ray { border-left-color: #9b59b6 !important; }
+        
+        .highlight-bell { background: rgba(231, 76, 60, 0.1) !important; }
+        .highlight-tanaka { background: rgba(243, 156, 18, 0.1) !important; }
+        .highlight-ray { background: rgba(155, 89, 182, 0.1) !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部信息条 -->
+        <div class="header">
+            <div class="question">
+                🏕️ 日本关西梅雨季节露营挑战：帐篷舒适度 & 泥泞地面解决方案
+            </div>
+            <div class="experts-row">
+                <div class="expert-card" data-expert="bell">
+                    <div class="expert-emoji">🏕️</div>
+                    <div class="expert-info">
+                        <h3>贝尔·格里尔斯</h3>
+                        <p>英国野外生存专家</p>
+                    </div>
+                </div>
+                <div class="expert-card" data-expert="tanaka">
+                    <div class="expert-emoji">🎌</div>
+                    <div class="expert-info">
+                        <h3>田中正人</h3>
+                        <p>日本户外指导员</p>
+                    </div>
+                </div>
+                <div class="expert-card" data-expert="ray">
+                    <div class="expert-emoji">🔧</div>
+                    <div class="expert-info">
+                        <h3>雷·米尔斯</h3>
+                        <p>美国装备工程师</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主体四轮时间线 -->
+        <div class="timeline">
+            <div class="timeline-header">
+                <div class="timeline-title">🌧️ 专家智慧演进时间线</div>
+                <p>点击任意观点卡片查看详细论述</p>
+            </div>
+            
+            <div class="rounds-container">
+                <!-- 第1轮：独立思考 -->
+                <div class="round" data-round="1">
+                    <div class="round-header">
+                        <div class="round-number">1</div>
+                        <div class="round-title">🤔 独立思考</div>
+                    </div>
+                    <div class="viewpoints">
+                        <div class="viewpoint expert-bell" data-expert="bell" data-round="1">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🏕️</span>
+                                <span class="viewpoint-expert">贝尔·格里尔斯</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                双层帐篷系统 + 45度法则 + 木板平台法 + 应急撤离计划
+                            </div>
+                        </div>
+                        <div class="viewpoint expert-tanaka" data-expert="tanaka" data-round="1">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🎌</span>
+                                <span class="viewpoint-expert">田中正人</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                "风通し"哲学 + 竹炭除湿 + 日式庭园排水 + "おもてなし"精神
+                            </div>
+                        </div>
+                        <div class="viewpoint expert-ray" data-expert="ray" data-round="1">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🔧</span>
+                                <span class="viewpoint-expert">雷·米尔斯</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                三层防水透气系统 + IoT传感器 + 模块化地面工程 + DIY改装
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第2轮：交叉辩论 -->
+                <div class="round" data-round="2">
+                    <div class="round-header">
+                        <div class="round-number">2</div>
+                        <div class="round-title">💬 交叉辩论</div>
+                    </div>
+                    <div class="viewpoints">
+                        <div class="viewpoint expert-bell" data-expert="bell" data-round="2">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🏕️</span>
+                                <span class="viewpoint-expert">贝尔·格里尔斯</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                融合三人智慧："格里尔斯-田中-米尔斯三合一生存法则" + 三级应对系统
+                            </div>
+                        </div>
+                        <div class="viewpoint expert-tanaka" data-expert="tanaka" data-round="2">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🎌</span>
+                                <span class="viewpoint-expert">田中正人</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                "和洋折衷"融合改良：四季对应 + 地域密着 + 可持续性设计
+                            </div>
+                        </div>
+                        <div class="viewpoint expert-ray" data-expert="ray" data-round="2">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🔧</span>
+                                <span class="viewpoint-expert">雷·米尔斯</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                工程师融合定律：KISS原则 + 模块化设计 + 智能材料应用
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第3轮：最终立场 -->
+                <div class="round" data-round="3">
+                    <div class="round-header">
+                        <div class="round-number">3</div>
+                        <div class="round-title">🎯 最终立场</div>
+                    </div>
+                    <div class="viewpoints">
+                        <div class="viewpoint expert-bell" data-expert="bell" data-round="3">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🏕️</span>
+                                <span class="viewpoint-expert">贝尔·格里尔斯</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                终极梅雨生存系统：三层防护体系 + 工程化生存平台 + 家庭安全协议
+                            </div>
+                        </div>
+                        <div class="viewpoint expert-tanaka" data-expert="tanaka" data-round="3">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🎌</span>
+                                <span class="viewpoint-expert">田中正人</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                完全版解决策："和魂洋才" + 七层地面工程 + 日本式"おもてなし"体验
+                            </div>
+                        </div>
+                        <div class="viewpoint expert-ray" data-expert="ray" data-round="3">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🔧</span>
+                                <span class="viewpoint-expert">雷·米尔斯</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                融合工程系统v3.0：九层地面工程 + 智能环境控制 + 分级配置方案
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第4轮：智慧综合 -->
+                <div class="round" data-round="4">
+                    <div class="round-header">
+                        <div class="round-number">4</div>
+                        <div class="round-title">🌟 智慧综合</div>
+                    </div>
+                    <div class="viewpoints">
+                        <div class="viewpoint" data-expert="synthesis" data-round="4">
+                            <div class="viewpoint-header">
+                                <span class="expert-emoji">🌈</span>
+                                <span class="viewpoint-expert">综合大师</span>
+                                <div class="influence-indicator"></div>
+                            </div>
+                            <div class="viewpoint-preview">
+                                终极融合方案：99.5%技术成功率 + 100%安全保障 + 无价文化体验
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部详细信息视图 -->
+        <div class="detail-view" id="detailView">
+            <div class="detail-header">
+                <div class="detail-title" id="detailTitle">观点详情</div>
+                <button class="close-btn" onclick="closeDetail()">关闭</button>
+            </div>
+            <div class="detail-content" id="detailContent">
+                <!-- 详细内容将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 详细内容数据
+        const detailData = {
+            'bell-1': {
+                title: '🏕️ 贝尔·格里尔斯 - 第1轮独立思考',
+                content: `
+                    <h3>🌧️ 挑战一：大雨中的帐篷舒适度</h3>
+                    <p><strong>核心装备策略：</strong></p>
+                    <ul>
+                        <li><strong>双层帐篷系统</strong> - 外帐硅胶涂层尼龙，内帐透气网布</li>
+                        <li><strong>地布三层防护</strong> - 厚实防水地布 + 帐篷自带地布 + 薄防潮垫</li>
+                        <li><strong>通风是王道</strong> - 即使下大雨，也要保持帐篷两端通风口微开</li>
+                    </ul>
+                    
+                    <h3>🏕️ 挑战二：泥泞地面解决方案</h3>
+                    <p><strong>地面处理系统：</strong></p>
+                    <ul>
+                        <li><strong>选址智慧</strong> - 寻找微高地，哪怕只高出5cm也是救命的</li>
+                        <li><strong>木板平台法</strong> - 收集干燥的木板或竹子，搭建简易平台</li>
+                        <li><strong>石头排水法</strong> - 在帐篷底部铺设石头层，创造排水空间</li>
+                    </ul>
+                    
+                    <h3>⚠️ 安全第一原则</h3>
+                    <p>记住，在野外生存中，<strong>舒适是奢侈品，安全是必需品</strong>！应急撤离计划、通讯保障、健康监控一个都不能少。</p>
+                `
+            },
+            'tanaka-1': {
+                title: '🎌 田中正人 - 第1轮独立思考',
+                content: `
+                    <h3>🌧️ "风通し"的日本式哲学</h3>
+                    <p><strong>日本式通风系统：</strong></p>
+                    <ul>
+                        <li><strong>"すのこ"活用法</strong> - 檜のすのこ敷设，完全遮断地面湿气</li>
+                        <li><strong>"竹炭"除湿法</strong> - 竹炭布袋放置四角，天然安全除湿</li>
+                        <li><strong>"打ち水"逆转发想</strong> - 蒸发冷却降低帐篷内温度2-3度</li>
+                    </ul>
+                    
+                    <h3>🏞️ "水はけ"的日本庭园思想</h3>
+                    <p><strong>田中式地面处理法：</strong></p>
+                    <ul>
+                        <li><strong>"敷石"システム</strong> - 轻石+ござ+银マット三层结构</li>
+                        <li><strong>"溝切り"技术</strong> - 20cm深排水沟+竹制简易排水管</li>
+                        <li><strong>"高床式"アプローチ</strong> - コンクリートブロック+コンパネ高床平台</li>
+                    </ul>
+                    
+                    <h3>🌿 日本自然素材活用</h3>
+                    <p>笹の葉作防水シート、杉の皮作断熱材、竹材多用途活用，体现"里山"智慧和"おもてなし"精神。</p>
+                `
+            },
+            'ray-1': {
+                title: '🔧 雷·米尔斯 - 第1轮独立思考',
+                content: `
+                    <h3>🔬 工程分析：问题的本质</h3>
+                    <p>从工程学角度看，面临两个经典的<strong>流体力学和热力学问题</strong>：</p>
+                    <ul>
+                        <li><strong>水汽管理系统失效</strong> - 帐篷内外压差导致的冷凝和渗透</li>
+                        <li><strong>地面排水系统缺陷</strong> - 土壤饱和度过高导致的承载力下降</li>
+                    </ul>
+                    
+                    <h3>⚙️ 三层防水透气系统</h3>
+                    <p><strong>技术规格：</strong></p>
+                    <ul>
+                        <li><strong>外层</strong>：20D硅胶涂层尼龙（耐水压>3000mm）</li>
+                        <li><strong>中层</strong>：eVent薄膜（透气率>20,000g/m²/24h）</li>
+                        <li><strong>内层</strong>：40D透气尼龙网布</li>
+                    </ul>
+                    
+                    <h3>🏗️ 模块化地面系统</h3>
+                    <p><strong>四层结构设计：</strong></p>
+                    <ul>
+                        <li><strong>第4层</strong>：睡垫（隔热层）</li>
+                        <li><strong>第3层</strong>：铝蜂窝板（承载层，厚度15mm）</li>
+                        <li><strong>第2层</strong>：排水垫层（砾石+土工布）</li>
+                        <li><strong>第1层</strong>：防渗膜（HDPE，厚度0.5mm）</li>
+                    </ul>
+                    
+                    <h3>🛠️ DIY改装方案</h3>
+                    <p>CPU散热风扇改装通风扇、汽车天窗密封条改善密封性，成本控制在$50以内。</p>
+                `
+            },
+            'bell-2': {
+                title: '🏕️ 贝尔·格里尔斯 - 第2轮交叉辩论',
+                content: `
+                    <h3>🎯 对其他专家方案的评价</h3>
+                    <p><strong>田中正人方案优势：</strong></p>
+                    <ul>
+                        <li>"风通し"哲学绝对天才级，竹炭除湿法体现自然材料可靠性</li>
+                        <li>"敷石系统"与阿富汗山区石头保温法异曲同工</li>
+                        <li>利用当地资源是真正的生存技能</li>
+                    </ul>
+                    
+                    <p><strong>雷·米尔斯方案优势：</strong></p>
+                    <ul>
+                        <li>三层防水透气系统技术规格完全正确</li>
+                        <li>压差平衡理论solid，铝蜂窝板设计聪明</li>
+                        <li>模块化地面系统比木板平台更轻便耐用</li>
+                    </ul>
+                    
+                    <h3>🏕️ 格里尔斯融合生存系统</h3>
+                    <p><strong>核心理念：</strong>简单可靠 + 多重备份 + 本土智慧</p>
+                    
+                    <p><strong>"格里尔斯-田中-米尔斯三合一生存法则"：</strong></p>
+                    <ul>
+                        <li><strong>Plan A（高科技）</strong>：雷的工程系统 - 舒适度最高</li>
+                        <li><strong>Plan B（本土智慧）</strong>：田中的日式方法 - 可持续性最强</li>
+                        <li><strong>Plan C（纯生存）</strong>：我的基础技能 - 可靠性最高</li>
+                    </ul>
+                `
+            },
+            'tanaka-2': {
+                title: '🎌 田中正人 - 第2轮交叉辩论',
+                content: `
+                    <h3>🏕️ 对其他专家方案的分析</h3>
+                    <p><strong>贝尔方案的优秀性：</strong></p>
+                    <ul>
+                        <li>"生存优先级系统"与日本人的"段取り"考え方完全一致</li>
+                        <li>45度法则和三级预警系统非常实用</li>
+                        <li>但在日本梅雨长期高湿度环境下需要增强</li>
+                    </ul>
+                    
+                    <p><strong>雷方案的工程学优势：</strong></p>
+                    <ul>
+                        <li>IoT传感器网络和模块化设计很优秀</li>
+                        <li>但过于高科技，与日本"侘寂"美学不符</li>
+                        <li>建议为电子系统增加模拟备份</li>
+                    </ul>
+                    
+                    <h3>🌸 田中式融合改良版</h3>
+                    <p><strong>"和洋折衷"三级系统：</strong></p>
+                    <ul>
+                        <li><strong>日常梅雨</strong>：基础日式系统</li>
+                        <li><strong>中强度雨</strong>：日式+西式技术融合</li>
+                        <li><strong>极端暴雨</strong>：全面防护+应急撤离</li>
+                    </ul>
+                    
+                    <p><strong>"四季对应"理念：</strong>不同季节使用不同材料配置，体现日本"地域密着"和"可持续性"思想。</p>
+                `
+            },
+            'ray-2': {
+                title: '🔧 雷·米尔斯 - 第2轮交叉辩论',
+                content: `
+                    <h3>🏕️ 工程师角度的技术评估</h3>
+                    <p><strong>贝尔方案的工程优势：</strong></p>
+                    <ul>
+                        <li>"生存优先级系统"符合工程师的"冗余设计"原则</li>
+                        <li>45度法则和多重备份体现故障安全设计</li>
+                        <li>建议木板平台下加入"毛细管阻断层"</li>
+                    </ul>
+                    
+                    <p><strong>田中方案的技术亮点：</strong></p>
+                    <ul>
+                        <li>"竹炭除湿法"是优秀的天然分子筛技术</li>
+                        <li>"打ち水逆转发想"体现蒸发冷却工程原理</li>
+                        <li>建议竹炭系统加入"再生循环"机制</li>
+                    </ul>
+                    
+                    <h3>⚙️ 工程师版梅雨露营解决方案</h3>
+                    <p><strong>"米尔斯融合定律"：</strong></p>
+                    <ul>
+                        <li>贝尔的生存智慧 + 田中的本土知识 + 米尔斯的工程技术</li>
+                        <li>KISS原则：简单可靠优于复杂精密</li>
+                        <li>模块化设计：问题分解，逐个击破</li>
+                        <li>持续改进：根据实际效果不断优化</li>
+                    </ul>
+                `
+            },
+            'bell-3': {
+                title: '🏕️ 贝尔·格里尔斯 - 第3轮最终立场',
+                content: `
+                    <h3>🌟 格里尔斯终极梅雨生存系统</h3>
+                    <p>融合三人智慧的最完善解决方案，确保家庭安全和舒适体验。</p>
+                    
+                    <h3>🌧️ 三层防护体系</h3>
+                    <p><strong>第一层：基础生存防护</strong></p>
+                    <ul>
+                        <li>格里尔斯双层帐篷法则 + 45度+田中竹炭组合</li>
+                        <li>生存级通风管理：主通风+辅助通风+应急通风</li>
+                    </ul>
+                    
+                    <p><strong>第二层：舒适度提升</strong></p>
+                    <ul>
+                        <li>三国联盟地面系统：5层结构设计</li>
+                        <li>智能湿度控制：竹炭+硅胶+监控系统</li>
+                    </ul>
+                    
+                    <p><strong>第三层：极端天气应对</strong></p>
+                    <ul>
+                        <li>三级预警响应：绿色-黄色-红色警报</li>
+                        <li>立即撤离计划和家庭安全协议</li>
+                    </ul>
+                    
+                    <h3>🏕️ 工程化生存平台</h3>
+                    <p>格里尔斯-田中-米尔斯三合一地面系统，包含选址、平台搭建、排水和技术优化四个层面。</p>
+                `
+            },
+            'tanaka-3': {
+                title: '🎌 田中正人 - 第3轮最终立场',
+                content: `
+                    <h3>🌸 "和魂洋才" + "温故知新"</h3>
+                    <p>日本传统智慧为核心，融合世界先进技术的完全版解决策。</p>
+                    
+                    <h3>🏯 "四季调和"帐篷舒适システム</h3>
+                    <p><strong>第一層："和"の基礎</strong></p>
+                    <ul>
+                        <li>"すのこ文化"完全活用：檜すのこ全面敷设</li>
+                        <li>"竹炭+備長炭"ダブル除湿：速效+持续双重效果</li>
+                        <li>"風鈴効果"自然通风：可视化风向调整</li>
+                    </ul>
+                    
+                    <p><strong>第二層："洋"の技術</strong></p>
+                    <ul>
+                        <li>ハイブリッド通风：自然+机械+应急三重系统</li>
+                        <li>三段階湿度管理：80%→70%→60%逐级控制</li>
+                    </ul>
+                    
+                    <p><strong>第三層："才"の創新</strong></p>
+                    <ul>
+                        <li>"おもてなし"空间设计：家庭成员专属区域</li>
+                        <li>四季素材地域调达：春夏秋冬不同材料配置</li>
+                    </ul>
+                    
+                    <h3>🏞️ "日本庭園工学"地面システム</h3>
+                    <p>七层"枯山水"排水系统，从安眠层到基础层的完整工程设计。</p>
+                `
+            },
+            'ray-3': {
+                title: '🔧 雷·米尔斯 - 第3轮最终立场',
+                content: `
+                    <h3>🔧 米尔斯融合工程系统 v3.0</h3>
+                    <p>将三人智慧进行系统性集成和技术优化，让1+1+1>10！</p>
+                    
+                    <h3>⚙️ 三重冗余智能系统</h3>
+                    <p><strong>系统架构：</strong></p>
+                    <ul>
+                        <li><strong>贝尔层</strong>：生存保障 - 基础安全+应急响应</li>
+                        <li><strong>田中层</strong>：文化适应 - 本土智慧+自然材料</li>
+                        <li><strong>米尔斯层</strong>：技术优化 - 工程精度+智能控制</li>
+                    </ul>
+                    
+                    <h3>🏗️ 九层地面工程</h3>
+                    <p><strong>技术规格：</strong></p>
+                    <ul>
+                        <li><strong>承载能力</strong>：500kg/m²（4人家庭+装备）</li>
+                        <li><strong>排水能力</strong>：200L/h/m²（暴雨级别）</li>
+                        <li><strong>安装时间</strong>：2人30分钟（模块化设计）</li>
+                    </ul>
+                    
+                    <h3>🔬 创新技术集成</h3>
+                    <ul>
+                        <li><strong>智能材料</strong>：形状记忆合金+相变材料+超疏水涂层</li>
+                        <li><strong>IoT传感器网络</strong>：四角监控+预警系统+APP联动</li>
+                        <li><strong>能源管理</strong>：太阳能+锂电池+手摇发电三重供电</li>
+                    </ul>
+                    
+                    <h3>💰 分级配置方案</h3>
+                    <p>从S级完美版（¥150,000-200,000）到C级学生版（¥20,000-30,000），满足不同预算需求。</p>
+                `
+            },
+            'synthesis-4': {
+                title: '🌈 智慧综合大师 - 第4轮终极融合',
+                content: `
+                    <h3>🌟 三位专家的终极梅雨露营解决方案</h3>
+                    <p>融合生存智慧、文化精髓和工程技术的完美解决方案。</p>
+                    
+                    <h3>🎯 核心理念整合</h3>
+                    <ul>
+                        <li><strong>贝尔·格里尔斯</strong>："适应性生存 + 多重保险 + 家庭安全"</li>
+                        <li><strong>田中正人</strong>："和魂洋才 + 温故知新 + 自然和谐"</li>
+                        <li><strong>雷·米尔斯</strong>："三重冗余智能系统 + 工程精度 + 技术优化"</li>
+                    </ul>
+                    
+                    <h3>🌧️ 帐篷舒适度：三层智慧防护体系</h3>
+                    <p><strong>生存基础层</strong>：双层帐篷+45度法则+三级预警</p>
+                    <p><strong>文化融合层</strong>：竹炭除湿+"おもてなし"空间+"打ち水"冷却</p>
+                    <p><strong>技术优化层</strong>：三层防水透气膜+IoT监控+智能通风</p>
+                    
+                    <h3>🏕️ 地面泥泞：九层工程化生存平台</h3>
+                    <p>从防水基础层到睡眠舒适层的完整工程设计，承载500kg/m²，排水200L/h/m²。</p>
+                    
+                    <h3>💰 分级配置推荐</h3>
+                    <ul>
+                        <li><strong>S级完美版</strong>（¥120,000-180,000）：全自动化+专业材料</li>
+                        <li><strong>A级实用版</strong>（¥60,000-90,000）：核心功能+性价比最优</li>
+                        <li><strong>B级经济版</strong>（¥30,000-50,000）：DIY改装+重点保障</li>
+                        <li><strong>C级入门版</strong>（¥15,000-25,000）：体验学习+基础安全</li>
+                    </ul>
+                    
+                    <h3>🌟 终极成功保障</h3>
+                    <p><strong>99.5%技术成功率</strong> + <strong>100%安全保障</strong> + <strong>无价文化体验</strong> = <strong>一次改变家庭的完美冒险</strong></p>
+                `
+            }
+        };
+        
+        // 显示详细信息
+        function showDetail(expert, round) {
+            const key = `${expert}-${round}`;
+            const data = detailData[key];
+            
+            if (data) {
+                document.getElementById('detailTitle').textContent = data.title;
+                document.getElementById('detailContent').innerHTML = data.content;
+                document.getElementById('detailView').style.display = 'block';
+                
+                // 滚动到详细视图
+                document.getElementById('detailView').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
+        
+        // 关闭详细信息
+        function closeDetail() {
+            document.getElementById('detailView').style.display = 'none';
+        }
+        
+        // 专家高亮效果
+        function highlightExpert(expertType) {
+            // 移除所有高亮
+            document.querySelectorAll('.viewpoint').forEach(el => {
+                el.classList.remove('highlight-bell', 'highlight-tanaka', 'highlight-ray');
+            });
+            
+            if (expertType) {
+                // 添加对应专家的高亮
+                document.querySelectorAll(`.expert-${expertType}`).forEach(el => {
+                    el.classList.add(`highlight-${expertType}`);
+                });
+            }
+        }
+        
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            // 观点卡片点击事件
+            document.querySelectorAll('.viewpoint').forEach(card => {
+                card.addEventListener('click', function() {
+                    const expert = this.getAttribute('data-expert');
+                    const round = this.getAttribute('data-round');
+                    showDetail(expert, round);
+                });
+            });
+            
+            // 专家卡片悬停事件
+            document.querySelectorAll('.expert-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    const expertType = this.getAttribute('data-expert');
+                    highlightExpert(expertType);
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    highlightExpert(null);
+                });
+            });
+            
+            // 轮次卡片点击事件
+            document.querySelectorAll('.round').forEach(round => {
+                round.addEventListener('click', function() {
+                    // 移除所有active状态
+                    document.querySelectorAll('.round').forEach(r => r.classList.remove('active'));
+                    // 添加active状态
+                    this.classList.add('active');
+                });
+            });
+        });
+        
+        // ESC键关闭详细视图
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDetail();
+            }
+        });
+    </script>
+</body>
+</html>
