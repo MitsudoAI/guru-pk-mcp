@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华为盘古大模型争议事件 - 专家PK分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 顶部信息条 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+        
+        .question {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .github-link {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .github-link a {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #24292e 0%, #586069 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(36, 41, 46, 0.2);
+        }
+        
+        .github-link a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(36, 41, 46, 0.3);
+            background: linear-gradient(135deg, #586069 0%, #6f42c1 100%);
+        }
+        
+        .experts {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .expert {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .expert:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .expert-emoji {
+            font-size: 24px;
+        }
+        
+        /* 主体时间线 */
+        .timeline {
+            position: relative;
+            margin: 40px 0;
+        }
+        
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border-radius: 2px;
+            z-index: 1;
+        }
+        
+        .rounds {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .round {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .round::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--round-color);
+        }
+        
+        .round:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .round-1 { --round-color: #667eea; }
+        .round-2 { --round-color: #764ba2; }
+        .round-3 { --round-color: #f093fb; }
+        .round-4 { --round-color: #ffecd2; }
+        
+        .round-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--round-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 auto 20px;
+        }
+        
+        .round-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .round-desc {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        
+        .viewpoints {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .viewpoint {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .viewpoint:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .viewpoint-ren {
+            background: rgba(231, 76, 60, 0.1);
+            border-left-color: #e74c3c;
+        }
+        
+        .viewpoint-li {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+        }
+        
+        .viewpoint-peter {
+            background: rgba(155, 89, 182, 0.1);
+            border-left-color: #9b59b6;
+        }
+        
+        .viewpoint-synthesis {
+            background: rgba(241, 196, 15, 0.1);
+            border-left-color: #f1c40f;
+        }
+        
+        /* 详细信息视图 */
+        .detail-view {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 20px 20px 0 0;
+            padding: 30px;
+            transform: translateY(100%);
+            transition: transform 0.4s ease;
+            z-index: 1000;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .detail-view.active {
+            transform: translateY(0);
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 15px;
+        }
+        
+        .detail-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            flex: 1;
+        }
+        
+        .close-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+        
+        .detail-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #34495e;
+        }
+        
+        .detail-content h3 {
+            color: #2c3e50;
+            margin: 20px 0 10px;
+            font-size: 18px;
+        }
+        
+        .detail-content p {
+            margin-bottom: 15px;
+        }
+        
+        .detail-content strong {
+            color: #e74c3c;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .rounds {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .rounds {
+                grid-template-columns: 1fr;
+            }
+            
+            .experts {
+                gap: 20px;
+            }
+            
+            .expert {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+            
+            .question {
+                font-size: 20px;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .round {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .round:nth-child(1) { animation-delay: 0.1s; }
+        .round:nth-child(2) { animation-delay: 0.2s; }
+        .round:nth-child(3) { animation-delay: 0.3s; }
+        .round:nth-child(4) { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部信息条 -->
+        <div class="header">
+            <div class="question">
+                华为盘古大模型被指控抄袭千问模型事件分析
+            </div>
+            <div class="github-link">
+                <a href="https://github.com/MitsudoAI/guru-pk-mcp/blob/main/data/enhanced_export_1d933c4d.md" target="_blank">
+                    📄 查看详细分析报告
+                </a>
+            </div>
+            <div class="experts">
+                <div class="expert" data-expert="ren">
+                    <span class="expert-emoji">🏢</span>
+                    <span>任正非</span>
+                </div>
+                <div class="expert" data-expert="li">
+                    <span class="expert-emoji">🔬</span>
+                    <span>李飞飞</span>
+                </div>
+                <div class="expert" data-expert="peter">
+                    <span class="expert-emoji">📊</span>
+                    <span>彼得·德鲁克</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主体时间线 -->
+        <div class="timeline">
+            <div class="timeline-line"></div>
+            <div class="rounds">
+                <!-- 第一轮：独立思考 -->
+                <div class="round round-1" data-round="1">
+                    <div class="round-number">1</div>
+                    <div class="round-title">独立思考</div>
+                    <div class="round-desc">各专家从自身角度提出初步观点</div>
+                    <div class="viewpoints">
+                        <div class="viewpoint viewpoint-ren" data-content="ren-1">
+                            🏢 管理失误与激励机制问题
+                        </div>
+                        <div class="viewpoint viewpoint-li" data-content="li-1">
+                            🔬 技术诚信与学术道德危机
+                        </div>
+                        <div class="viewpoint viewpoint-peter" data-content="peter-1">
+                            📊 组织管理失效的典型案例
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第二轮：交叉辩论 -->
+                <div class="round round-2" data-round="2">
+                    <div class="round-number">2</div>
+                    <div class="round-title">交叉辩论</div>
+                    <div class="round-desc">专家间相互回应和质疑</div>
+                    <div class="viewpoints">
+                        <div class="viewpoint viewpoint-ren" data-content="ren-2">
+                            🏢 生存压力与技术诚信的平衡
+                        </div>
+                        <div class="viewpoint viewpoint-li" data-content="li-2">
+                            🔬 技术实力是最好的安全保障
+                        </div>
+                        <div class="viewpoint viewpoint-peter" data-content="peter-2">
+                            📊 知识工作者管理的新挑战
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第三轮：最终立场 -->
+                <div class="round round-3" data-round="3">
+                    <div class="round-number">3</div>
+                    <div class="round-title">最终立场</div>
+                    <div class="round-desc">综合讨论形成完善方案</div>
+                    <div class="viewpoints">
+                        <div class="viewpoint viewpoint-ren" data-content="ren-3">
+                            🏢 华为AI发展的"新长征"战略
+                        </div>
+                        <div class="viewpoint viewpoint-li" data-content="li-3">
+                            🔬 构建AI技术诚信联盟框架
+                        </div>
+                        <div class="viewpoint viewpoint-peter" data-content="peter-3">
+                            📊 知识时代组织管理新范式
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第四轮：智慧综合 -->
+                <div class="round round-4" data-round="4">
+                    <div class="round-number">4</div>
+                    <div class="round-title">智慧综合</div>
+                    <div class="round-desc">融合三者精华的终极方案</div>
+                    <div class="viewpoints">
+                        <div class="viewpoint viewpoint-synthesis" data-content="synthesis">
+                            ⚡ AI文明进化框架
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详细信息视图 -->
+    <div class="detail-view" id="detailView">
+        <div class="detail-header">
+            <div class="detail-title" id="detailTitle">详细内容</div>
+            <button class="close-btn" onclick="closeDetail()">×</button>
+        </div>
+        <div class="detail-content" id="detailContent">
+            <!-- 详细内容将在这里显示 -->
+        </div>
+    </div>
+    
+    <script>
+        // 详细内容数据
+        const detailData = {
+            'ren-1': {
+                title: '任正非 - 第一轮：管理失误与激励机制问题',
+                content: `
+                    <h3>核心观点</h3>
+                    <p>如果指控属实，这是华为管理上的重大失误，违背了"以客户为中心，以奋斗者为本，长期艰苦奋斗"的核心价值观。</p>
+                    
+                    <h3>深层次问题分析</h3>
+                    <p><strong>激励机制出了问题：</strong>真正做技术的人得不到应有回报，而搞投机的人反而获得表彰。</p>
+                    <p><strong>"力出一孔"没有做到：</strong>内部各个团队各自为政，甚至相互拆台。</p>
+                    <p><strong>新技术领域的焦虑和浮躁：</strong>美国制裁带来的压力不能成为走捷径的理由。</p>
+                    
+                    <h3>未来思考</h3>
+                    <p>• 建立更严格的技术诚信体系</p>
+                    <p>• 重新审视人才评价体系</p>
+                    <p>• 要有更大的战略耐心</p>
+                `
+            },
+            'li-1': {
+                title: '李飞飞 - 第一轮：技术诚信与学术道德危机',
+                content: `
+                    <h3>技术发展角度</h3>
+                    <p>"套壳"行为实际上是技术上的"伪创新"。真正的科学进步需要可重复、可验证的研究成果。</p>
+                    
+                    <h3>学术诚信的重要性</h3>
+                    <p>学术诚信是科学研究的生命线。习惯性地将他人工作包装成自己的创新，会对整个研究生态造成毒害。</p>
+                    
+                    <h3>对AI行业的深层影响</h3>
+                    <p><strong>信任危机：</strong>影响全球合作和开放交流</p>
+                    <p><strong>资源错配：</strong>误导市场和投资者</p>
+                    <p><strong>标准混乱：</strong>技术评估体系崩塌</p>
+                    
+                    <h3>建议</h3>
+                    <p>• 建立更严格的技术审查机制</p>
+                    <p>• 推动开源和透明化</p>
+                    <p>• 重塑评价体系</p>
+                    <p>• 加强国际合作</p>
+                `
+            },
+            'peter-1': {
+                title: '彼得·德鲁克 - 第一轮：组织管理失效的典型案例',
+                content: `
+                    <h3>错误的绩效指标</h3>
+                    <p>"衡量什么，就会得到什么"。只关注短期结果而忽视过程诚信性，导致"劣币驱逐良币"。</p>
+                    
+                    <h3>知识工作者管理挑战</h3>
+                    <p>管理者无法直接观察评估工作过程，外行难以区分真正创新和"伪创新"。需要建立更精细的评估体系。</p>
+                    
+                    <h3>组织文化腐蚀</h3>
+                    <p>当投机取巧行为得到奖励时，整个组织价值观发生扭曲，形成自我强化的恶性循环。</p>
+                    
+                    <h3>管理建议</h3>
+                    <p>• 重新设计绩效评估体系</p>
+                    <p>• 建立专业化技术治理结构</p>
+                    <p>• 强化组织价值观建设</p>
+                    <p>• 改革资源分配机制</p>
+                `
+            },
+            'ren-2': {
+                title: '任正非 - 第二轮：生存压力与技术诚信的平衡',
+                content: `
+                    <h3>对开源透明化的思考</h3>
+                    <p>在当前国际环境下，华为面临的不仅是技术竞争，更是生存挑战。需要在诚信和生存之间找到平衡。</p>
+                    
+                    <h3>对管理理论的补充</h3>
+                    <p>中国企业面临特殊挑战，在激烈竞争中有时需要做"不完美"的选择。"拿来主义"也是必要的学习方式。</p>
+                    
+                    <h3>文化建设的重要性</h3>
+                    <p><strong>重新定义"奋斗者"：</strong>真正的奋斗者是在昇腾芯片上从零开始训练模型的工程师</p>
+                    <p><strong>建立"容错"机制：</strong>容忍创新失败，但不容忍弄虚作假</p>
+                    <p><strong>保持"战略定力"：</strong>结合长远技术布局和短期生存策略</p>
+                `
+            },
+            'li-2': {
+                title: '李飞飞 - 第二轮：技术实力是最好的安全保障',
+                content: `
+                    <h3>技术诚信与战略安全并不对立</h3>
+                    <p>真正的技术实力恰恰是最好的安全保障。ImageNet的开放建立了斯坦福的权威地位，真正的技术领导力来自创新能力。</p>
+                    
+                    <h3>对"拿来主义"的要求</h3>
+                    <p><strong>透明性：</strong>明确标注技术来源</p>
+                    <p><strong>增量创新：</strong>必须有实质性改进和贡献</p>
+                    <p><strong>诚实披露：</strong>让使用者知道技术的真实来源和能力边界</p>
+                    
+                    <h3>对管理理论的技术视角补充</h3>
+                    <p>AI研究的特殊性要求管理者具备技术判断力：高度不确定性、长周期投入、跨学科复杂性。</p>
+                    
+                    <h3>建议</h3>
+                    <p>• 分层管理：基础研究、应用开发、产品化分层管理</p>
+                    <p>• 渐进式开放：逐步建立技术信誉</p>
+                    <p>• 建立技术评估专业机制</p>
+                    <p>• 重新定义成功指标</p>
+                `
+            },
+            'peter-2': {
+                title: '彼得·德鲁克 - 第二轮：知识工作者管理的新挑战',
+                content: `
+                    <h3>对生存压力的管理学思考</h3>
+                    <p>生存压力可能导致短期思维和投机行为。管理者应该在压力下保持组织价值观，而不是放弃原则。</p>
+                    
+                    <h3>对"开源透明化"的补充</h3>
+                    <p>提出"分层透明制"：内部完全透明、同行基本透明、公众适度透明。</p>
+                    
+                    <h3>组织学习能力的重要性</h3>
+                    <p><strong>重新定义效率：</strong>不仅是短期产出，更是长期学习和适应能力</p>
+                    <p><strong>双重循环学习：</strong>不仅学会如何更好地做事，更要学会质疑为什么这样做</p>
+                    <p><strong>建设性冲突文化：</strong>鼓励不同观点的碰撞和辩论</p>
+                    
+                    <h3>里程碑管理法</h3>
+                    <p>将长期目标分解为可验证的里程碑，每个里程碑都要经过严格的技术和伦理审查。</p>
+                `
+            },
+            'ren-3': {
+                title: '任正非 - 第三轮：华为AI发展的"新长征"战略',
+                content: `
+                    <h3>承认现实，把握转机</h3>
+                    <p>此次事件是华为的耻辱，但也可能是转机。技术诚信和战略安全并非对立，如果连自己的技术能力都搞不清楚，怎么可能建立真正的竞争优势？</p>
+                    
+                    <h3>"新长征"战略框架</h3>
+                    <p><strong>重新定义"奋斗者"：</strong>让"笨功夫"的践行者成为华为英雄</p>
+                    <p><strong>"容错但不容假"文化：</strong>区分技术失败和诚信失败</p>
+                    <p><strong>"分层开放"策略：</strong>基础研究开放、应用技术有选择开放、产品技术保密但内部透明</p>
+                    <p><strong>"技术主权"与"技术诚信"平衡：</strong>建立技术来源追溯系统</p>
+                    <p><strong>重塑AI人才生态：</strong>技术贡献积分制、首席科学家制度</p>
+                    
+                    <h3>最终判断</h3>
+                    <p>华为在AI时代的成功，只能靠"板凳要坐十年冷"的坚持。让技术诚信成为华为在AI时代的核心竞争力。</p>
+                `
+            },
+            'li-3': {
+                title: '李飞飞 - 第三轮：构建AI技术诚信联盟框架',
+                content: `
+                    <h3>修正与深化观点</h3>
+                    <p>技术诚信不是奢侈品，而是必需品。建立"技术生态健康发展"框架，技术诚信是AI发展的基石。</p>
+                    
+                    <h3>"渐进式诚信"机制</h3>
+                    <p><strong>内部透明：</strong>组织内部完全透明</p>
+                    <p><strong>同行透明：</strong>学术技术社区基本诚信标准</p>
+                    <p><strong>公众诚实：</strong>诚实描述技术能力和局限性</p>
+                    
+                    <h3>重新定义AI时代技术领导力</h3>
+                    <p>• 技术原创能力</p>
+                    <p>• 生态建设能力</p>
+                    <p>• 伦理引领能力</p>
+                    <p>• 长期视野能力</p>
+                    
+                    <h3>"AI技术诚信联盟"构想</h3>
+                    <p>包括AI企业、研究机构、学术组织、标准制定机构、政府监管部门，建立共同的诚信标准和评价体系。</p>
+                    
+                    <h3>最终判断</h3>
+                    <p>此事件是AI行业的"免疫反应"，关键是如何利用它建立更健康的技术生态。技术诚信是中国AI行业获得国际尊重的基础。</p>
+                `
+            },
+            'peter-3': {
+                title: '彼得·德鲁克 - 第三轮：知识时代组织管理新范式',
+                content: `
+                    <h3>知识时代组织管理新范式</h3>
+                    <p><strong>重新定义组织核心资产：</strong>无形资产（知识、信誉、文化、创造力）比有形资产更重要</p>
+                    
+                    <h3>"知识价值会计"新衡量体系</h3>
+                    <p>• 知识原创度：原创知识的数量和质量</p>
+                    <p>• 知识传承度：知识传播和影响</p>
+                    <p>• 知识诚信度：知识创造使用过程中的诚信表现</p>
+                    <p>• 知识可持续性：知识创造能力的可持续性</p>
+                    
+                    <h3>"四维绩效评估模型"</h3>
+                    <p>• 结果维度：传统业绩指标</p>
+                    <p>• 过程维度：技术开发过程诚信</p>
+                    <p>• 能力维度：学习和创新能力提升</p>
+                    <p>• 文化维度：对组织文化价值观的贡献</p>
+                    
+                    <h3>知识工作者新激励机制</h3>
+                    <p>• 成就激励：看到工作意义和价值</p>
+                    <p>• 成长激励：持续学习和能力提升机会</p>
+                    <p>• 认同激励：真正贡献得到同行社会认可</p>
+                    <p>• 自主激励：足够的自主权和创造空间</p>
+                `
+            },
+            'synthesis': {
+                title: '智慧综合：AI文明进化框架',
+                content: `
+                    <h3>核心洞察</h3>
+                    <p>华为盘古大模型事件不仅是技术诚信问题，更是人类进入AI时代后面临的第一次"文明级别"的管理挑战。</p>
+                    
+                    <h3>"AI文明进化框架"</h3>
+                    
+                    <h3>第一层：文明级别的价值重构</h3>
+                    <p><strong>AI文明宪章：</strong>将技术诚信提升到文明价值高度</p>
+                    <p><strong>技术文明指数：</strong>衡量组织在AI发展中的文明程度</p>
+                    
+                    <h3>第二层：组织级别的进化机制</h3>
+                    <p><strong>"三螺旋"管理模式：</strong></p>
+                    <p>• 生存螺旋（任正非）：确保组织竞争中的生存能力</p>
+                    <p>• 创新螺旋（李飞飞）：推动技术持续创新突破</p>
+                    <p>• 进化螺旋（德鲁克）：促进组织管理能力不断进化</p>
+                    
+                    <h3>第三层：个体级别的能力重塑</h3>
+                    <p><strong>"AI时代新人类"培养：</strong>技术能力、伦理能力、协作能力、进化能力</p>
+                    <p><strong>个人技术诚信档案：</strong>基于区块链的不可篡改记录系统</p>
+                    
+                    <h3>第四层：生态级别的协同进化</h3>
+                    <p><strong>"AI生态共同体"：</strong>多方协作的互利共赢机制</p>
+                    <p><strong>"全球AI治理网络"：</strong>跨国AI治理协调机制</p>
+                    
+                    <h3>华为重生计划</h3>
+                    <p><strong>阶段一（0-12个月）：</strong>危机转化 - 成立AI文明委员会、技术考古、文化重塑</p>
+                    <p><strong>阶段二（12-36个月）：</strong>能力重建 - AI原创能力、开放合作网络、创新管理模式</p>
+                    <p><strong>阶段三（36个月后）：</strong>生态引领 - 成为AI文明引领者、建设AI生态共同体</p>
+                    
+                    <h3>对人类AI文明的启示</h3>
+                    <p>技术诚信不是约束而是解放，不是负担而是力量。将危机转化为机遇，将挑战转化为进步，将个体问题转化为文明进化的动力。</p>
+                `
+            }
+        };
+        
+        // 显示详细内容
+        function showDetail(contentKey) {
+            const data = detailData[contentKey];
+            if (data) {
+                document.getElementById('detailTitle').textContent = data.title;
+                document.getElementById('detailContent').innerHTML = data.content;
+                document.getElementById('detailView').classList.add('active');
+            }
+        }
+        
+        // 关闭详细内容
+        function closeDetail() {
+            document.getElementById('detailView').classList.remove('active');
+        }
+        
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            // 观点卡片点击事件
+            document.querySelectorAll('.viewpoint').forEach(function(element) {
+                element.addEventListener('click', function() {
+                    const contentKey = this.getAttribute('data-content');
+                    showDetail(contentKey);
+                });
+            });
+            
+            // 专家悬停效果
+            document.querySelectorAll('.expert').forEach(function(expert) {
+                expert.addEventListener('mouseenter', function() {
+                    const expertType = this.getAttribute('data-expert');
+                    document.querySelectorAll('.viewpoint-' + expertType).forEach(function(viewpoint) {
+                        viewpoint.style.transform = 'translateX(10px)';
+                        viewpoint.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+                    });
+                });
+                
+                expert.addEventListener('mouseleave', function() {
+                    const expertType = this.getAttribute('data-expert');
+                    document.querySelectorAll('.viewpoint-' + expertType).forEach(function(viewpoint) {
+                        viewpoint.style.transform = '';
+                        viewpoint.style.boxShadow = '';
+                    });
+                });
+            });
+            
+            // ESC键关闭详细视图
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeDetail();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,6 +1,43 @@
 {
   "infographics": [
     {
+      "id": "1d933c4d",
+      "title": "华为盘古大模型争议事件",
+      "question": "专家辩论问题",
+      "date": "2025-07-12",
+      "created": "2025-07-12T00:03:02.779097Z",
+      "updated": "2025-07-12T00:03:02.771203Z",
+      "filename": "infographic_1d933c4d.html",
+      "path": "infographics/infographic_1d933c4d.html",
+      "experts": [
+        {
+          "name": "🏢\n任正非",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "🔬\n李飞飞",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "📊\n彼得·德鲁克",
+          "emoji": "📊",
+          "role": "领域专家",
+          "category": "philosophy"
+        }
+      ],
+      "summary": "🏢\n任正非、🔬\n李飞飞等3位专家就华为盘古大模型争议事件展开深入讨论，探讨相关领域的核心问题与解决方案。",
+      "category": "philosophy",
+      "tags": [],
+      "rounds": 4,
+      "wordCount": 224,
+      "status": "completed",
+      "featured": false
+    },
+    {
       "id": "6acdfd1c",
       "title": "日本梅雨露营专家辩论",
       "question": "专家辩论问题",
@@ -242,15 +279,15 @@
     }
   ],
   "metadata": {
-    "total": 6,
-    "lastUpdated": "2025-07-11T09:10:55.872439Z",
+    "total": 7,
+    "lastUpdated": "2025-07-12T00:03:37.553960Z",
     "categories": {
-      "tech": 1,
-      "philosophy": 5
+      "philosophy": 6,
+      "tech": 1
     },
     "experts": {
-      "total": 18,
-      "unique": 17
+      "total": 21,
+      "unique": 20
     },
     "tags": [
       "AI",
