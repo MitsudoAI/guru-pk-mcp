@@ -183,19 +183,6 @@ class GuruPKServer:
                     },
                 ),
                 types.Tool(
-                    name="get_expert_insights",
-                    description="获取专家洞察和关系分析",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {
-                            "session_id": {
-                                "type": "string",
-                                "description": "会话ID（可选，默认当前会话）",
-                            }
-                        },
-                    },
-                ),
-                types.Tool(
                     name="export_enhanced_session",
                     description="导出增强的会话分析报告",
                     inputSchema={
@@ -267,15 +254,6 @@ class GuruPKServer:
                     },
                 ),
                 types.Tool(
-                    name="list_available_personas",
-                    description="列出所有可用的专家",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": False,
-                    },
-                ),
-                types.Tool(
                     name="recommend_personas",
                     description="根据问题类型智能推荐专家组合",
                     inputSchema={
@@ -300,15 +278,6 @@ class GuruPKServer:
                                 "description": "会话ID（可选，默认查看当前会话）",
                             }
                         },
-                    },
-                ),
-                types.Tool(
-                    name="get_usage_statistics",
-                    description="获取使用统计和分析",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": False,
                     },
                 ),
                 types.Tool(
@@ -564,8 +533,6 @@ class GuruPKServer:
                 return await self._handle_analyze_question_profile(arguments)
             elif name == "generate_dynamic_experts":
                 return await self._handle_generate_dynamic_experts(arguments)
-            elif name == "get_expert_insights":
-                return await self._handle_get_expert_insights(arguments)
             elif name == "export_enhanced_session":
                 return await self._handle_export_enhanced_session(arguments)
             elif name == "guru_pk_help":
@@ -578,8 +545,6 @@ class GuruPKServer:
                 return await self._handle_record_batch_responses(arguments)
             elif name == "get_session_status":
                 return await self._handle_get_session_status(arguments)
-            elif name == "list_available_personas":
-                return await self._handle_list_available_personas(arguments)
             elif name == "recommend_personas":
                 return await self._handle_recommend_personas(arguments)
             elif name == "view_session_history":
@@ -590,8 +555,6 @@ class GuruPKServer:
                 return await self._handle_export_session_as_infographic(arguments)
             elif name == "advance_to_next_round":
                 return await self._handle_advance_to_next_round(arguments)
-            elif name == "get_usage_statistics":
-                return await self._handle_get_usage_statistics(arguments)
             elif name == "set_language":
                 return await self._handle_set_language(arguments)
             elif name == "get_language_settings":
@@ -779,190 +742,6 @@ start_stepwise_pk_session({{
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 智能推荐失败: {str(e)}")]
-
-    def _get_smart_recommendation(self, question: str) -> dict[str, Any] | None:
-        """根据问题内容智能推荐专家组合"""
-        try:
-            question_lower = question.lower()
-            recommendations: list[dict[str, Any]] = []
-
-            # 教育学习类
-            if any(
-                word in question_lower
-                for word in [
-                    "教育",
-                    "学习",
-                    "英语",
-                    "语言",
-                    "学生",
-                    "儿童",
-                    "孩子",
-                    "小学",
-                    "中学",
-                    "教学",
-                    "学校",
-                    "课程",
-                ]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["苏格拉底", "大卫伯恩斯", "王阳明"],
-                        "reason": "教育智慧组合：苏格拉底式启发教学 + 认知心理学 + 知行合一的学习理念",
-                        "score": 95,
-                    },
-                    {
-                        "combo": ["苏格拉底", "吉杜克里希那穆提", "稻盛和夫"],
-                        "reason": "成长启发组合：哲学思辨 + 觉察学习 + 匠人精神",
-                        "score": 90,
-                    },
-                ]
-
-            # 商业创业类
-            elif any(
-                word in question_lower
-                for word in ["创业", "商业", "投资", "经营", "企业", "生意", "商务"]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["埃隆马斯克", "查理芒格", "稻盛和夫"],
-                        "reason": "商业创新组合：第一性原理创新思维 + 投资智慧 + 经营哲学",
-                        "score": 95,
-                    },
-                    {
-                        "combo": ["史蒂夫乔布斯", "埃隆马斯克", "稻盛和夫"],
-                        "reason": "产品创新组合：极致产品思维 + 颠覆式创新 + 匠人精神",
-                        "score": 90,
-                    },
-                ]
-
-            # 人生成长类
-            elif any(
-                word in question_lower
-                for word in [
-                    "人生",
-                    "成长",
-                    "认知",
-                    "思维",
-                    "心理",
-                    "修养",
-                    "品格",
-                    "情感",
-                    "压力",
-                    "焦虑",
-                ]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["苏格拉底", "大卫伯恩斯", "吉杜克里希那穆提"],
-                        "reason": "心理成长组合：哲学思辨 + CBT认知疗法 + 内在觉察智慧",
-                        "score": 95,
-                    },
-                    {
-                        "combo": ["王阳明", "曾国藩", "稻盛和夫"],
-                        "reason": "修身养性组合：知行合一 + 品格修养 + 人格典范",
-                        "score": 90,
-                    },
-                ]
-
-            # 系统管理类
-            elif any(
-                word in question_lower
-                for word in [
-                    "系统",
-                    "管理",
-                    "复杂",
-                    "问题",
-                    "解决",
-                    "策略",
-                    "方法",
-                    "流程",
-                    "组织",
-                ]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["杰伊福雷斯特", "查理芒格", "苏格拉底"],
-                        "reason": "系统分析组合：系统动力学 + 多元思维模型 + 批判思辨",
-                        "score": 95,
-                    },
-                    {
-                        "combo": ["杰伊福雷斯特", "埃隆马斯克", "王阳明"],
-                        "reason": "创新解决组合：系统思维 + 创新突破 + 知行合一",
-                        "score": 88,
-                    },
-                ]
-
-            # 产品技术类
-            elif any(
-                word in question_lower
-                for word in [
-                    "产品",
-                    "设计",
-                    "用户",
-                    "体验",
-                    "技术",
-                    "软件",
-                    "开发",
-                    "创新",
-                ]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["史蒂夫乔布斯", "埃隆马斯克", "孙子"],
-                        "reason": "产品创新组合：极致用户体验 + 技术创新 + 战略思维",
-                        "score": 92,
-                    },
-                    {
-                        "combo": ["史蒂夫乔布斯", "稻盛和夫", "苏格拉底"],
-                        "reason": "完美主义组合：产品极致 + 匠人精神 + 深度思考",
-                        "score": 88,
-                    },
-                ]
-
-            # 宗教精神类
-            elif any(
-                word in question_lower
-                for word in [
-                    "宗教",
-                    "信仰",
-                    "精神",
-                    "圣经",
-                    "教会",
-                    "上帝",
-                    "神",
-                    "灵性",
-                    "道德",
-                    "伦理",
-                ]
-            ):
-                recommendations = [
-                    {
-                        "combo": ["苏格拉底", "王阳明", "吉杜克里希那穆提"],
-                        "reason": "精神哲学组合：理性思辨 + 心学智慧 + 灵性觉察",
-                        "score": 95,
-                    },
-                    {
-                        "combo": ["苏格拉底", "曾国藩", "稻盛和夫"],
-                        "reason": "道德修养组合：哲学思辨 + 儒家修身 + 敬天爱人",
-                        "score": 90,
-                    },
-                ]
-
-            else:
-                # 默认通用推荐
-                recommendations = [
-                    {
-                        "combo": ["苏格拉底", "埃隆马斯克", "查理芒格"],
-                        "reason": "经典全能组合：哲学思辨 + 创新思维 + 投资智慧",
-                        "score": 90,
-                    },
-                ]
-
-            # 新架构中不再需要检查专家可用性（动态生成）
-            return recommendations[0] if recommendations else None
-
-        except Exception:
-            return None
 
     async def _handle_get_smart_recommendation_guidance(
         self, arguments: dict[str, Any]
@@ -1485,40 +1264,7 @@ get_batch_persona_prompt({{"round_type": "{next_round_type}"}})
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 获取状态失败: {str(e)}")]
 
-        # 工具5: 列出可用专家
-
-    async def _handle_list_available_personas(
-        self, arguments: dict[str, Any]
-    ) -> list[TextContent]:
-        """列出所有可用的专家"""
-        try:
-            # 获取语言设置
-            config = ConfigManager()
-            language_instruction = config.get_language_instruction()
-
-            # 在开头添加语言指示
-            result = f"{language_instruction}\n\n🎭 **动态专家生成系统**\n\n"
-
-            result += "## 🚀 新的专家系统\n\n"
-            result += "新系统不再使用预定义的专家列表，而是根据您的问题动态生成最合适的专家！\n\n"
-
-            result += "## 💡 使用方式\n\n"
-            result += "**🤖 智能推荐**（推荐方式）：\n"
-            result += "1. 使用 `get_smart_recommendation_guidance` 获取推荐指导\n"
-            result += "2. MCP Host端LLM根据指导动态生成3位专家\n"
-            result += "3. 使用 `start_pk_session` 启动专家辩论\n\n"
-
-            result += "**🎯 优势**：\n"
-            result += "- 每次都为问题定制最合适的专家\n"
-            result += "- 保证专业度和多样性的最佳平衡\n"
-            result += "- 无需维护专家列表，永远新鲜\n"
-
-            return [TextContent(type="text", text=result)]
-
-        except Exception as e:
-            return [TextContent(type="text", text=f"❌ 获取专家列表失败: {str(e)}")]
-
-        # 工具6: 查看会话历史
+        # 工具5: 查看会话历史
 
     async def _handle_view_session_history(
         self, arguments: dict[str, Any]
@@ -2009,11 +1755,11 @@ get_batch_persona_prompt({{"round_type": "{next_round_type}"}})
 ### 📋 **智能推荐使用方法**：
 
 ```javascript
-// 步骤1: 获取智能推荐指导
-get_smart_recommendation_guidance({{"question": "{question}"}})
+// 步骤1: 生成动态专家
+generate_dynamic_experts({{"question": "{question}"}})
 
-// 步骤2: 基于指导推荐专家，然后启动会话
-// start_pk_session({{"question": "{question}", "personas": ["推荐专家1", "推荐专家2", "推荐专家3"]}}
+// 步骤2: 基于生成的专家启动会话
+// start_pk_session({{"question": "{question}", "personas": ["生成的专家1", "生成的专家2", "生成的专家3"]}}
 ```
 
 ## 🔄 **传统推荐（备选）**
@@ -2084,7 +1830,6 @@ start_pk_session({{"question": "{question}"}})
 - `advance_to_next_round` - 手动进入下一轮/专家
 
 ### ⚙️ 系统设置
-- `get_usage_statistics` - 查看系统使用统计
 - `set_language` - 🌍 设置专家回复语言
 - `get_language_settings` - 查看当前语言设置
 - `guru_pk_help` - 获取系统帮助（本工具）
@@ -2151,7 +1896,6 @@ set_language: english
 
 🤖 **最佳实践**：直接提出您的问题，系统会自动生成最合适的专家组合
 
-📊 **查看统计**：使用`get_usage_statistics`了解系统使用情况
 
 📄 **导出记录**：使用`export_enhanced_session`获得完整的分析报告
 
@@ -2163,142 +1907,6 @@ set_language: english
         # 使用预格式化文本确保原始格式显示
         formatted_help = f"```\n{help_text}\n```"
         return [TextContent(type="text", text=formatted_help)]
-
-        # Phase 3 工具: 统计分析
-
-    async def _handle_get_usage_statistics(
-        self, arguments: dict[str, Any]
-    ) -> list[TextContent]:
-        """获取使用统计和分析"""
-        try:
-            sessions = self.session_manager.list_sessions()
-
-            if not sessions:
-                return [
-                    TextContent(
-                        type="text",
-                        text="📊 暂无使用数据。创建一些PK会话后再来查看统计信息吧！",
-                    )
-                ]
-
-            # 基础统计
-            total_sessions = len(sessions)
-            completed_sessions = len([s for s in sessions if s["is_completed"]])
-            completion_rate = (
-                (completed_sessions / total_sessions * 100) if total_sessions > 0 else 0
-            )
-
-            # 专家使用统计
-            persona_usage: dict[str, int] = {}
-            for session in sessions:
-                for persona in session["personas"]:
-                    persona_usage[persona] = persona_usage.get(persona, 0) + 1
-
-            # 最受欢迎的专家
-            popular_personas = sorted(
-                persona_usage.items(), key=lambda x: x[1], reverse=True
-            )[:5]
-
-            # 时间分析
-            from datetime import datetime
-
-            now = datetime.now()
-            recent_sessions = [
-                s
-                for s in sessions
-                if (now - datetime.fromisoformat(s["created_at"])).days <= 7
-            ]
-
-            # 问题类型分析（简单关键词统计）
-            question_keywords: dict[str, int] = {}
-            for session in sessions:
-                question = session["question"].lower()
-                # 统计常见关键词
-                for keyword in [
-                    "创业",
-                    "投资",
-                    "人生",
-                    "学习",
-                    "产品",
-                    "管理",
-                    "系统",
-                    "心理",
-                ]:
-                    if keyword in question:
-                        question_keywords[keyword] = (
-                            question_keywords.get(keyword, 0) + 1
-                        )
-
-            result = f"""📊 **使用统计分析**
-
-## 📈 基础数据
-- **总会话数**: {total_sessions}
-- **已完成**: {completed_sessions} ({completion_rate:.1f}%)
-- **最近7天**: {len(recent_sessions)} 个会话
-
-## 🏆 热门专家排行
-"""
-
-            for i, (persona, count) in enumerate(popular_personas, 1):
-                percentage = (count / total_sessions * 100) if total_sessions > 0 else 0
-                result += f"{i}. {self._format_expert_info(persona)} - {count}次 ({percentage:.1f}%)\n"
-
-            result += "\n## 🔍 问题领域分析\n"
-            if question_keywords:
-                for keyword, count in sorted(
-                    question_keywords.items(), key=lambda x: x[1], reverse=True
-                )[:5]:
-                    percentage = (
-                        (count / total_sessions * 100) if total_sessions > 0 else 0
-                    )
-                    result += f"- **{keyword}**: {count}次 ({percentage:.1f}%)\n"
-            else:
-                result += "暂无足够数据进行分析\n"
-
-            # 详细会话信息
-            if total_sessions > 0:
-                # 计算平均字数
-                total_chars = 0
-                total_responses = 0
-
-                for session in sessions:
-                    if session["is_completed"]:
-                        # 这里需要加载完整会话来计算字数
-                        full_session = self.session_manager.load_session(
-                            session["session_id"]
-                        )
-                        if full_session:
-                            for round_responses in full_session.responses.values():
-                                for response in round_responses.values():
-                                    total_chars += len(response)
-                                    total_responses += 1
-                            if full_session.final_synthesis:
-                                total_chars += len(full_session.final_synthesis)
-                                total_responses += 1
-
-                avg_chars = total_chars // total_responses if total_responses > 0 else 0
-
-                result += f"""
-## 💬 讨论质量
-- **总发言数**: {total_responses}
-- **平均每次发言**: {avg_chars:,} 字符
-- **总讨论字数**: {total_chars:,} 字符
-
-## 📅 活跃度
-- **最近会话**: {sessions[0]["created_at"][:19].replace("T", " ")}
-- **本周会话**: {len(recent_sessions)}个"""
-
-            result += """
-
-## 🎯 使用建议
-- 尝试不同的专家组合来获得多元化视角
-- 完成更多会话以获得更深入的洞察
-- 使用 `recommend_personas` 获得智能推荐"""
-
-            return [TextContent(type="text", text=result)]
-
-        except Exception as e:
-            return [TextContent(type="text", text=f"❌ 获取统计失败: {str(e)}")]
 
     async def _handle_set_language(
         self, arguments: dict[str, Any]
@@ -2497,86 +2105,6 @@ start_pk_session({{
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 专家推荐生成失败: {str(e)}")]
-
-    async def _handle_get_expert_insights(
-        self, arguments: dict[str, Any]
-    ) -> list[TextContent]:
-        """获取专家洞察和关系分析"""
-        try:
-            session_id = arguments.get("session_id")
-
-            if session_id:
-                session = self.session_manager.load_session(session_id)
-                if not session:
-                    return [
-                        TextContent(type="text", text=f"❌ 未找到会话 {session_id}")
-                    ]
-            else:
-                if not self.current_session:
-                    return [TextContent(type="text", text="❌ 没有活跃的会话。")]
-                session = self.current_session
-
-            # 新架构中不支持此功能
-            insights: dict[str, Any] = {
-                "expert_profiles": {},
-                "relationships": {},
-                "recommendation_details": None,
-            }
-
-            result = f"""🔍 **专家洞察分析**
-
-**会话ID**: `{session.session_id}`
-
-## 👥 专家档案"""
-
-            if insights["expert_profiles"]:
-                for name, profile in insights["expert_profiles"].items():
-                    result += f"""
-
-### {name}
-- **专业背景**: {profile["background"]}
-- **思维风格**: {profile["thinking_style"]}
-- **知识领域**: {", ".join(profile["knowledge_domains"])}
-- **核心特质**: {", ".join(profile["personality_traits"])}
-- **来源**: {profile["source"]}
-- **相关度**: {profile["relevance_score"]:.2f}"""
-            else:
-                result += "\n暂无专家档案信息。"
-
-            # 推荐详情
-            if insights["recommendation_details"]:
-                details = insights["recommendation_details"]
-                result += f"""
-
-## 🎯 推荐分析
-- **推荐理由**: {details["reason"]}
-- **多样性评分**: {details["diversity_score"]:.2f}
-- **相关性评分**: {details["relevance_score"]:.2f}
-
-### 🔮 预期视角
-{chr(10).join(["- " + p for p in details["expected_perspectives"]]) if details["expected_perspectives"] else "- 暂无预期视角信息"}"""
-
-            # 专家关系
-            if insights["relationships"]:
-                result += "\n\n## 🕸️ 专家关系图谱"
-                for expert, relations in insights["relationships"].items():
-                    if (
-                        relations.get("potential_allies")
-                        or relations.get("potential_opponents")
-                        or relations.get("complementary")
-                    ):
-                        result += f"\n\n### {expert}"
-                        if relations.get("potential_allies"):
-                            result += f"\n- 🤝 **潜在盟友**: {', '.join(relations['potential_allies'])}"
-                        if relations.get("potential_opponents"):
-                            result += f"\n- ⚔️ **观点对手**: {', '.join(relations['potential_opponents'])}"
-                        if relations.get("complementary"):
-                            result += f"\n- 🔄 **互补关系**: {', '.join(relations['complementary'])}"
-
-            return [TextContent(type="text", text=result)]
-
-        except Exception as e:
-            return [TextContent(type="text", text=f"❌ 专家洞察分析失败: {str(e)}")]
 
     async def _handle_export_enhanced_session(
         self, arguments: dict[str, Any]
@@ -2836,7 +2364,6 @@ start_pk_session({{
 ## 🔗 相关工具
 
 - 📄 **标准导出**: 使用 `export_session` 获取简化版报告
-- 📊 **统计信息**: 使用 `get_usage_statistics` 查看系统使用统计
 - 📋 **会话历史**: 使用 `view_session_history` 浏览历史会话
 
 ---

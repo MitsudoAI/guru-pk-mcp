@@ -123,7 +123,7 @@ def test_get_expert_recommendation_guidance():
     assert "专家推荐指导原则" in guidance
     assert "真实人物优先" in guidance
     assert "专家选择优先级" in guidance
-    assert "真实人物推荐指南" in guidance
+    assert "动态专家选择指导原则" in guidance
     assert "专家组合策略" in guidance
     assert "多样性原则" in guidance
     assert "互补性原则" in guidance
@@ -221,8 +221,8 @@ def test_guidance_content_structure():
         "互补性原则", 
         "针对性原则",
         "平衡性原则",
-        "专家组合示例",
-        "质量检查"
+        "动态专家组合指导框架",
+        "专家选择质量检查标准"
     ]
     
     for section in expected_expert_sections:
