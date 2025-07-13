@@ -16,6 +16,7 @@ class DebateMode(Enum):
     STANDARD_DEBATE = "standard"  # 标准辩论模式 (4轮)
     DEEP_EXPLORATION = "deep"  # 深度探讨模式 (6轮)
     FREE_DEBATE = "free"  # 自由辩论模式 (用户控制)
+    BATCH_OPTIMIZED = "batch"  # 批处理优化模式 (4轮，但使用批处理提示词)
 
 
 class QuestionComplexity(Enum):
@@ -24,6 +25,119 @@ class QuestionComplexity(Enum):
     SIMPLE = "simple"
     STANDARD = "standard"
     COMPLEX = "complex"
+
+
+class ProcessingMode(Enum):
+    """处理模式枚举"""
+
+    SEQUENTIAL = "sequential"  # 序列模式：逐个专家发言
+    BATCH = "batch"  # 批处理模式：专家并发发言
+
+
+@dataclass
+class BatchConfig:
+    """批处理模式配置"""
+
+    enable_self_check: bool = True  # 启用自检机制
+    emphasize_interaction: bool = True  # 强调专家互动
+    use_virtual_timing: bool = True  # 使用虚拟时序
+    quality_threshold: float = 0.7  # 质量阈值
+    max_retry_attempts: int = 1  # 最大重试次数
+    prompt_version: str = "v1"  # 提示词版本
+
+    @classmethod
+    def create_default(cls) -> "BatchConfig":
+        """创建默认配置"""
+        return cls()
+
+    @classmethod
+    def create_high_quality(cls) -> "BatchConfig":
+        """创建高质量配置"""
+        return cls(
+            enable_self_check=True,
+            emphasize_interaction=True,
+            use_virtual_timing=True,
+            quality_threshold=0.8,
+            max_retry_attempts=2,
+            prompt_version="v2",
+        )
+
+
+@dataclass
+class ABTestResult:
+    """A/B测试结果"""
+
+    test_id: str
+    question: str
+    personas: list[str]
+
+    # 序列模式结果
+    sequential_result: dict[str, Any]
+    sequential_time: float
+    sequential_token_count: int
+    sequential_quality_score: float
+
+    # 批处理模式结果
+    batch_result: dict[str, Any]
+    batch_time: float
+    batch_token_count: int
+    batch_quality_score: float
+
+    # 比较指标
+    time_improvement: float  # 时间提升百分比
+    token_efficiency: float  # Token效率
+    quality_delta: float  # 质量差异
+
+    # 元数据
+    test_timestamp: str
+    llm_model: str
+    batch_config: BatchConfig
+
+    @classmethod
+    def create_test_result(
+        cls,
+        question: str,
+        personas: list[str],
+        sequential_data: dict[str, Any],
+        batch_data: dict[str, Any],
+        batch_config: BatchConfig,
+    ) -> "ABTestResult":
+        """创建测试结果"""
+
+        seq_time = sequential_data.get("execution_time", 0.0)
+        batch_time = batch_data.get("execution_time", 0.0)
+
+        time_improvement = (
+            ((seq_time - batch_time) / seq_time * 100) if seq_time > 0 else 0.0
+        )
+
+        seq_tokens = sequential_data.get("token_count", 0)
+        batch_tokens = batch_data.get("token_count", 0)
+        token_efficiency = (seq_tokens / batch_tokens) if batch_tokens > 0 else 1.0
+
+        seq_quality = sequential_data.get("quality_score", 5.0)
+        batch_quality = batch_data.get("quality_score", 5.0)
+        quality_delta = batch_quality - seq_quality
+
+        return cls(
+            test_id=str(uuid.uuid4())[:8],
+            question=question,
+            personas=personas,
+            sequential_result=sequential_data,
+            sequential_time=seq_time,
+            sequential_token_count=seq_tokens,
+            sequential_quality_score=seq_quality,
+            batch_result=batch_data,
+            batch_time=batch_time,
+            batch_token_count=batch_tokens,
+            batch_quality_score=batch_quality,
+            time_improvement=time_improvement,
+            token_efficiency=token_efficiency,
+            quality_delta=quality_delta,
+            test_timestamp=datetime.now().isoformat(),
+            llm_model=batch_data.get("model", "unknown"),
+            batch_config=batch_config,
+        )
 
 
 @dataclass
@@ -203,6 +317,11 @@ class PKSession:
     is_recommended_by_host: bool = False  # 是否由Host端智能推荐
     expert_relationships: dict[str, list[str]] | None = None  # 专家关系图谱
 
+    # 批处理模式支持
+    processing_mode: ProcessingMode = ProcessingMode.SEQUENTIAL
+    batch_config: BatchConfig | None = None
+    ab_test_result: ABTestResult | None = None
+
     @classmethod
     def create_new(
         cls,
@@ -220,6 +339,7 @@ class PKSession:
             DebateMode.STANDARD_DEBATE: 4,
             DebateMode.DEEP_EXPLORATION: 6,
             DebateMode.FREE_DEBATE: 4,  # 默认4轮，可动态调整
+            DebateMode.BATCH_OPTIMIZED: 4,  # 批处理模式也是4轮
         }.get(debate_mode, 4)
 
         return cls(
@@ -249,6 +369,8 @@ class PKSession:
         # 处理枚举类型序列化
         if "debate_mode" in result and hasattr(result["debate_mode"], "value"):
             result["debate_mode"] = result["debate_mode"].value
+        if "processing_mode" in result and hasattr(result["processing_mode"], "value"):
+            result["processing_mode"] = result["processing_mode"].value
 
         # 处理其他可能的复杂对象
         if "question_profile" in result and result["question_profile"]:
@@ -281,6 +403,8 @@ class PKSession:
         # 处理枚举类型反序列化
         if "debate_mode" in data and isinstance(data["debate_mode"], str):
             data["debate_mode"] = DebateMode(data["debate_mode"])
+        if "processing_mode" in data and isinstance(data["processing_mode"], str):
+            data["processing_mode"] = ProcessingMode(data["processing_mode"])
 
         # 处理问题档案中的枚举
         if "question_profile" in data and data["question_profile"]:
@@ -449,3 +573,32 @@ class PKSession:
         """设置专家关系图谱"""
         self.expert_relationships = relationships
         self.updated_at = datetime.now().isoformat()
+
+    def enable_batch_mode(self, config: BatchConfig | None = None) -> None:
+        """启用批处理模式"""
+        self.processing_mode = ProcessingMode.BATCH
+        self.batch_config = config or BatchConfig.create_default()
+        if self.debate_mode == DebateMode.STANDARD_DEBATE:
+            self.debate_mode = DebateMode.BATCH_OPTIMIZED
+        self.updated_at = datetime.now().isoformat()
+
+    def disable_batch_mode(self) -> None:
+        """禁用批处理模式"""
+        self.processing_mode = ProcessingMode.SEQUENTIAL
+        self.batch_config = None
+        if self.debate_mode == DebateMode.BATCH_OPTIMIZED:
+            self.debate_mode = DebateMode.STANDARD_DEBATE
+        self.updated_at = datetime.now().isoformat()
+
+    def is_batch_mode(self) -> bool:
+        """检查是否为批处理模式"""
+        return self.processing_mode == ProcessingMode.BATCH
+
+    def set_ab_test_result(self, result: ABTestResult) -> None:
+        """设置A/B测试结果"""
+        self.ab_test_result = result
+        self.updated_at = datetime.now().isoformat()
+
+    def get_batch_config(self) -> BatchConfig:
+        """获取批处理配置"""
+        return self.batch_config or BatchConfig.create_default()

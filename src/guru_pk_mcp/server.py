@@ -52,6 +52,28 @@ class GuruPKServer:
         current_experts = self.expert_manager.get_current_experts()
         return format_persona_info(expert_name, current_experts)
 
+    def _add_tool_control_warning(self, text: str) -> str:
+        """添加严格的工具调用控制警告"""
+        control_warning = """
+
+🚨 **严格工具调用控制 - 必须遵守**:
+- ✅ **仅允许**: 调用Guru-PK专用工具 (start_pk_session, record_round_response, record_batch_responses, get_persona_prompt等)
+- ❌ **绝对禁止**: 调用任何其他MCP工具
+  - ❌ 禁止: sequentialthinking, browser_*, playwright_*, mcp__*
+  - ❌ 禁止: WebFetch, Task, Edit, Write, Read等任何非Guru-PK工具
+- 🔒 **执行要求**:
+  - 只能使用本系统提供的工具完成专家辩论
+  - 任何其他工具调用都会破坏辩论流程的完整性
+  - 如果需要其他功能，请在Guru-PK系统外单独处理
+- ⚠️ **违规后果**: 调用非授权工具可能导致会话中断和数据不一致
+
+🔐 **本次对话中，您只能使用以下Guru-PK专用工具**:
+📋 **会话管理**: start_pk_session, start_stepwise_pk_session, get_session_status
+📝 **记录工具**: record_round_response (单人模式), record_batch_responses (批处理模式)
+🎭 **提示获取**: get_persona_prompt, get_batch_persona_prompt
+📊 **会话操作**: advance_to_next_round, view_session_history, export_session"""
+        return text + control_warning
+
     def _register_tools(self) -> None:
         """注册所有MCP工具"""
 
@@ -62,7 +84,7 @@ class GuruPKServer:
             return [
                 types.Tool(
                     name="start_pk_session",
-                    description="启动新的专家PK会话",
+                    description="启动专家PK会话（默认高效模式，建议先调用 generate_dynamic_experts 生成专家）",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -94,13 +116,21 @@ class GuruPKServer:
                                         "base_prompt",
                                     ],
                                 },
-                                "description": "参与讨论的三位专家完整数据（可选）。如果不提供，系统将基于问题内容和专家偏好自动推荐",
+                                "description": "参与讨论的三位专家完整数据（可选）。如果不提供，建议先调用 generate_dynamic_experts 生成专家",
                                 "minItems": 3,
                                 "maxItems": 3,
                             },
-                            "recommended_by_host": {
-                                "type": "boolean",
-                                "description": "是否由MCP Host端智能推荐（内部使用）",
+                            "batch_config": {
+                                "type": "object",
+                                "properties": {
+                                    "enable_self_check": {"type": "boolean"},
+                                    "emphasize_interaction": {"type": "boolean"},
+                                    "use_virtual_timing": {"type": "boolean"},
+                                    "quality_threshold": {"type": "number"},
+                                    "max_retry_attempts": {"type": "integer"},
+                                    "prompt_version": {"type": "string"},
+                                },
+                                "description": "批处理配置（可选）",
                             },
                         },
                         "required": ["question"],
@@ -198,16 +228,33 @@ class GuruPKServer:
                 ),
                 types.Tool(
                     name="record_round_response",
-                    description="记录当前轮次的回答",
+                    description="记录当前轮次的回答（序列模式）",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "response": {
                                 "type": "string",
                                 "description": "专家的回答内容",
-                            }
+                            },
                         },
                         "required": ["response"],
+                        "additionalProperties": False,
+                    },
+                ),
+                types.Tool(
+                    name="record_batch_responses",
+                    description="记录批处理模式的多专家回答",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "responses": {
+                                "type": "object",
+                                "description": "专家名称到回答内容的映射",
+                                "additionalProperties": {"type": "string"},
+                            },
+                        },
+                        "required": ["responses"],
+                        "additionalProperties": False,
                     },
                 ),
                 types.Tool(
@@ -331,6 +378,173 @@ class GuruPKServer:
                         "additionalProperties": False,
                     },
                 ),
+                # 批处理模式相关工具
+                types.Tool(
+                    name="get_batch_persona_prompt",
+                    description="获取批处理模式的专家提示词（需要先启动批处理会话和设置专家）",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "round_type": {
+                                "type": "string",
+                                "enum": [
+                                    "independent_thinking",
+                                    "cross_debate",
+                                    "final_position",
+                                    "synthesis",
+                                ],
+                                "description": "轮次类型：independent_thinking(独立思考), cross_debate(交叉辩论), final_position(最终立场), synthesis(智慧综合)",
+                            },
+                            "batch_config": {
+                                "type": "object",
+                                "properties": {
+                                    "enable_self_check": {"type": "boolean"},
+                                    "emphasize_interaction": {"type": "boolean"},
+                                    "use_virtual_timing": {"type": "boolean"},
+                                    "quality_threshold": {"type": "number"},
+                                    "max_retry_attempts": {"type": "integer"},
+                                    "prompt_version": {"type": "string"},
+                                },
+                                "description": "批处理配置（可选）",
+                            },
+                        },
+                        "required": ["round_type"],
+                    },
+                ),
+                types.Tool(
+                    name="start_stepwise_pk_session",
+                    description="启动逐步模式的专家PK会话（轮次对话）",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "question": {
+                                "type": "string",
+                                "description": "要讨论的问题",
+                            },
+                            "personas": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "emoji": {"type": "string"},
+                                        "description": {"type": "string"},
+                                        "core_traits": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "speaking_style": {"type": "string"},
+                                        "base_prompt": {"type": "string"},
+                                    },
+                                    "required": [
+                                        "name",
+                                        "emoji",
+                                        "description",
+                                        "core_traits",
+                                        "speaking_style",
+                                        "base_prompt",
+                                    ],
+                                },
+                                "description": "参与讨论的三位专家完整数据（可选）。如果不提供，系统将基于问题内容和专家偏好自动推荐",
+                                "minItems": 3,
+                                "maxItems": 3,
+                            },
+                            "recommended_by_host": {
+                                "type": "boolean",
+                                "description": "是否由MCP Host端智能推荐（内部使用）",
+                            },
+                        },
+                        "required": ["question"],
+                    },
+                ),
+                types.Tool(
+                    name="get_mode_selection_guidance",
+                    description="获取辩论模式选择的智能指导",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "question": {
+                                "type": "string",
+                                "description": "要分析的问题",
+                            },
+                            "personas": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "description": {"type": "string"},
+                                        "core_traits": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                    },
+                                },
+                                "description": "专家信息（可选）",
+                            },
+                            "user_preference": {
+                                "type": "string",
+                                "description": "用户偏好描述（可选），如'注重效率'、'注重质量'等",
+                            },
+                        },
+                        "required": ["question"],
+                    },
+                ),
+                types.Tool(
+                    name="run_ab_test",
+                    description="运行A/B测试对比序列模式和批处理模式",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "question": {
+                                "type": "string",
+                                "description": "要测试的问题",
+                            },
+                            "personas": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "emoji": {"type": "string"},
+                                        "description": {"type": "string"},
+                                        "core_traits": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "speaking_style": {"type": "string"},
+                                        "base_prompt": {"type": "string"},
+                                    },
+                                },
+                                "description": "参与测试的专家数据",
+                                "minItems": 3,
+                                "maxItems": 3,
+                            },
+                            "batch_config": {
+                                "type": "object",
+                                "properties": {
+                                    "enable_self_check": {"type": "boolean"},
+                                    "emphasize_interaction": {"type": "boolean"},
+                                    "use_virtual_timing": {"type": "boolean"},
+                                    "quality_threshold": {"type": "number"},
+                                    "max_retry_attempts": {"type": "integer"},
+                                    "prompt_version": {"type": "string"},
+                                },
+                                "description": "批处理配置（可选）",
+                            },
+                        },
+                        "required": ["question", "personas"],
+                    },
+                ),
+                types.Tool(
+                    name="get_ab_test_results",
+                    description="获取A/B测试结果和性能分析",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": False,
+                    },
+                ),
             ]
 
         # 统一工具处理器
@@ -342,6 +556,8 @@ class GuruPKServer:
 
             if name == "start_pk_session":
                 return await self._handle_start_pk_session(arguments)
+            elif name == "start_stepwise_pk_session":
+                return await self._handle_start_stepwise_pk_session(arguments)
             elif name == "get_smart_recommendation_guidance":
                 return await self._handle_get_smart_recommendation_guidance(arguments)
             elif name == "analyze_question_profile":
@@ -358,6 +574,8 @@ class GuruPKServer:
                 return await self._handle_get_persona_prompt(arguments)
             elif name == "record_round_response":
                 return await self._handle_record_round_response(arguments)
+            elif name == "record_batch_responses":
+                return await self._handle_record_batch_responses(arguments)
             elif name == "get_session_status":
                 return await self._handle_get_session_status(arguments)
             elif name == "list_available_personas":
@@ -378,10 +596,19 @@ class GuruPKServer:
                 return await self._handle_set_language(arguments)
             elif name == "get_language_settings":
                 return await self._handle_get_language_settings(arguments)
+            # 批处理模式工具
+            elif name == "get_batch_persona_prompt":
+                return await self._handle_get_batch_persona_prompt(arguments)
+            elif name == "get_mode_selection_guidance":
+                return await self._handle_get_mode_selection_guidance(arguments)
+            elif name == "run_ab_test":
+                return await self._handle_run_ab_test(arguments)
+            elif name == "get_ab_test_results":
+                return await self._handle_get_ab_test_results(arguments)
             else:
                 return [TextContent(type="text", text=f"❌ 未知工具: {name}")]
 
-    async def _handle_start_pk_session(
+    async def _handle_start_stepwise_pk_session(
         self, arguments: dict[str, Any]
     ) -> list[TextContent]:
         """启动新的PK会话"""
@@ -394,7 +621,7 @@ class GuruPKServer:
                 return [
                     TextContent(
                         type="text",
-                        text='❌ 请提供一个问题来启动PK会话。\n\n📋 **使用方式**：\n\n**方式1: 自动专家推荐**\n```javascript\nstart_pk_session({"question": "如何在AI时代实现个人突破？请两位人工智能领域的专家和一位心理学方面的专家参与辩论"})\n```\n\n**方式2: 完整专家数据**\n```javascript\nstart_pk_session({"question": "你的问题", "personas": [专家数据1, 专家数据2, 专家数据3]})\n```\n\n💡 **说明**: 系统会自动检测问题中的专家偏好，智能推荐最合适的专家组合。',
+                        text='❌ 请提供一个问题来启动PK会话。\n\n📋 **使用方式**：\n\n**方式1: 自动专家推荐**\n```javascript\nstart_stepwise_pk_session({"question": "如何在AI时代实现个人突破？请两位人工智能领域的专家和一位心理学方面的专家参与辩论"})\n```\n\n**方式2: 完整专家数据**\n```javascript\nstart_stepwise_pk_session({"question": "你的问题", "personas": [专家数据1, 专家数据2, 专家数据3]})\n```\n\n💡 **说明**: 系统会自动检测问题中的专家偏好，智能推荐最合适的专家组合。',
                     )
                 ]
 
@@ -424,10 +651,10 @@ class GuruPKServer:
 
 🤖 **MCP Host端操作指引**:
 
-请为每个专家名称生成完整的专家数据，然后重新调用 start_pk_session：
+请为每个专家名称生成完整的专家数据，然后重新调用 start_stepwise_pk_session：
 
 ```javascript
-start_pk_session({{
+start_stepwise_pk_session({{
   "question": "{question}",
   "personas": [
     {{
@@ -494,7 +721,9 @@ start_pk_session({{
 
 💡 **下一步**: 使用 `get_persona_prompt` 工具获取当前专家的角色提示，然后让我扮演该专家来回答您的问题。"""
 
-            return [TextContent(type="text", text=result)]
+            return [
+                TextContent(type="text", text=self._add_tool_control_warning(result))
+            ]
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 启动会话失败: {str(e)}")]
@@ -528,10 +757,10 @@ start_pk_session({{
 1. **分析用户问题中的专家偏好**（按照上述第一步指导）
 2. **选择3位最合适的专家**（优先真实人物）
 3. **生成完整的专家数据**
-4. **重新调用 start_pk_session**：
+4. **重新调用 start_stepwise_pk_session**：
 
 ```javascript
-start_pk_session({{
+start_stepwise_pk_session({{
   "question": "{question}",
   "personas": [
     // 3位专家的完整数据，每个包含：name, emoji, description, core_traits, speaking_style, base_prompt
@@ -830,7 +1059,9 @@ start_pk_session({{
 
 💡 **提示**: 完全进入角色，用该专家的语言风格、思维方式来回答。回答完成后，请使用 `record_round_response` 工具记录你的回答。"""
 
-            return [TextContent(type="text", text=result)]
+            return [
+                TextContent(type="text", text=self._add_tool_control_warning(result))
+            ]
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 获取提示失败: {str(e)}")]
@@ -840,7 +1071,7 @@ start_pk_session({{
     async def _handle_record_round_response(
         self, arguments: dict[str, Any]
     ) -> list[TextContent]:
-        """记录当前轮次的回答"""
+        """记录当前轮次的回答（支持序列模式和批处理模式）"""
         try:
             # 获取语言设置
             config = ConfigManager()
@@ -854,33 +1085,113 @@ start_pk_session({{
                     )
                 ]
 
-            response = arguments.get("response", "").strip()
-            if not response:
-                return [
-                    TextContent(
-                        type="text",
-                        text=f'{language_instruction}\n\n❌ 请提供回答内容。\n\n使用方法：record_round_response({{"response": "你的回答内容"}})',
-                    )
-                ]
-
             session = self.current_session
-            current_persona = session.get_current_persona()
-
-            if not current_persona:
-                return [TextContent(type="text", text="❌ 当前会话已完成。")]
-
-            # 记录回答
-            session.record_response(current_persona, response)
-
-            # 检查是否是第4轮（综合分析）
-            if session.current_round == 4:
-                session.final_synthesis = response
-                self.session_manager.save_session(session)
-
+            response = arguments.get("response", "")
+            if response:
+                response = response.strip()
+            # 检查是否是批处理模式（但第4轮智慧综合除外）
+            if session.is_batch_mode() and session.current_round != 4:
                 return [
                     TextContent(
                         type="text",
                         text=f"""{language_instruction}
+
+❌ **工具使用错误** - 当前是批处理模式（第{session.current_round}轮）
+
+🔧 **正确的工具**: 请使用 `record_batch_responses` 记录多专家回答
+
+📝 **正确用法示例**:
+```javascript
+record_batch_responses({{
+  "responses": {{
+    "{session.selected_personas[0] if session.selected_personas else '专家1'}": "专家1的完整回答内容",
+    "{session.selected_personas[1] if len(session.selected_personas) > 1 else '专家2'}": "专家2的完整回答内容",
+    "{session.selected_personas[2] if len(session.selected_personas) > 2 else '专家3'}": "专家3的完整回答内容"
+  }}
+}})
+```
+
+⚠️ **重要**: 第1-3轮使用 `record_batch_responses`，第4轮智慧综合使用 `record_round_response`""",
+                    )
+                ]
+            else:
+                return await self._handle_standard_record_response(
+                    session, response, language_instruction
+                )
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 记录回答失败: {str(e)}")]
+
+    async def _handle_record_batch_responses(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """记录批处理模式的多专家回答"""
+        try:
+            # 获取语言设置
+            config = ConfigManager()
+            language_instruction = config.get_language_instruction()
+
+            if not self.current_session:
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{language_instruction}\n\n❌ 没有活跃的会话。",
+                    )
+                ]
+
+            session = self.current_session
+            if not session.is_batch_mode():
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"{language_instruction}\n\n❌ 当前不是批处理模式。请使用 record_round_response 工具。",
+                    )
+                ]
+
+            responses = arguments.get("responses", {})
+            if not responses:
+                return [
+                    TextContent(
+                        type="text",
+                        text=f'{language_instruction}\n\n❌ 请提供专家回答内容。\n\n使用方法：record_batch_responses({{"responses": {{"专家1": "回答1", "专家2": "回答2", "专家3": "回答3"}}}})',
+                    )
+                ]
+
+            return await self._handle_batch_record_response(
+                session, "", language_instruction, responses
+            )
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 记录批处理回答失败: {str(e)}")]
+
+    async def _handle_standard_record_response(
+        self, session: Any, response: str, language_instruction: str
+    ) -> list[TextContent]:
+        """处理标准模式的回答记录"""
+        if not response:
+            return [
+                TextContent(
+                    type="text",
+                    text=f'{language_instruction}\n\n❌ 请提供回答内容。\n\n使用方法：record_round_response({{"response": "你的回答内容"}})',
+                )
+            ]
+
+        current_persona = session.get_current_persona()
+        if not current_persona:
+            return [TextContent(type="text", text="❌ 当前会话已完成。")]
+
+        # 记录回答
+        session.record_response(current_persona, response)
+
+        # 检查是否是第4轮（综合分析）
+        if session.current_round == 4:
+            session.final_synthesis = response
+            self.session_manager.save_session(session)
+
+            return [
+                TextContent(
+                    type="text",
+                    text=f"""{language_instruction}
 
 ✅ **最终综合分析已完成！**
 
@@ -889,18 +1200,18 @@ start_pk_session({{
 📝 所有专家的智慧已经融合成最终方案。您可以使用 `view_session_history` 查看完整的讨论记录。
 
 💡 **提示**: 您可以开始新的PK会话来探讨其他问题，或者查看这次讨论的完整历史。""",
-                    )
-                ]
+                )
+            ]
 
-            # 切换到下一个专家或下一轮
-            has_next = session.advance_to_next_persona()
-            self.session_manager.save_session(session)
+        # 切换到下一个专家或下一轮
+        has_next = session.advance_to_next_persona()
+        self.session_manager.save_session(session)
 
-            if not has_next:
-                return [
-                    TextContent(
-                        type="text",
-                        text=f"""{language_instruction}
+        if not has_next:
+            return [
+                TextContent(
+                    type="text",
+                    text=f"""{language_instruction}
 
 ✅ **所有轮次已完成！**
 
@@ -910,19 +1221,19 @@ start_pk_session({{
 - 参与专家: {", ".join(session.selected_personas)}
 
 使用 `view_session_history` 查看完整讨论记录。""",
-                    )
-                ]
+                )
+            ]
 
-            # 准备下一步提示
-            next_persona = session.get_current_persona()
-            round_names = {
-                1: "第1轮：独立思考",
-                2: "第2轮：交叉辩论",
-                3: "第3轮：最终立场",
-                4: "第4轮：智慧综合",
-            }
+        # 准备下一步提示
+        next_persona = session.get_current_persona()
+        round_names = {
+            1: "第1轮：独立思考",
+            2: "第2轮：交叉辩论",
+            3: "第3轮：最终立场",
+            4: "第4轮：智慧综合",
+        }
 
-            result = f"""{language_instruction}
+        result = f"""{language_instruction}
 
 ✅ **回答已记录！**
 
@@ -934,10 +1245,196 @@ start_pk_session({{
 
 💡 使用 `get_persona_prompt` 获取下一位专家的角色提示。"""
 
-            return [TextContent(type="text", text=result)]
+        return [TextContent(type="text", text=result)]
 
-        except Exception as e:
-            return [TextContent(type="text", text=f"❌ 记录回答失败: {str(e)}")]
+    async def _handle_batch_record_response(
+        self,
+        session: Any,
+        response: str,
+        language_instruction: str,
+        batch_responses: dict[str, str] | None = None,
+    ) -> list[TextContent]:
+        """处理批处理模式的回答记录"""
+
+        # 检查批处理模式的输入
+        if batch_responses:
+            # 使用结构化的batch_responses
+            responses_to_record = batch_responses
+        elif response:
+            # 尝试从response中解析多个专家的回答
+            responses_to_record = self._parse_batch_response(
+                response, session.selected_personas
+            )
+        else:
+            return [
+                TextContent(
+                    type="text",
+                    text=f"""{language_instruction}
+
+❌ **批处理模式记录失败**
+
+请提供专家回答内容，使用以下任一方式：
+
+**方式1 - 结构化数据（推荐）**：
+```javascript
+record_batch_responses({{
+  "responses": {{
+    "{session.selected_personas[0]}": "专家1的具体回答",
+    "{session.selected_personas[1]}": "专家2的具体回答",
+    "{session.selected_personas[2]}": "专家3的具体回答"
+  }}
+}})
+```
+
+**方式2 - 完整内容自动解析**：
+```javascript
+record_round_response({{
+  "response": "包含三位专家完整回答的LLM生成内容"
+}})
+```""",
+                )
+            ]
+
+        # 验证专家回答完整性
+        missing_experts = []
+        for persona in session.selected_personas:
+            if (
+                persona not in responses_to_record
+                or not responses_to_record[persona].strip()
+            ):
+                missing_experts.append(persona)
+
+        if missing_experts:
+            return [
+                TextContent(
+                    type="text",
+                    text=f"""{language_instruction}
+
+❌ **缺少专家回答**
+
+缺少以下专家的回答：{', '.join(missing_experts)}
+
+请确保提供所有3位专家的完整回答内容。""",
+                )
+            ]
+
+        # 记录当前轮次的所有专家回答
+        current_round = session.current_round
+        for persona, persona_response in responses_to_record.items():
+            if persona in session.selected_personas:
+                session.record_response(persona, persona_response)
+
+        # 检查是否是最终轮次（智慧综合）
+        if current_round == 4:
+            # 对于批处理模式，final_synthesis 应该是综合分析的内容
+            # 如果有"综合"相关的专家回答，使用它；否则使用第一个专家的回答
+            synthesis_content = response or list(responses_to_record.values())[0]
+            session.final_synthesis = synthesis_content
+            self.session_manager.save_session(session)
+
+            return [
+                TextContent(
+                    type="text",
+                    text=f"""{language_instruction}
+
+✅ **批处理辩论完成！**
+
+🎉 **会话 {session.session_id} 圆满结束**
+
+📊 **本轮记录统计**:
+- 记录专家数: {len(responses_to_record)}
+- 当前轮次: 第{current_round}轮 - 智慧综合
+
+📝 **下一步建议**:
+- 使用 `export_enhanced_session` 导出完整分析报告
+- 使用 `view_session_history` 查看完整讨论记录
+
+💡 **批处理优势**: 通过4轮批处理辩论，您已获得完整而深度的多专家分析！""",
+                )
+            ]
+
+        # 批处理模式：一次性完成当前轮次，准备下一轮
+        next_round_types = {
+            1: ("cross_debate", "第2轮 - 交叉辩论"),
+            2: ("final_position", "第3轮 - 最终立场"),
+            3: ("synthesis", "第4轮 - 智慧综合"),
+        }
+
+        session.current_round += 1
+        self.session_manager.save_session(session)
+
+        next_round_type, next_round_name = next_round_types.get(
+            current_round, (None, "完成")
+        )
+
+        if next_round_type:
+            return [
+                TextContent(
+                    type="text",
+                    text=f"""{language_instruction}
+
+✅ **第{current_round}轮批处理记录完成！**
+
+📊 **本轮记录统计**:
+- 记录专家数: {len(responses_to_record)}
+- 回答总字数: {sum(len(r) for r in responses_to_record.values()):,} 字符
+
+📍 **下一步**: {next_round_name}
+```javascript
+get_batch_persona_prompt({{"round_type": "{next_round_type}"}})
+```
+
+💡 **批处理进度**: 已完成 {current_round}/4 轮，继续保持高效率！""",
+                )
+            ]
+        else:
+            return [
+                TextContent(
+                    type="text",
+                    text=f"""{language_instruction}
+
+✅ **所有批处理轮次已完成！**
+
+🎉 **批处理辩论圆满结束**
+📊 **最终统计**:
+- 总轮次: 4轮批处理
+- 参与专家: {', '.join(session.selected_personas)}
+- 最后记录: {len(responses_to_record)} 位专家回答
+
+📝 **建议导出报告**: 使用 `export_enhanced_session` 获取完整分析""",
+                )
+            ]
+
+    def _parse_batch_response(
+        self, response: str, personas: list[str]
+    ) -> dict[str, str]:
+        """从LLM的完整回答中解析出各个专家的回答"""
+        import re
+
+        responses = {}
+
+        # 尝试按专家名称分割内容
+        for persona in personas:
+            # 查找专家名称后的内容
+            patterns = [
+                f"### {persona}[^\\n]*\\n([\\s\\S]*?)(?=### |$)",  # ### 专家名称
+                f"## {persona}[^\\n]*\\n([\\s\\S]*?)(?=## |$)",  # ## 专家名称
+                f"\\*\\*{persona}\\*\\*[^\\n]*\\n([\\s\\S]*?)(?=\\*\\*|$)",  # **专家名称**
+            ]
+
+            for pattern in patterns:
+                match = re.search(pattern, response, re.MULTILINE)
+                if match:
+                    content = match.group(1).strip()
+                    if content:
+                        responses[persona] = content
+                        break
+
+        # 如果解析失败，将整个回答分配给第一个专家（作为fallback）
+        if not responses and response.strip():
+            responses[personas[0]] = response.strip()
+
+        return responses
 
         # 工具4: 获取会话状态
 
@@ -1516,7 +2013,7 @@ start_pk_session({{
 get_smart_recommendation_guidance({{"question": "{question}"}})
 
 // 步骤2: 基于指导推荐专家，然后启动会话
-// start_pk_session({{"question": "{question}", "personas": ["推荐专家1", "推荐专家2", "推荐专家3"], "recommended_by_host": true}})
+// start_pk_session({{"question": "{question}", "personas": ["推荐专家1", "推荐专家2", "推荐专家3"]}}
 ```
 
 ## 🔄 **传统推荐（备选）**
@@ -1570,7 +2067,7 @@ start_pk_session({{"question": "{question}"}})
 ## 📋 可用工具
 
 ### 🚀 核心功能
-- `start_pk_session` - 智能生成专家并启动辩论会话
+- `start_pk_session` - 批处理模式启动专家辩论会话
 - `get_persona_prompt` - 获取当前专家的角色提示
 - `record_round_response` - 记录专家发言
 - `get_session_status` - 查看当前会话状态
@@ -2380,6 +2877,388 @@ start_pk_session({{
 
         except Exception as e:
             return [TextContent(type="text", text=f"❌ 增强报告导出失败: {str(e)}")]
+
+    # 批处理模式工具处理方法
+
+    async def _handle_get_batch_persona_prompt(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """获取批处理模式的专家提示词"""
+        try:
+            round_type = arguments.get("round_type", "").strip()
+            batch_config_data = arguments.get("batch_config", {})
+
+            if not round_type:
+                return [TextContent(type="text", text="❌ 请指定轮次类型")]
+
+            if not self.current_session:
+                return [
+                    TextContent(type="text", text="❌ 当前没有活跃的会话，请先启动会话")
+                ]
+
+            # 构建批处理配置
+            from .models import BatchConfig
+
+            if batch_config_data:
+                batch_config = BatchConfig(**batch_config_data)
+            else:
+                batch_config = self.current_session.get_batch_config()
+
+            # 获取专家信息
+            current_experts = self.expert_manager.get_current_experts()
+            personas = []
+            for persona_name in self.current_session.selected_personas:
+                if persona_name in current_experts:
+                    personas.append(current_experts[persona_name])
+
+            if not personas:
+                return [
+                    TextContent(
+                        type="text",
+                        text="""❌ **批处理模式需要先确定专家信息**
+
+🔧 **解决方案**：请先生成专家，然后启动批处理会话
+
+📋 **正确的工具调用顺序**：
+1. **生成专家**: `generate_dynamic_experts({{"question": "你的问题"}})`
+2. **启动批处理会话**: `start_pk_session({{"question": "你的问题", "personas": [专家数据]}})`
+3. **获取批处理提示词**: `get_batch_persona_prompt({{"round_type": "independent_thinking"}})`
+
+💡 **说明**：`get_batch_persona_prompt` 需要预先设置好的专家和会话信息
+
+🎯 **建议**：如果你想直接开始批处理辩论，请先调用 `generate_dynamic_experts` 来获取3位合适的专家""",
+                    )
+                ]
+
+            # 获取上下文信息
+            previous_responses = None
+            if round_type in ["cross_debate", "final_position"]:
+                previous_responses = self.current_session.responses
+
+            # 转换响应格式以匹配类型要求
+            formatted_responses = None
+            if previous_responses:
+                formatted_responses = {str(k): v for k, v in previous_responses.items()}
+
+            # 生成批处理提示词
+            prompt = self.session_manager.get_batch_prompt(
+                round_type=round_type,
+                personas=personas,
+                question=self.current_session.user_question,
+                previous_responses=formatted_responses,
+                batch_config=batch_config,
+            )
+
+            # 根据轮次类型提供下一步指引
+            next_step_guidance = self._get_batch_next_step_guidance(round_type)
+
+            full_response = f"""{prompt}
+
+---
+
+⚠️ **重要约束**: 请只使用上述提示词进行辩论生成，不要调用任何其他工具或函数。
+
+---
+
+{next_step_guidance}"""
+
+            return [
+                TextContent(
+                    type="text", text=self._add_tool_control_warning(full_response)
+                )
+            ]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 获取批处理提示词失败: {str(e)}")]
+
+    def _get_batch_next_step_guidance(self, round_type: str) -> str:
+        """根据当前轮次类型提供下一步指引"""
+        round_names = {
+            "independent_thinking": "第1轮 - 独立思考",
+            "cross_debate": "第2轮 - 交叉辩论",
+            "final_position": "第3轮 - 最终立场",
+            "synthesis": "第4轮 - 智慧综合",
+        }
+
+        next_rounds = {
+            "independent_thinking": ("cross_debate", "第2轮 - 交叉辩论"),
+            "cross_debate": ("final_position", "第3轮 - 最终立场"),
+            "final_position": ("synthesis", "第4轮 - 智慧综合"),
+            "synthesis": (None, "完成所有轮次"),
+        }
+
+        current_round_name = round_names.get(round_type, round_type)
+        next_round_type, next_round_name = next_rounds.get(round_type, (None, ""))
+
+        if next_round_type:
+            return f"""## 🎯 批处理工作流程指引
+
+📍 **当前轮次**: {current_round_name}
+📝 **任务**: 请将上述提示词发送给LLM，让其一次性生成所有专家的回答
+
+✅ **完成当前轮次后的下一步**:
+1. **记录当前轮次结果**: 🎯 **强烈推荐** 使用 `record_batch_responses({{"responses": {{"专家1": "回答1", "专家2": "回答2", "专家3": "回答3"}}}})` 保存批处理结果
+2. **进入下一轮**: 调用 `get_batch_persona_prompt({{"round_type": "{next_round_type}"}})` 开始{next_round_name}
+
+⚠️ **注意**: 请只使用 Guru-PK 系统提供的工具，勿调用其他工具。
+
+💡 **提醒**: 批处理模式的优势在于每轮一次性生成所有专家内容，大幅提升效率！"""
+        else:
+            return f"""## 🎯 批处理工作流程指引
+
+📍 **当前轮次**: {current_round_name}（最终轮次）
+📝 **任务**: 请将上述提示词发送给LLM，让其生成智慧综合分析
+
+✅ **完成最终轮次后的下一步**:
+1. **记录综合结果**: 使用 `record_round_response({{"response": "完整的综合分析内容"}})` 保存最终结果
+2. **导出完整报告**: 使用 `export_enhanced_session` 生成最终报告
+3. **会话完成**: 🎉 恭喜！批处理辩论已全部完成
+
+💡 **批处理优势**: 通过4轮批处理，您已经获得了一个完整而深度的多专家分析！"""
+
+    async def _handle_start_pk_session(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """启动批处理模式的专家PK会话"""
+        try:
+            question = arguments.get("question", "").strip()
+            personas = arguments.get("personas", [])
+            batch_config_data = arguments.get("batch_config", {})
+
+            if not question:
+                return [TextContent(type="text", text="❌ 请提供问题来启动批处理会话")]
+
+            if not personas or len(personas) != 3:
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"""❌ **需要3位专家才能启动批处理会话**
+
+🔧 **解决方案**：请先生成高质量的真实专家
+
+📋 **推荐的工具调用顺序**：
+1. **生成专家**: `generate_dynamic_experts({{"question": "{question}"}})`
+2. **启动会话**: `start_pk_session({{"question": "{question}", "personas": [专家数据]}})`
+
+💡 **为什么这样做**：
+- ✅ 确保获得真实的权威专家（如爱因斯坦、乔布斯等）
+- ❌ 避免使用虚拟专家（如"系统架构师"、"认知科学家"等）
+- 🎯 提升辩论质量和权威性
+
+🚫 **请勿直接提供虚拟专家名称**，而应使用 `generate_dynamic_experts` 获取真实专家推荐""",
+                    )
+                ]
+
+            # 验证专家数据
+            expert_dict = {}
+            for i, persona in enumerate(personas):
+                if not self.expert_manager.validate_expert_data(persona):
+                    return [
+                        TextContent(type="text", text=f"❌ 专家 {i + 1} 数据格式不完整")
+                    ]
+                expert_dict[persona["name"]] = persona
+
+            # 设置当前专家
+            self.expert_manager.set_current_experts(expert_dict)
+
+            # 构建批处理配置
+            from .models import BatchConfig
+
+            if batch_config_data:
+                batch_config = BatchConfig(**batch_config_data)
+            else:
+                batch_config = BatchConfig.create_default()
+
+            # 创建批处理会话
+            self.current_session = self.session_manager.create_batch_session(
+                question=question,
+                personas=list(expert_dict.keys()),
+                expert_profiles=expert_dict,
+                batch_config=batch_config,
+                is_recommended_by_host=False,
+            )
+
+            # 格式化专家信息
+            expert_info = "\n".join(
+                [
+                    f"• {persona['emoji']} **{persona['name']}** - {persona['description']}"
+                    for persona in personas
+                ]
+            )
+
+            batch_config_info = f"""
+**批处理配置**:
+- 自检机制: {'启用' if batch_config.enable_self_check else '禁用'}
+- 强调互动: {'是' if batch_config.emphasize_interaction else '否'}
+- 虚拟时序: {'启用' if batch_config.use_virtual_timing else '禁用'}
+- 质量阈值: {batch_config.quality_threshold}
+- 最大重试: {batch_config.max_retry_attempts}次
+- 提示词版本: {batch_config.prompt_version}
+"""
+
+            result = f"""✅ **批处理模式专家PK会话启动成功！**
+
+📋 **会话信息**:
+- **会话ID**: {self.current_session.session_id}
+- **模式**: 批处理优化模式 (4轮)
+- **问题**: {question}
+
+👥 **参与专家**:
+{expert_info}
+
+{batch_config_info}
+
+📍 **当前状态**: 第1轮 - 独立思考阶段（批处理模式）
+
+💡 **下一步**: 使用 `get_batch_persona_prompt` 工具获取第一轮的批处理提示词，然后一次性生成3位专家的独立思考内容。
+
+🎯 **立即开始第一轮**:
+```javascript
+get_batch_persona_prompt({{"round_type": "independent_thinking"}})
+```
+
+⚠️ **批处理模式工具使用顺序**:
+1. 🔧 `get_batch_persona_prompt` - 获取批处理提示词
+2. 📝 **记录工具选择**:
+   - 第1-3轮: 🎯 **强制使用** `record_batch_responses` (多专家回答)
+   - 第4轮: ✅ **使用** `record_round_response` (智慧综合)
+
+💡 **重要提示**: 请确保只调用上述 Guru-PK 系统的工具，避免触发其他第三方工具。
+
+---
+
+📚 **完整工作流程**:
+1. **第1轮 - 独立思考**: `get_batch_persona_prompt({{"round_type": "independent_thinking"}})`
+2. **记录第1轮结果**: 使用 `record_batch_responses({{"responses": {{"专家1": "回答1", "专家2": "回答2", "专家3": "回答3"}}}})` 记录结果
+3. **第2轮 - 交叉辩论**: `get_batch_persona_prompt({{"round_type": "cross_debate"}})`
+4. **记录第2轮结果**: 使用 `record_batch_responses({{"responses": {{"专家1": "回答1", "专家2": "回答2", "专家3": "回答3"}}}})` 记录辩论内容
+5. **第3轮 - 最终立场**: `get_batch_persona_prompt({{"round_type": "final_position"}})`
+6. **记录第3轮结果**: 使用 `record_batch_responses({{"responses": {{"专家1": "回答1", "专家2": "回答2", "专家3": "回答3"}}}})` 记录最终立场
+7. **第4轮 - 智慧综合**: `get_batch_persona_prompt({{"round_type": "synthesis"}})`
+8. **记录综合结果**: 使用 `record_round_response({{"response": "LLM生成的完整内容"}})` 记录综合分析
+9. **导出报告**: 使用 `export_enhanced_session` 导出完整分析
+
+💡 **批处理优势**: 相比传统序列模式，批处理模式可节省约60%的时间，同时通过元提示词保证辩论质量。"""
+
+            return [
+                TextContent(type="text", text=self._add_tool_control_warning(result))
+            ]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 启动批处理会话失败: {str(e)}")]
+
+    async def _handle_get_mode_selection_guidance(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """获取模式选择指导"""
+        try:
+            question = arguments.get("question", "").strip()
+            personas = arguments.get("personas", [])
+            user_preference = arguments.get("user_preference", "")
+
+            if not question:
+                return [TextContent(type="text", text="❌ 请提供要分析的问题")]
+
+            # 获取模式选择指导
+            guidance = self.session_manager.get_mode_selection_guidance(
+                question=question, personas=personas, user_preference=user_preference
+            )
+
+            return [TextContent(type="text", text=guidance)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 获取模式选择指导失败: {str(e)}")]
+
+    async def _handle_run_ab_test(self, arguments: dict[str, Any]) -> list[TextContent]:
+        """运行A/B测试"""
+        try:
+            question = arguments.get("question", "").strip()
+            personas = arguments.get("personas", [])
+            batch_config_data = arguments.get("batch_config", {})
+
+            if not question:
+                return [TextContent(type="text", text="❌ 请提供要测试的问题")]
+
+            if not personas or len(personas) != 3:
+                return [TextContent(type="text", text="❌ 请提供3位专家的完整数据")]
+
+            # 构建批处理配置
+            from .models import BatchConfig
+
+            if batch_config_data:
+                batch_config = BatchConfig(**batch_config_data)
+            else:
+                batch_config = BatchConfig.create_default()
+
+            # 获取A/B测试指导
+            guidance = self.session_manager.get_ab_test_guidance(
+                question=question, personas=personas, batch_config=batch_config
+            )
+
+            return [TextContent(type="text", text=guidance)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 运行A/B测试失败: {str(e)}")]
+
+    async def _handle_get_ab_test_results(
+        self, arguments: dict[str, Any]
+    ) -> list[TextContent]:
+        """获取A/B测试结果"""
+        try:
+            # 获取性能总结
+            summary = self.session_manager.get_performance_summary()
+
+            # 获取详细结果
+            detailed_results = self.session_manager.get_ab_test_results()
+
+            if not detailed_results:
+                result = """# A/B测试结果
+
+暂无A/B测试数据。
+
+💡 **如何开始A/B测试**:
+
+1. 使用 `get_mode_selection_guidance` 分析问题是否适合A/B测试
+2. 使用 `run_ab_test` 获取测试指导并执行
+3. 完成测试后，测试结果会自动保存
+4. 再次调用此工具查看汇总分析
+
+🔗 **相关工具**:
+- `get_mode_selection_guidance` - 获取模式选择建议
+- `run_ab_test` - 运行A/B测试
+"""
+            else:
+                # 格式化详细结果
+                results_info = "\n\n".join(
+                    [
+                        f"**测试 {r.get('test_id', 'unknown')}** ({r.get('test_timestamp', 'unknown')}):\n"
+                        f"- 问题: {r.get('question', 'unknown')[:100]}...\n"
+                        f"- 时间提升: {r.get('time_improvement', 0):.1%}\n"
+                        f"- 质量差异: {r.get('quality_delta', 0):+.2f}分\n"
+                        f"- Token效率: {r.get('token_efficiency', 1):.2f}x"
+                        for r in detailed_results[:5]  # 只显示最近5次测试
+                    ]
+                )
+
+                result = f"""{summary}
+
+## 最近测试详情
+
+{results_info}
+
+---
+
+💡 **使用建议**: 根据以上数据选择最适合的辩论模式。
+
+🔗 **相关工具**:
+- `start_pk_session` - 启动高效批处理模式会话
+- `start_stepwise_pk_session` - 启动传统逐步模式会话
+"""
+
+            return [TextContent(type="text", text=result)]
+
+        except Exception as e:
+            return [TextContent(type="text", text=f"❌ 获取A/B测试结果失败: {str(e)}")]
 
     async def run(self) -> None:
         """运行MCP服务器"""

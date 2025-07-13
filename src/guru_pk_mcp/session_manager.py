@@ -7,7 +7,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .models import PKSession
+from .ab_testing import ABTestFramework
+from .batch_prompts import BatchPromptGenerator
+from .mode_selector import ModeRecommendationEngine
+from .models import ABTestResult, BatchConfig, PKSession
 
 
 class SessionManager:
@@ -22,6 +25,12 @@ class SessionManager:
 
         self.data_dir = Path(data_dir)
         self.expert_manager = expert_manager
+
+        # 初始化批处理相关组件
+        self.batch_prompt_generator = BatchPromptGenerator()
+        self.mode_recommendation_engine = ModeRecommendationEngine()
+        self.ab_test_framework = ABTestFramework(str(self.data_dir))
+
         try:
             self.data_dir.mkdir(parents=True, exist_ok=True)
         except OSError:
@@ -224,3 +233,120 @@ class SessionManager:
 *由 Guru-PK MCP 系统生成*"""
 
         return md_content
+
+    # 批处理模式支持方法
+
+    def get_batch_prompt(
+        self,
+        round_type: str,
+        personas: list[dict[str, Any]],
+        question: str,
+        previous_responses: dict[str, Any] | None = None,
+        batch_config: BatchConfig | None = None,
+        language_instruction: str = "请务必使用中文回答。",
+    ) -> str:
+        """获取批处理模式的提示词"""
+        if batch_config:
+            self.batch_prompt_generator.config = batch_config
+
+        return self.batch_prompt_generator.get_batch_prompt(
+            round_type, personas, question, previous_responses, language_instruction
+        )
+
+    def get_mode_selection_guidance(
+        self,
+        question: str,
+        personas: list[dict[str, Any]] | None = None,
+        user_preference: str | None = None,
+    ) -> str:
+        """获取模式选择指导"""
+        return self.mode_recommendation_engine.get_recommendation_prompt(
+            question, personas, user_preference
+        )
+
+    def get_ab_test_guidance(
+        self,
+        question: str,
+        personas: list[dict[str, Any]],
+        batch_config: BatchConfig | None = None,
+    ) -> str:
+        """获取A/B测试指导"""
+        return self.ab_test_framework.get_ab_test_guidance(
+            question, personas, batch_config
+        )
+
+    def save_ab_test_result(self, result: ABTestResult) -> bool:
+        """保存A/B测试结果"""
+        return self.ab_test_framework.save_test_result(result)
+
+    def get_ab_test_results(self) -> list[dict[str, Any]]:
+        """获取所有A/B测试结果"""
+        return self.ab_test_framework.load_test_results()
+
+    def get_performance_summary(self) -> str:
+        """获取性能总结报告"""
+        return self.ab_test_framework.get_performance_summary()
+
+    def create_batch_session(
+        self,
+        question: str,
+        personas: list[str],
+        expert_profiles: dict[str, Any] | None = None,
+        batch_config: BatchConfig | None = None,
+        is_recommended_by_host: bool = False,
+    ) -> PKSession:
+        """创建批处理模式的会话"""
+        from .models import DebateMode
+
+        session = PKSession.create_new(
+            user_question=question,
+            selected_personas=personas,
+            debate_mode=DebateMode.BATCH_OPTIMIZED,
+            is_recommended_by_host=is_recommended_by_host,
+        )
+
+        # 启用批处理模式
+        session.enable_batch_mode(batch_config)
+
+        # 如果提供了专家详细信息，保存到会话中
+        if expert_profiles:
+            session.expert_profiles = expert_profiles
+
+        # 保存会话
+        self.save_session(session)
+        return session
+
+    def optimize_batch_config(
+        self,
+        question: str,
+        personas: list[dict[str, Any]],
+        user_requirements: str | None = None,
+    ) -> str:
+        """获取批处理配置优化建议"""
+        from .mode_selector import ModeSelector
+
+        # 分析问题复杂度和专家多样性
+        complexity, _ = ModeSelector.analyze_question_complexity(question)
+        diversity, _ = ModeSelector.analyze_expert_diversity(personas)
+
+        return ModeSelector.get_batch_config_guidance(
+            complexity, diversity, user_requirements
+        )
+
+    def should_use_ab_testing(
+        self,
+        question: str,
+        personas: list[dict[str, Any]],
+        user_preference: str | None = None,
+    ) -> str:
+        """判断是否应该进行A/B测试的指导"""
+        from .mode_selector import ModeSelector
+
+        complexity, _ = ModeSelector.analyze_question_complexity(question)
+        diversity, _ = ModeSelector.analyze_expert_diversity(personas)
+
+        should_test, guidance = ModeSelector.should_use_ab_testing(
+            complexity, diversity, user_preference
+        )
+
+        return guidance
