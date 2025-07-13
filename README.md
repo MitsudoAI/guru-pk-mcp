@@ -114,7 +114,13 @@ start_pk_session: 生成AI的领域，有没有特别适合个人创业的方向
 
 ### 💡 使用提示
 
-- 🤖 **`start_pk_session:直接提问`** - 最简单的使用方式，系统自动生成专家
+**启动辩论**：
+
+- 🤖 **`start_pk_session:直接提问`** - 默认高效批处理模式（推荐）
+- 🔄 **`start_stepwise_pk_session:直接提问`** - 传统逐步对话模式
+
+**工具功能**：
+
 - 📋 `guru_pk_help` - 获取系统介绍和详细帮助
 - 📄 `export_session` - 导出会话为Markdown文件
 - 🎨 `export_session_as_infographic` - 导出会话为塔夫特风格单页动态信息图
@@ -170,6 +176,20 @@ flowchart TD
 ```
 
 ### 🔄 辩论流程
+
+**两种辩论模式**：
+
+🚀 **批处理模式** (`start_pk_session`) - **默认推荐**
+
+- ⚡ 高效率：一轮生成所有专家回答，节省约60%时间
+- 🎯 适用场景：快速获取多角度分析，高效决策支持
+
+🔄 **逐步模式** (`start_stepwise_pk_session`) - 传统体验  
+
+- 🎭 互动性：逐个专家发言，实时调整和深入探讨
+- 🎯 适用场景：深度思辨，享受完整辩论过程
+
+**4轮辩论流程**：
 
 ```mermaid
 flowchart TD
