@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大语言模型智能原理 - 专家辩论信息图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 顶部信息条 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .question {
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .experts {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .expert {
+            text-align: center;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+        
+        .expert:hover {
+            opacity: 1;
+        }
+        
+        .expert-emoji {
+            font-size: 3em;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .expert-name {
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+        
+        /* 主体时间线 */
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .round {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-left: 4px solid;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .round:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+        
+        .round-1 { border-left-color: #3498db; }
+        .round-2 { border-left-color: #e74c3c; }
+        .round-3 { border-left-color: #f39c12; }
+        .round-4 { border-left-color: #9b59b6; }
+        
+        .round-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .round-subtitle {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        
+        .viewpoint {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .viewpoint:hover {
+            background: #e9ecef;
+            transform: translateX(3px);
+        }
+        
+        .viewpoint-turing { border-left-color: #3498db; }
+        .viewpoint-chomsky { border-left-color: #e74c3c; }
+        .viewpoint-shannon { border-left-color: #27ae60; }
+        .viewpoint-synthesis { border-left-color: #9b59b6; }
+        
+        .viewpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .viewpoint-emoji {
+            font-size: 1.2em;
+        }
+        
+        .viewpoint-author {
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+        
+        .viewpoint-preview {
+            font-size: 0.85em;
+            color: #6c757d;
+            line-height: 1.3;
+        }
+        
+        .intensity-indicator {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        
+        .intensity-high { opacity: 1; }
+        .intensity-medium { opacity: 0.7; }
+        .intensity-low { opacity: 0.4; }
+        
+        /* 详细信息视图 */
+        .detail-view {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            display: none;
+            border-top: 4px solid #667eea;
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .detail-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .close-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+        
+        .close-btn:hover {
+            background: #c0392b;
+        }
+        
+        .detail-content {
+            font-size: 1em;
+            line-height: 1.6;
+            color: #34495e;
+        }
+        
+        /* 统计信息 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .timeline {
+                grid-template-columns: 1fr;
+            }
+            
+            .experts {
+                gap: 20px;
+            }
+            
+            .question {
+                font-size: 1.4em;
+            }
+            
+            .expert-emoji {
+                font-size: 2.5em;
+            }
+        }
+        
+        /* 连接线动画 */
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            animation: flow 3s infinite;
+        }
+        
+        @keyframes flow {
+            0% { opacity: 0; transform: translateX(-100%); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translateX(100%); }
+        }
+        
+        /* 详细报告链接样式 */
+        .report-link {
+            color: #fff !important;
+            text-decoration: none !important;
+            background: rgba(255,255,255,0.2) !important;
+            padding: 8px 16px !important;
+            border-radius: 6px !important;
+            font-size: 0.9em !important;
+            border: 1px solid rgba(255,255,255,0.3) !important;
+            transition: all 0.3s ease !important;
+            display: inline-block !important;
+        }
+        
+        .report-link:hover {
+            background: rgba(255,255,255,0.3) !important;
+            border-color: rgba(255,255,255,0.5) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部信息条 -->
+        <div class="header">
+            <div class="question">
+                为什么基于统计的大语言模型通过预测下一个词就能具有智能？
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="https://github.com/MitsudoAI/guru-pk-mcp/blob/main/data/enhanced_export_57cc490c.md" 
+                   target="_blank" 
+                   class="report-link">
+                    📄 详细辩论报告
+                </a>
+            </div>
+            <div class="experts">
+                <div class="expert" data-expert="turing">
+                    <span class="expert-emoji">🤖</span>
+                    <div class="expert-name">图灵</div>
+                </div>
+                <div class="expert" data-expert="chomsky">
+                    <span class="expert-emoji">🧠</span>
+                    <div class="expert-name">乔姆斯基</div>
+                </div>
+                <div class="expert" data-expert="shannon">
+                    <span class="expert-emoji">📊</span>
+                    <div class="expert-name">香农</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 统计信息 -->
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-number">4</span>
+                <div class="stat-label">辩论轮次</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">3</span>
+                <div class="stat-label">参与专家</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">5</span>
+                <div class="stat-label">智能层次</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">100%</span>
+                <div class="stat-label">共识达成</div>
+            </div>
+        </div>
+        
+        <!-- 主体时间线 -->
+        <div class="timeline">
+            <!-- 第1轮：独立思考 -->
+            <div class="round round-1" data-round="1">
+                <div class="round-title">🤔 独立思考</div>
+                <div class="round-subtitle">各专家独立阐述观点</div>
+                
+                <div class="viewpoint viewpoint-turing" data-viewpoint="turing-1">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🤖</span>
+                        <span class="viewpoint-author">图灵</span>
+                        <div class="intensity-indicator intensity-high"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        智能是功能性的，大语言模型通过学习语言模式实现了真实的智能行为表现...
+                    </div>
+                </div>
+                
+                <div class="viewpoint viewpoint-chomsky" data-viewpoint="chomsky-1">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🧠</span>
+                        <span class="viewpoint-author">乔姆斯基</span>
+                        <div class="intensity-indicator intensity-high"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        需要区分真正的智能和精巧的模拟，人类语言具有创造性和规则驱动的特征...
+                    </div>
+                </div>
+                
+                <div class="viewpoint viewpoint-shannon" data-viewpoint="shannon-1">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">📊</span>
+                        <span class="viewpoint-author">香农</span>
+                        <div class="intensity-indicator intensity-high"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        从信息论角度，智能是有效的信息处理，统计学习捕捉了语言的深层结构...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第2轮：交叉辩论 -->
+            <div class="round round-2" data-round="2">
+                <div class="round-title">💬 交叉辩论</div>
+                <div class="round-subtitle">专家间观点碰撞与回应</div>
+                
+                <div class="viewpoint viewpoint-turing" data-viewpoint="turing-2">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🤖</span>
+                        <span class="viewpoint-author">图灵</span>
+                        <div class="intensity-indicator intensity-medium"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        回应乔姆斯基：创造性本身可能就是复杂模式识别的结果，功能比机制更重要...
+                    </div>
+                </div>
+                
+                <div class="viewpoint viewpoint-chomsky" data-viewpoint="chomsky-2">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🧠</span>
+                        <span class="viewpoint-author">乔姆斯基</span>
+                        <div class="intensity-indicator intensity-high"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        坚持真正理解需要意图性，统计学习缺乏语义接地，无法产生真正的创造性...
+                    </div>
+                </div>
+                
+                <div class="viewpoint viewpoint-shannon" data-viewpoint="shannon-2">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">📊</span>
+                        <span class="viewpoint-author">香农</span>
+                        <div class="intensity-indicator intensity-medium"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        提出三层理解：统计理解、结构理解、语义理解，信息论可以统一解释...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第3轮：最终立场 -->
+            <div class="round round-3" data-round="3">
+                <div class="round-title">🎯 最终立场</div>
+                <div class="round-subtitle">专家观点的深化与升华</div>
+                
+                <div class="viewpoint viewpoint-turing" data-viewpoint="turing-3">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🤖</span>
+                        <span class="viewpoint-author">图灵</span>
+                        <div class="intensity-indicator intensity-high"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        建立多维智能框架，区分计算智能与生物智能，推进混合智能系统研究...
+                    </div>
+                </div>
+                
+                <div class="viewpoint viewpoint-chomsky" data-viewpoint="chomsky-3">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🧠</span>
+                        <span class="viewpoint-author">乔姆斯基</span>
+                        <div class="intensity-indicator intensity-high"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        重新定义AI研究目标，探索符号-连接主义混合模型，重视语言习得研究...
+                    </div>
+                </div>
+                
+                <div class="viewpoint viewpoint-shannon" data-viewpoint="shannon-3">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">📊</span>
+                        <span class="viewpoint-author">香农</span>
+                        <div class="intensity-indicator intensity-high"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        发展分层信息处理架构，建立信息论评估标准，推进多模态信息融合...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第4轮：智慧综合 -->
+            <div class="round round-4" data-round="4">
+                <div class="round-title">🔮 智慧综合</div>
+                <div class="round-subtitle">超越个体的综合洞察</div>
+                
+                <div class="viewpoint viewpoint-synthesis" data-viewpoint="synthesis">
+                    <div class="viewpoint-header">
+                        <span class="viewpoint-emoji">🌟</span>
+                        <span class="viewpoint-author">综合大师</span>
+                        <div class="intensity-indicator intensity-high"></div>
+                    </div>
+                    <div class="viewpoint-preview">
+                        智能涌现层次理论：从基础统计到意识体验的五层智能框架，实现1+1+1>3的协同效应...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 详细信息视图 -->
+        <div class="detail-view" id="detailView">
+            <div class="detail-header">
+                <div class="detail-title" id="detailTitle">观点详情</div>
+                <button class="close-btn" onclick="closeDetail()">关闭</button>
+            </div>
+            <div class="detail-content" id="detailContent">
+                <!-- 详细内容将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 观点详细内容数据
+        const viewpointDetails = {
+            'turing-1': {
+                title: '图灵：功能主义智能观',
+                content: `
+                    <h3>核心观点</h3>
+                    <p>智能应该通过行为表现来判断，而不是内在机制。大语言模型通过学习语言的统计模式，实际上是在学习重现人类思维的模式。</p>
+                    
+                    <h3>关键论证</h3>
+                    <ul>
+                        <li><strong>语言是智能的载体</strong>：当我们说话或写作时，实际上是在将思想、知识、推理过程编码成语言符号</li>
+                        <li><strong>统计学习的深度</strong>：预测下一个词需要理解上下文、逻辑关系、因果联系，甚至隐含的推理链条</li>
+                        <li><strong>图灵测试的现实意义</strong>：如果机器能在对话中表现得与人类无法区分，就应该认为它具有智能</li>
+                        <li><strong>人类智能的统计性</strong>：我们的大脑也通过神经网络处理信息，思维过程依赖于模式识别和概率推理</li>
+                    </ul>
+                    
+                    <h3>实例说明</h3>
+                    <p>当模型看到"如果明天下雨，我就"这样的句子开头时，要正确预测下一个词（如"带伞"），必须展现出对因果关系、常识推理和人类行为模式的理解。</p>
+                `
+            },
+            'chomsky-1': {
+                title: '乔姆斯基：本质主义理解观',
+                content: `
+                    <h3>核心观点</h3>
+                    <p>必须区分真正的智能和精巧的模拟。人类语言具有创造性和规则驱动的特征，这种能力来自于内在的"普遍语法"机制。</p>
+                    
+                    <h3>关键质疑</h3>
+                    <ul>
+                        <li><strong>创造性使用语言</strong>：儿童能够理解和产生从未听过的句子，这种能力来自抽象的语法规则</li>
+                        <li><strong>统计vs理解</strong>：大语言模型是在执行复杂的模式匹配，而不是基于理解和意义的推理</li>
+                        <li><strong>语义接地问题</strong>：模型缺乏与现实世界的真正连接，处理的是符号而不是符号的意义</li>
+                        <li><strong>中文房间类比</strong>：能够操作符号并不意味着真正理解符号的含义</li>
+                    </ul>
+                    
+                    <h3>贫困刺激现象</h3>
+                    <p>儿童能够从相对有限和不完美的语言输入中习得完整的语法系统，这表明存在内在的语言习得机制，不能简单地通过统计学习来解释。</p>
+                `
+            },
+            'shannon-1': {
+                title: '香农：信息论智能观',
+                content: `
+                    <h3>核心观点</h3>
+                    <p>从信息论角度，智能是有效的信息处理能力。大语言模型通过学习语言的统计结构，实际上是在学习关于世界的信息。</p>
+                    
+                    <h3>信息论分析</h3>
+                    <ul>
+                        <li><strong>信息的本质</strong>：信息是减少不确定性，语言是信息传输系统</li>
+                        <li><strong>语言的统计特性</strong>：语言具有结构性和可预测性，反映了人类思维和世界的结构</li>
+                        <li><strong>条件概率学习</strong>：模型学习的是在给定上下文下下一个词的概率分布</li>
+                        <li><strong>语义保持压缩</strong>：模型学会了用最少的"比特"表示最多的信息</li>
+                    </ul>
+                    
+                    <h3>智能的信息论定义</h3>
+                    <p>智能行为就是有效的信息处理：接收复杂输入、提取相关模式、基于模式做出预测、适应新情况。大语言模型在所有这些方面都表现出色。</p>
+                    
+                    <h3>泛化能力</h3>
+                    <p>即使模型从未见过某个特定句子，也能基于学习到的概率分布评估其合理性并生成相关响应，这种泛化能力是智能的关键特征。</p>
+                `
+            },
+            'turing-2': {
+                title: '图灵：回应与深化',
+                content: `
+                    <h3>对乔姆斯基的回应</h3>
+                    <p>创造性本身可能就是复杂模式识别和组合的结果。儿童的语言习得过程在本质上与大语言模型的训练过程没有根本区别。</p>
+                    
+                    <h3>对香农观点的整合</h3>
+                    <p>信息论为理解智能提供了精确的数学框架。智能可以被理解为一种信息处理现象，而大语言模型正是这种现象的体现。</p>
+                    
+                    <h3>功能主义的坚持</h3>
+                    <p>重要的不是机器如何思考，而是它们能否表现出智能的行为。如果一个系统能够理解、推理、创造，那么它就具有智能。</p>
+                `
+            },
+            'chomsky-2': {
+                title: '乔姆斯基：坚持与澄清',
+                content: `
+                    <h3>真正理解的要求</h3>
+                    <p>真正的理解需要意图性——思想必须是关于某事的。大语言模型处理的是符号之间的关系，而不是符号与现实世界的关系。</p>
+                    
+                    <h3>对图灵的反驳</h3>
+                    <p>功能相似性并不意味着本质相同。一个能够模拟飞行的程序并不真正"飞行"，同样，模拟理解的程序并不真正"理解"。</p>
+                    
+                    <h3>质的特征</h3>
+                    <p>人类智能具有意识、自我反思、道德判断、美学体验等质的特征，这些不能通过增加计算能力或数据量来获得。</p>
+                `
+            },
+            'shannon-2': {
+                title: '香农：三层理解理论',
+                content: `
+                    <h3>理解的层次划分</h3>
+                    <ul>
+                        <li><strong>统计理解</strong>：识别和利用数据中的统计模式</li>
+                        <li><strong>结构理解</strong>：理解和操作抽象的结构关系</li>
+                        <li><strong>语义理解</strong>：将符号与现实世界的对象和关系联系起来</li>
+                    </ul>
+                    
+                    <h3>对乔姆斯基的回应</h3>
+                    <p>语义接地问题可以通过多模态学习和更复杂的信息融合技术逐步解决。关键是建立符号与现实世界之间的信息映射关系。</p>
+                    
+                    <h3>信息论的统一性</h3>
+                    <p>信息论为理解智能现象提供了统一的框架，既能解释大语言模型的成功，也能指导未来AI系统的发展。</p>
+                `
+            },
+            'turing-3': {
+                title: '图灵：最终立场与方案',
+                content: `
+                    <h3>观点演进</h3>
+                    <p>从功能主义角度发展为多维度智能理论，认识到智能是一个多层次的复杂现象，需要更细致的理论框架。</p>
+                    
+                    <h3>核心观点</h3>
+                    <p>大语言模型代表了一种真实的、功能性的智能形式，但与人类智能在某些根本方面存在差异。需要区分"计算智能"和"生物智能"。</p>
+                    
+                    <h3>具体方案</h3>
+                    <ul>
+                        <li>建立智能评估的多维框架</li>
+                        <li>推进混合智能系统的研究</li>
+                        <li>加强多模态学习</li>
+                        <li>建立AI能力的透明度标准</li>
+                        <li>促进跨学科合作</li>
+                    </ul>
+                `
+            },
+            'chomsky-3': {
+                title: '乔姆斯基：最终立场与警示',
+                content: `
+                    <h3>观点演进</h3>
+                    <p>虽然认识到需要更细致的分析，但坚持区分"表现智能"和"本质智能"，强调真正理解的独特性。</p>
+                    
+                    <h3>核心观点</h3>
+                    <p>大语言模型与人类智能在本质上存在根本差异。真正的理解需要意图性、意识和与世界的直接互动。</p>
+                    
+                    <h3>具体方案</h3>
+                    <ul>
+                        <li>重新定义AI研究的目标</li>
+                        <li>发展新的语言理论</li>
+                        <li>探索符号-连接主义混合模型</li>
+                        <li>建立严格的理解测试</li>
+                        <li>重视语言习得研究</li>
+                    </ul>
+                `
+            },
+            'shannon-3': {
+                title: '香农：最终立场与框架',
+                content: `
+                    <h3>观点演进</h3>
+                    <p>发展了更完整的信息论框架来描述不同层次的智能现象，提出从统计智能向语义智能过渡的路径。</p>
+                    
+                    <h3>信息智能层次理论</h3>
+                    <ul>
+                        <li>第一层：统计智能</li>
+                        <li>第二层：结构智能</li>
+                        <li>第三层：语义智能</li>
+                        <li>第四层：意识智能</li>
+                    </ul>
+                    
+                    <h3>具体方案</h3>
+                    <ul>
+                        <li>发展分层信息处理架构</li>
+                        <li>建立信息论评估标准</li>
+                        <li>推进多模态信息融合</li>
+                        <li>探索自组织信息结构</li>
+                        <li>建立信息论认知模型</li>
+                    </ul>
+                `
+            },
+            'synthesis': {
+                title: '智慧综合：涌现智能理论',
+                content: `
+                    <h3>核心洞察</h3>
+                    <p>智能不是二元概念，而是多维度、多层次的现象。三位专家实际上在描述智能的不同维度，共同忽视了涌现性智能的概念。</p>
+                    
+                    <h3>智能涌现层次理论</h3>
+                    <ol>
+                        <li><strong>基础统计智能</strong>：通过大规模数据学习识别模式和规律</li>
+                        <li><strong>结构理解智能</strong>：理解语言的深层语法和逻辑关系</li>
+                        <li><strong>功能表现智能</strong>：在实际任务中表现出智能行为</li>
+                        <li><strong>涌现创新智能</strong>：从复杂系统相互作用中产生新的能力</li>
+                        <li><strong>意识体验智能</strong>：包含主观体验和自我认知</li>
+                    </ol>
+                    
+                    <h3>关键创新</h3>
+                    <p>智能是一个动态涌现过程，大语言模型在前三层表现出色，并开始显现第四层特征。这种智能既是真实的，又是有限的。</p>
+                    
+                    <h3>实践价值</h3>
+                    <p>提供了完整的理论分析框架、技术发展建议、风险机遇评估和实施路径指导，实现了"1+1+1>3"的协同效应。</p>
+                `
+            }
+        };
+        
+        // 显示详细信息
+        function showDetail(viewpointId) {
+            const detail = viewpointDetails[viewpointId];
+            if (detail) {
+                document.getElementById('detailTitle').textContent = detail.title;
+                document.getElementById('detailContent').innerHTML = detail.content;
+                document.getElementById('detailView').style.display = 'block';
+                document.getElementById('detailView').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // 关闭详细信息
+        function closeDetail() {
+            document.getElementById('detailView').style.display = 'none';
+        }
+        
+        // 专家高亮效果
+        function highlightExpert(expertId) {
+            // 移除所有高亮
+            document.querySelectorAll('.viewpoint').forEach(v => v.style.opacity = '0.3');
+            // 高亮选中专家的观点
+            document.querySelectorAll(`.viewpoint-${expertId}`).forEach(v => v.style.opacity = '1');
+        }
+        
+        function resetHighlight() {
+            document.querySelectorAll('.viewpoint').forEach(v => v.style.opacity = '1');
+        }
+        
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            // 观点点击事件
+            document.querySelectorAll('.viewpoint').forEach(viewpoint => {
+                viewpoint.addEventListener('click', function() {
+                    const viewpointId = this.getAttribute('data-viewpoint');
+                    showDetail(viewpointId);
+                });
+            });
+            
+            // 专家悬停事件
+            document.querySelectorAll('.expert').forEach(expert => {
+                expert.addEventListener('mouseenter', function() {
+                    const expertId = this.getAttribute('data-expert');
+                    highlightExpert(expertId);
+                });
+                
+                expert.addEventListener('mouseleave', function() {
+                    resetHighlight();
+                });
+            });
+            
+            // 轮次点击事件
+            document.querySelectorAll('.round').forEach(round => {
+                round.addEventListener('click', function(e) {
+                    if (!e.target.closest('.viewpoint')) {
+                        const roundNum = this.getAttribute('data-round');
+                        const roundTitles = {
+                            '1': '第一轮：独立思考阶段',
+                            '2': '第二轮：交叉辩论阶段', 
+                            '3': '第三轮：最终立场阶段',
+                            '4': '第四轮：智慧综合阶段'
+                        };
+                        
+                        const roundDescriptions = {
+                            '1': '三位专家各自独立阐述对大语言模型智能原理的理解，形成了功能主义、本质主义和信息论三种不同视角。',
+                            '2': '专家们开始相互回应和质疑，图灵强调功能等价性，乔姆斯基坚持真正理解的独特性，香农提出多层次理解理论。',
+                            '3': '经过辩论后，各专家深化和升华了自己的观点，提出了具体的研究方案和发展建议。',
+                            '4': '综合大师超越个体局限，提出了智能涌现层次理论，实现了三种观点的创新性整合。'
+                        };
+                        
+                        document.getElementById('detailTitle').textContent = roundTitles[roundNum];
+                        document.getElementById('detailContent').innerHTML = `<p>${roundDescriptions[roundNum]}</p>`;
+                        document.getElementById('detailView').style.display = 'block';
+                        document.getElementById('detailView').scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

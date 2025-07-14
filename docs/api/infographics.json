@@ -1,6 +1,43 @@
 {
   "infographics": [
     {
+      "id": "57cc490c",
+      "title": "大语言模型智能原理",
+      "question": "专家辩论问题",
+      "date": "2025-07-14",
+      "created": "2025-07-14T09:32:32.135837Z",
+      "updated": "2025-07-14T09:32:18.547472Z",
+      "filename": "infographic_57cc490c.html",
+      "path": "infographics/infographic_57cc490c.html",
+      "experts": [
+        {
+          "name": "图灵",
+          "emoji": "🤖",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "乔姆斯基",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "香农",
+          "emoji": "📊",
+          "role": "领域专家",
+          "category": "philosophy"
+        }
+      ],
+      "summary": "图灵、乔姆斯基等3位专家就大语言模型智能原理展开深入讨论，探讨相关领域的核心问题与解决方案。",
+      "category": "philosophy",
+      "tags": [],
+      "rounds": 4,
+      "wordCount": 462,
+      "status": "completed",
+      "featured": false
+    },
+    {
       "id": "1d933c4d",
       "title": "华为盘古大模型争议事件",
       "question": "专家辩论问题",
@@ -279,15 +316,15 @@
     }
   ],
   "metadata": {
-    "total": 7,
-    "lastUpdated": "2025-07-12T00:03:37.553960Z",
+    "total": 8,
+    "lastUpdated": "2025-07-14T09:33:19.226527Z",
     "categories": {
-      "philosophy": 6,
+      "philosophy": 7,
       "tech": 1
     },
     "experts": {
-      "total": 21,
-      "unique": 20
+      "total": 24,
+      "unique": 23
     },
     "tags": [
       "AI",
