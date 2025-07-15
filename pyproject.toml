@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "guru-pk-mcp"
-version = "1.2.2"
+version = "1.2.3"
 description = "MCP server enabling AI expert debates - Dynamic expert generation for personalized multi-round philosophical discussions on any topic"
 readme = "README.md"
 license = { file = "LICENSE" }
