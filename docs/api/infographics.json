@@ -1,6 +1,43 @@
 {
   "infographics": [
     {
+      "id": "9dfd114a",
+      "title": "专家PK：家务解决方案",
+      "question": "专家辩论问题",
+      "date": "2025-07-15",
+      "created": "2025-07-15T19:45:27.459457Z",
+      "updated": "2025-07-15T19:45:27.452380Z",
+      "filename": "infographic_9dfd114a.html",
+      "path": "infographics/infographic_9dfd114a.html",
+      "experts": [
+        {
+          "name": "玛丽·近藤",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "蒂姆·费里斯",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        },
+        {
+          "name": "布琳·布朗",
+          "emoji": "🧠",
+          "role": "领域专家",
+          "category": "philosophy"
+        }
+      ],
+      "summary": "玛丽·近藤、蒂姆·费里斯等3位专家就专家PK：家务解决方案展开深入讨论，探讨相关领域的核心问题与解决方案。",
+      "category": "philosophy",
+      "tags": [],
+      "rounds": 4,
+      "wordCount": 395,
+      "status": "completed",
+      "featured": false
+    },
+    {
       "id": "57cc490c",
       "title": "大语言模型智能原理",
       "question": "专家辩论问题",
@@ -316,15 +353,15 @@
     }
   ],
   "metadata": {
-    "total": 8,
-    "lastUpdated": "2025-07-14T09:33:19.226527Z",
+    "total": 9,
+    "lastUpdated": "2025-07-15T19:45:50.812402Z",
     "categories": {
-      "philosophy": 7,
+      "philosophy": 8,
       "tech": 1
     },
     "experts": {
-      "total": 24,
-      "unique": 23
+      "total": 27,
+      "unique": 26
     },
     "tags": [
       "AI",

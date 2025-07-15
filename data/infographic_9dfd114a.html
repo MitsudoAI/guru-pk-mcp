@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专家PK：家务解决方案 - 塔夫特风格信息图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 顶部信息条 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .problem-statement {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .experts-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .expert-card {
+            background: rgba(255,255,255,0.15);
+            padding: 15px 25px;
+            border-radius: 8px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .expert-card:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+        }
+
+        .expert-emoji {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .expert-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .expert-title {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* 主体时间线 */
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .round {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .round:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .round-1 { border-left-color: #4CAF50; }
+        .round-2 { border-left-color: #FF9800; }
+        .round-3 { border-left-color: #2196F3; }
+        .round-4 { border-left-color: #9C27B0; }
+
+        .round-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .round-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .round-1 .round-number { background: #4CAF50; }
+        .round-2 .round-number { background: #FF9800; }
+        .round-3 .round-number { background: #2196F3; }
+        .round-4 .round-number { background: #9C27B0; }
+
+        .round-title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .viewpoints {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .viewpoint {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .viewpoint:hover {
+            background: #e9ecef;
+            transform: translateX(3px);
+        }
+
+        .viewpoint.marie { border-left-color: #e91e63; }
+        .viewpoint.tim { border-left-color: #00bcd4; }
+        .viewpoint.brene { border-left-color: #ff5722; }
+
+        .viewpoint-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .viewpoint-emoji {
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .viewpoint-author {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .viewpoint-summary {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .intensity-indicator {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .intensity-high { background: #f44336; opacity: 1; }
+        .intensity-medium { background: #ff9800; opacity: 0.7; }
+        .intensity-low { background: #4caf50; opacity: 0.5; }
+
+        /* 详细信息视图 */
+        .detail-view {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: none;
+            position: relative;
+        }
+
+        .detail-view.active {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: #d32f2f;
+        }
+
+        .detail-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .detail-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .detail-meta {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .detail-content {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .detail-content h3 {
+            color: #333;
+            margin: 20px 0 10px 0;
+            font-size: 18px;
+        }
+
+        .detail-content p {
+            margin-bottom: 15px;
+        }
+
+        .detail-content ul {
+            margin: 10px 0 15px 20px;
+        }
+
+        .detail-content li {
+            margin-bottom: 8px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .timeline {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .timeline {
+                grid-template-columns: 1fr;
+            }
+            
+            .experts-row {
+                gap: 20px;
+            }
+            
+            .problem-statement {
+                font-size: 20px;
+            }
+        }
+
+        /* 连接线效果 */
+        .connection-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .connection-line {
+            stroke: #ddd;
+            stroke-width: 1;
+            opacity: 0.5;
+        }
+
+        .expert-highlight .connection-line {
+            stroke: #667eea;
+            stroke-width: 2;
+            opacity: 0.8;
+        }
+
+        .report-link:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.6);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部信息条 -->
+        <div class="header">
+            <div class="problem-statement">
+                💭 核心问题：我是几个孩子的妈妈，最近就是不想做家务，有什么好办法可以解决呢？
+            </div>
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="https://github.com/MitsudoAI/guru-pk-mcp/blob/main/data/enhanced_export_9dfd114a.md" 
+                   target="_blank" 
+                   class="report-link"
+                   style="color: rgba(255,255,255,0.9); text-decoration: none; font-size: 14px; border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 6px; transition: all 0.3s ease;">
+                    📄 查看详细辩论报告
+                </a>
+            </div>
+            <div class="experts-row">
+                <div class="expert-card" data-expert="marie">
+                    <span class="expert-emoji">✨</span>
+                    <div class="expert-name">玛丽·近藤</div>
+                    <div class="expert-title">整理收纳专家</div>
+                </div>
+                <div class="expert-card" data-expert="tim">
+                    <span class="expert-emoji">⚡</span>
+                    <div class="expert-name">蒂姆·费里斯</div>
+                    <div class="expert-title">效率优化专家</div>
+                </div>
+                <div class="expert-card" data-expert="brene">
+                    <span class="expert-emoji">💝</span>
+                    <div class="expert-name">布琳·布朗</div>
+                    <div class="expert-title">心理学家</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主体时间线 -->
+        <div class="timeline">
+            <!-- 第1轮：独立思考 -->
+            <div class="round round-1" data-round="1">
+                <div class="round-header">
+                    <div class="round-number">1</div>
+                    <div class="round-title">🤔 独立思考</div>
+                </div>
+                <div class="viewpoints">
+                    <div class="viewpoint marie" data-viewpoint="marie-1">
+                        <div class="intensity-indicator intensity-high"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">✨</span>
+                            <span class="viewpoint-author">玛丽·近藤</span>
+                        </div>
+                        <div class="viewpoint-summary">"怦然心动"整理法：建立与物品的情感连接，创造有意义的家务体验</div>
+                    </div>
+                    <div class="viewpoint tim" data-viewpoint="tim-1">
+                        <div class="intensity-indicator intensity-high"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">⚡</span>
+                            <span class="viewpoint-author">蒂姆·费里斯</span>
+                        </div>
+                        <div class="viewpoint-summary">80/20法则家务审计：自动化、外包、批处理优化时间价值</div>
+                    </div>
+                    <div class="viewpoint brene" data-viewpoint="brene-1">
+                        <div class="intensity-indicator intensity-high"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">💝</span>
+                            <span class="viewpoint-author">布琳·布朗</span>
+                        </div>
+                        <div class="viewpoint-summary">情感根源分析：承认困难，建立支持网络，重新定义"足够好"</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第2轮：交叉辩论 -->
+            <div class="round round-2" data-round="2">
+                <div class="round-header">
+                    <div class="round-number">2</div>
+                    <div class="round-title">💬 交叉辩论</div>
+                </div>
+                <div class="viewpoints">
+                    <div class="viewpoint marie" data-viewpoint="marie-2">
+                        <div class="intensity-indicator intensity-medium"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">✨</span>
+                            <span class="viewpoint-author">玛丽·近藤</span>
+                        </div>
+                        <div class="viewpoint-summary">反驳过度效率化：家务不仅是重复工作，更是建立空间关系的方式</div>
+                    </div>
+                    <div class="viewpoint tim" data-viewpoint="tim-2">
+                        <div class="intensity-indicator intensity-medium"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">⚡</span>
+                            <span class="viewpoint-author">蒂姆·费里斯</span>
+                        </div>
+                        <div class="viewpoint-summary">质疑情感方法：没有系统支撑的情感连接难以持续，需要实用工具</div>
+                    </div>
+                    <div class="viewpoint brene" data-viewpoint="brene-2">
+                        <div class="intensity-indicator intensity-medium"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">💝</span>
+                            <span class="viewpoint-author">布琳·布朗</span>
+                        </div>
+                        <div class="viewpoint-summary">批评简化人性：人不是效率机器，需要考虑情感耗竭和社会支持</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第3轮：最终立场 -->
+            <div class="round round-3" data-round="3">
+                <div class="round-header">
+                    <div class="round-number">3</div>
+                    <div class="round-title">🎯 最终立场</div>
+                </div>
+                <div class="viewpoints">
+                    <div class="viewpoint marie" data-viewpoint="marie-3">
+                        <div class="intensity-indicator intensity-high"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">✨</span>
+                            <span class="viewpoint-author">玛丽·近藤</span>
+                        </div>
+                        <div class="viewpoint-summary">"三阶段适应性整理法"：紧急减负→系统建立→深化连接</div>
+                    </div>
+                    <div class="viewpoint tim" data-viewpoint="tim-3">
+                        <div class="intensity-indicator intensity-high"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">⚡</span>
+                            <span class="viewpoint-author">蒂姆·费里斯</span>
+                        </div>
+                        <div class="viewpoint-summary">"智能家务管理系统"：数据诊断→技术自动化→外包委托→系统维护</div>
+                    </div>
+                    <div class="viewpoint brene" data-viewpoint="brene-3">
+                        <div class="intensity-indicator intensity-high"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">💝</span>
+                            <span class="viewpoint-author">布琳·布朗</span>
+                        </div>
+                        <div class="viewpoint-summary">"勇气驱动的生活重构"：情感基础→支持网络→边界设定→实用整合</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第4轮：智慧综合 -->
+            <div class="round round-4" data-round="4">
+                <div class="round-header">
+                    <div class="round-number">4</div>
+                    <div class="round-title">🧠 智慧综合</div>
+                </div>
+                <div class="viewpoints">
+                    <div class="viewpoint" data-viewpoint="synthesis" style="border-left-color: #9C27B0;">
+                        <div class="intensity-indicator intensity-high"></div>
+                        <div class="viewpoint-header">
+                            <span class="viewpoint-emoji">🌟</span>
+                            <span class="viewpoint-author">综合智慧</span>
+                        </div>
+                        <div class="viewpoint-summary">"生态系统重构模型"：个人+物理+系统+社会四维整合，3个月到5年分阶段实施</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细信息视图 -->
+        <div class="detail-view" id="detailView">
+            <button class="close-btn" onclick="closeDetail()">×</button>
+            <div class="detail-header">
+                <div class="detail-title" id="detailTitle"></div>
+                <div class="detail-meta" id="detailMeta"></div>
+            </div>
+            <div class="detail-content" id="detailContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 详细内容数据
+        const detailData = {
+            'marie-1': {
+                title: '✨ 玛丽·近藤："怦然心动"的家务系统',
+                meta: '第1轮 - 独立思考 | 整理收纳专家',
+                content: `
+                    <h3>核心理念</h3>
+                    <p>家务困境往往反映的不仅仅是对清洁工作的厌倦，更是对生活状态的一种内在反应。我们需要创造"让你怦然心动的家务体验"。</p>
+                    
+                    <h3>五步解决方案</h3>
+                    <p><strong>第一步：物品减量</strong> - 按类别整理，应用"怦然心动"标准，进行感谢式整理</p>
+                    <p><strong>第二步：创建收纳系统</strong> - 垂直收纳法、标签系统、"一进一出"原则</p>
+                    <p><strong>第三步：仪式感体验</strong> - 晨间整理仪式、感谢练习、音乐伴随</p>
+                    <p><strong>第四步：家庭参与</strong> - 年龄适宜的责任分配、整理时间概念、庆祝小成就</p>
+                    <p><strong>第五步：可持续维护</strong> - 每日重置、周末深度整理、季节性回顾</p>
+                    
+                    <h3>心理转换</h3>
+                    <p>家务不是惩罚，而是对家人的爱的表达，是创造舒适生活环境的方式。当你开始感谢你的家时，家务就会从负担转变为一种冥想式的自我关爱。</p>
+                `
+            },
+            'tim-1': {
+                title: '⚡ 蒂姆·费里斯：80/20法则家务审计',
+                meta: '第1轮 - 独立思考 | 效率优化专家',
+                content: `
+                    <h3>问题诊断</h3>
+                    <p>根据帕累托原理，80%的家务烦恼来自20%的低效活动。需要进行"家务审计"，记录所有家务活动的时间、频率、难度和满意度。</p>
+                    
+                    <h3>五大解决方案</h3>
+                    <p><strong>自动化和技术优化</strong> - 洗碗机年节省152小时，扫地机器人年节省121小时，计算ROI</p>
+                    <p><strong>批处理和时间块管理</strong> - 洗衣批处理、采购批处理、清洁批处理</p>
+                    <p><strong>外包和委托策略</strong> - 专业清洁服务、洗衣服务、食材配送、家庭内部重新分配</p>
+                    <p><strong>系统化和标准化</strong> - 创建家务SOP、时间盒子技术、设定"足够好"标准</p>
+                    <p><strong>心理重构和激励</strong> - 重新定义家务价值、游戏化策略</p>
+                    
+                    <h3>投资回报率</h3>
+                    <p>假设每天节省1.25小时，年价值22,800元，减去成本8,000元，净收益14,800元。效率不是为了做更多家务，而是为了用最少时间维持理想生活标准。</p>
+                `
+            },
+            'brene-1': {
+                title: '💝 布琳·布朗：情感根源分析',
+                meta: '第1轮 - 独立思考 | 心理学家',
+                content: `
+                    <h3>情感根源理解</h3>
+                    <p>"不想做家务"背后隐藏着更深层的情感需求：疲惫和耗竭、缺乏认可、失去自我认同、完美主义的负担。承认这些感受需要勇气。</p>
+                    
+                    <h3>五步情感可持续系统</h3>
+                    <p><strong>诚实的自我对话</strong> - 探索抗拒的具体来源，识别与自我价值的错误联系</p>
+                    <p><strong>寻求支持和连接</strong> - 与伴侣诚实对话、建立妈妈支持网络、寻求专业支持</p>
+                    <p><strong>重新构建意义</strong> - 从服务到自我关爱、从义务到选择、从孤独到连接</p>
+                    <p><strong>设定边界和优先级</strong> - 学会说不、时间边界、情感边界</p>
+                    <p><strong>培养感恩和庆祝</strong> - 感恩练习、庆祝小胜利、家庭感恩仪式</p>
+                    
+                    <h3>给孩子的榜样</h3>
+                    <p>通过诚实处理感受和寻求支持，你正在教导孩子：承认困难是可以的，寻求帮助是勇敢的，自我关爱是重要的。</p>
+                `
+            },
+            'marie-2': {
+                title: '✨ 玛丽·近藤：反驳过度效率化',
+                meta: '第2轮 - 交叉辩论 | 整理收纳专家',
+                content: `
+                    <h3>对蒂姆效率论的回应</h3>
+                    <p>效率确实重要，但过度量化会让家务变得机械化和冷漠。家务不仅仅是重复性工作，它是我们与生活空间建立关系的方式。</p>
+                    
+                    <h3>关键分歧点</h3>
+                    <p><strong>自动化的局限性</strong> - 亲自清扫地板时会注意到家中细节，获得冥想般的平静，这是机器无法替代的</p>
+                    <p><strong>外包的风险</strong> - 可能让家庭成员失去对家的责任感和归属感</p>
+                    <p><strong>情感连接的价值</strong> - 与物品和空间的情感连接是长期可持续性的关键</p>
+                    
+                    <h3>对布琳情感论的认同</h3>
+                    <p>深度赞同对情感层面的关注，但担心纯粹的情感方法可能缺乏具体的行动指导。需要将情感智慧与实用方法相结合。</p>
+                    
+                    <h3>整合性建议</h3>
+                    <p>建议采用"适应性整理哲学" - 整理的核心是建立与生活空间的健康关系，但这个过程必须是渐进的、适应个人状态的。</p>
+                `
+            },
+            'tim-2': {
+                title: '⚡ 蒂姆·费里斯：质疑情感方法的可持续性',
+                meta: '第2轮 - 交叉辩论 | 效率优化专家',
+                content: `
+                    <h3>对玛丽整理论的质疑</h3>
+                    <p>"怦然心动"标准过于主观和不稳定。在疲惫状态下，很少有东西能让人"怦然心动"。需要更客观、可量化的决策标准。</p>
+                    
+                    <h3>对布琳情感论的挑战</h3>
+                    <p><strong>实用性不足</strong> - 纯粹的情感支持虽然重要，但缺乏具体的行动框架</p>
+                    <p><strong>效率忽视</strong> - 不解决根本的时间和精力稀缺问题</p>
+                    <p><strong>可持续性质疑</strong> - 没有系统支撑的情感连接难以长期维持</p>
+                    
+                    <h3>核心论点</h3>
+                    <p>时间仍然是最稀缺的资源。一个有几个孩子的妈妈面临的根本问题是时间和精力的稀缺性。任何不能显著节省时间的解决方案都是不切实际的。</p>
+                    
+                    <h3>整合性妥协</h3>
+                    <p>承认情感因素的重要性，但坚持认为必须建立在高效系统的基础上。提出"人性化效率系统"概念。</p>
+                `
+            },
+            'brene-2': {
+                title: '💝 布琳·布朗：批评将人类简化为效率机器',
+                meta: '第2轮 - 交叉辩论 | 心理学家',
+                content: `
+                    <h3>对蒂姆效率论的批评</h3>
+                    <p>将人类简化为效率机器，忽略了情感耗竭、社会期待和心理健康的复杂性。纯粹的效率方法可能加剧而非缓解压力。</p>
+                    
+                    <h3>对玛丽整理论的担忧</h3>
+                    <p><strong>理想化风险</strong> - "怦然心动"方法对处于困境中的人可能过于理想化</p>
+                    <p><strong>情感状态考虑</strong> - 需要考虑个人的情感耗竭状态</p>
+                    <p><strong>社会压力因素</strong> - 必须考虑社会对"完美妈妈"的期待压力</p>
+                    
+                    <h3>核心观点</h3>
+                    <p>真正的问题不是效率或整理技巧，而是社会对女性和母亲角色的不现实期待。需要从根本上重新定义"好妈妈"的标准。</p>
+                    
+                    <h3>建设性建议</h3>
+                    <p>提出"情感优先"原则 - 只有当情感基础稳固时，任何技术或方法才能真正发挥作用。强调建立支持网络的重要性。</p>
+                `
+            },
+            'marie-3': {
+                title: '✨ 玛丽·近藤：三阶段适应性整理法',
+                meta: '第3轮 - 最终立场 | 整理收纳专家',
+                content: `
+                    <h3>观点演进</h3>
+                    <p>认识到初始方法可能对某些处于困境中的人过于理想化。现在提出"适应性整理哲学" - 整理的核心仍然是建立与生活空间的健康关系，但过程必须是渐进的、适应个人状态的。</p>
+                    
+                    <h3>三阶段方法</h3>
+                    <p><strong>第一阶段：紧急减负（1-2周）</strong></p>
+                    <ul>
+                        <li>"救急式"物品减量：每天处理一个小区域，使用简化三分法</li>
+                        <li>建立"最小维护系统"：确定每天必须完成的3-5项核心家务</li>
+                        <li>寻求即时支持：接受外包、请家人分担、使用自动化工具</li>
+                    </ul>
+                    
+                    <p><strong>第二阶段：系统建立（3-4周）</strong></p>
+                    <ul>
+                        <li>"温和的怦然心动"评估：不强求立即的情感连接</li>
+                        <li>创建"生活支持系统"：为每类物品指定固定位置</li>
+                        <li>引入仪式感：选择1-2项家务转化为有意义的活动</li>
+                    </ul>
+                    
+                    <p><strong>第三阶段：深化连接（持续进行）</strong></p>
+                    <ul>
+                        <li>发展个人整理哲学：反思什么样的家庭环境最支持你的价值观</li>
+                        <li>教育和传承：与孩子分享整理的意义</li>
+                        <li>持续优化：定期评估系统的有效性</li>
+                    </ul>
+                `
+            },
+            'tim-3': {
+                title: '⚡ 蒂姆·费里斯：智能家务管理系统',
+                meta: '第3轮 - 最终立场 | 效率优化专家',
+                content: `
+                    <h3>观点演进</h3>
+                    <p>认识到初始方法可能忽略了人类行为的复杂性和情感需求。现在提出"人性化效率系统" - 既要追求最大的投入产出比，也要考虑情感满足和长期可持续性。</p>
+                    
+                    <h3>四模块系统</h3>
+                    <p><strong>模块一：数据驱动的诊断和优化（第1-2周）</strong></p>
+                    <ul>
+                        <li>家务时间审计：记录任务类型、耗时、频率、难度、满意度</li>
+                        <li>80/20分析：识别高价值和低价值任务</li>
+                        <li>成本效益分析：计算时间价值和投资回报率</li>
+                    </ul>
+                    
+                    <p><strong>模块二：技术和自动化解决方案（第2-4周）</strong></p>
+                    <ul>
+                        <li>智能设备投资策略：洗碗机、扫地机器人、烘干机</li>
+                        <li>数字化管理工具：购物清单应用、自动订购、家务分配应用</li>
+                        <li>批处理优化：洗衣、采购、清洁的集中处理</li>
+                    </ul>
+                    
+                    <p><strong>模块三：外包和委托策略（第3-6周）</strong></p>
+                    <ul>
+                        <li>专业服务外包：清洁服务、洗衣服务、食材配送</li>
+                        <li>家庭内部重新分配：与伴侣协商、孩子责任清单、家务积分系统</li>
+                        <li>社区资源利用：邻居互助、兼职助手、社区服务</li>
+                    </ul>
+                    
+                    <p><strong>模块四：系统维护和持续优化（持续进行）</strong></p>
+                    <ul>
+                        <li>建立标准操作程序：为每项家务制定最优流程</li>
+                        <li>绩效监控和调整：每月评估系统效果</li>
+                        <li>激励机制设计：设定目标、游戏化元素、社会认可</li>
+                    </ul>
+                `
+            },
+            'brene-3': {
+                title: '💝 布琳·布朗：勇气驱动的家庭生活重构',
+                meta: '第3轮 - 最终立场 | 心理学家',
+                content: `
+                    <h3>观点演进</h3>
+                    <p>认识到初始方法虽然在情感层面正确，但可能缺乏足够具体的行动指导。现在提出"勇气驱动的生活重构" - 以自我同情为起点，以真实性为指导，以可持续的行动为目标。</p>
+                    
+                    <h3>五阶段方案</h3>
+                    <p><strong>第一阶段：情感基础建设（第1-2周）</strong></p>
+                    <ul>
+                        <li>自我同情练习：每天5-10分钟自我同情冥想</li>
+                        <li>情感验证和接纳：承认"不想做家务"是正常感受</li>
+                        <li>价值观澄清：反思什么对你和家庭真正重要</li>
+                    </ul>
+                    
+                    <p><strong>第二阶段：支持网络建设（第2-4周）</strong></p>
+                    <ul>
+                        <li>与伴侣的脆弱性对话：分享真实感受，使用"我"语句</li>
+                        <li>寻找妈妈支持群体：分享真实挑战，学习应对策略</li>
+                        <li>专业支持评估：必要时寻求心理健康专业人士帮助</li>
+                    </ul>
+                    
+                    <p><strong>第三阶段：边界设定和期待管理（第3-6周）</strong></p>
+                    <ul>
+                        <li>重新定义"足够好"：基于价值观而非社会期待</li>
+                        <li>学会说不：对额外活动和完美主义说不</li>
+                        <li>与孩子的诚实对话：解释家庭责任概念</li>
+                    </ul>
+                    
+                    <p><strong>第四阶段：实用策略整合（第4-8周）</strong></p>
+                    <ul>
+                        <li>选择性采用效率工具：基于舒适度选择</li>
+                        <li>渐进式整理方法：适应情感状态</li>
+                        <li>建立有意义的仪式：选择1-2项家务转化为连接机会</li>
+                    </ul>
+                    
+                    <p><strong>第五阶段：长期维护和成长（持续进行）</strong></p>
+                    <ul>
+                        <li>定期情感检查：每周反思情感状态和需求</li>
+                        <li>模型化健康行为：向孩子展示如何诚实面对困难</li>
+                        <li>持续学习和适应：保持对新方法的开放性</li>
+                    </ul>
+                `
+            },
+            'synthesis': {
+                title: '🌟 智慧综合：生态系统重构模型',
+                meta: '第4轮 - 智慧综合 | 超越专家视角',
+                content: `
+                    <h3>核心洞察</h3>
+                    <p><strong>深层共识</strong>：三位专家都认同当前的家务困境不是个人能力问题，而是系统性问题。</p>
+                    <p><strong>关键分歧根源</strong>：对"人性"理解的不同层次 - 美学精神层面、理性效率层面、情感社会层面。</p>
+                    <p><strong>共同忽视的维度</strong>：家务的社会建构性质 - 社会性别角色、经济结构和文化价值观的产物。</p>
+                    
+                    <h3>四维整合框架</h3>
+                    <p><strong>个人维度</strong>（布琳的贡献）：情感健康和自我认知</p>
+                    <p><strong>物理维度</strong>（玛丽的贡献）：空间和物品的优化</p>
+                    <p><strong>系统维度</strong>（蒂姆的贡献）：效率和资源优化</p>
+                    <p><strong>社会维度</strong>（三位专家共同忽视）：社区支持和文化变革</p>
+                    
+                    <h3>分阶段实施方案</h3>
+                    <p><strong>短期措施（3个月内）</strong>：危机缓解和基础建设</p>
+                    <ul>
+                        <li>第一个月：情感稳定和支持网络建立</li>
+                        <li>第二个月：物理环境初步优化</li>
+                        <li>第三个月：系统整合和习惯建立</li>
+                    </ul>
+                    
+                    <p><strong>中期计划（1年内）</strong>：系统深化和能力建设</p>
+                    <ul>
+                        <li>第4-6个月：深化个人成长</li>
+                        <li>第7-9个月：优化家庭系统</li>
+                        <li>第10-12个月：扩展社会连接</li>
+                    </ul>
+                    
+                    <p><strong>长期战略（3-5年）</strong>：生态系统成熟和价值创造</p>
+                    <ul>
+                        <li>系统成熟阶段：建立完全适应家庭需求的个性化生活系统</li>
+                        <li>价值创造阶段：通过经验帮助其他家庭，参与社会倡导</li>
+                    </ul>
+                    
+                    <h3>核心价值</h3>
+                    <p>这个综合方案不仅解决了表面的家务问题，更重要的是帮助建立了一个支持个人成长、家庭和谐和社会连接的生态系统。通过这个过程，一个"不想做家务的妈妈"可以转变为一个拥有清晰价值观、有效支持系统和可持续生活方式的女性。</p>
+                `
+            }
+        };
+
+        // 显示详细信息
+        function showDetail(viewpointId) {
+            const data = detailData[viewpointId];
+            if (!data) return;
+            
+            document.getElementById('detailTitle').textContent = data.title;
+            document.getElementById('detailMeta').textContent = data.meta;
+            document.getElementById('detailContent').innerHTML = data.content;
+            document.getElementById('detailView').classList.add('active');
+            
+            // 滚动到详细视图
+            document.getElementById('detailView').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 关闭详细信息
+        function closeDetail() {
+            document.getElementById('detailView').classList.remove('active');
+        }
+
+        // 专家高亮效果
+        function highlightExpert(expertId) {
+            // 移除所有高亮
+            document.querySelectorAll('.expert-card').forEach(card => {
+                card.classList.remove('expert-highlight');
+            });
+            document.querySelectorAll('.viewpoint').forEach(viewpoint => {
+                viewpoint.style.opacity = '0.3';
+            });
+            
+            // 添加当前专家高亮
+            document.querySelector(`[data-expert="${expertId}"]`).classList.add('expert-highlight');
+            document.querySelectorAll(`.viewpoint.${expertId}`).forEach(viewpoint => {
+                viewpoint.style.opacity = '1';
+                viewpoint.style.transform = 'scale(1.02)';
+            });
+        }
+
+        function removeHighlight() {
+            document.querySelectorAll('.expert-card').forEach(card => {
+                card.classList.remove('expert-highlight');
+            });
+            document.querySelectorAll('.viewpoint').forEach(viewpoint => {
+                viewpoint.style.opacity = '1';
+                viewpoint.style.transform = 'scale(1)';
+            });
+        }
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            // 观点点击事件
+            document.querySelectorAll('.viewpoint[data-viewpoint]').forEach(viewpoint => {
+                viewpoint.addEventListener('click', function() {
+                    const viewpointId = this.getAttribute('data-viewpoint');
+                    showDetail(viewpointId);
+                });
+            });
+            
+            // 专家卡片悬停事件
+            document.querySelectorAll('.expert-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    const expertId = this.getAttribute('data-expert');
+                    highlightExpert(expertId);
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    removeHighlight();
+                });
+            });
+            
+            // 轮次点击事件
+            document.querySelectorAll('.round').forEach(round => {
+                round.addEventListener('click', function(e) {
+                    if (e.target.closest('.viewpoint')) return; // 避免冲突
+                    
+                    const roundNum = this.getAttribute('data-round');
+                    const roundTitle = this.querySelector('.round-title').textContent;
+                    
+                    // 可以在这里添加轮次详细信息显示逻辑
+                    console.log(`点击了${roundTitle}`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
