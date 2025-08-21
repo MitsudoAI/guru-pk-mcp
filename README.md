@@ -4,7 +4,7 @@
 
 ---
 
-# Guru-PK MCP Intelligent Expert Debate System
+## Guru-PK MCP Intelligent Expert Debate System
 
 An AI expert debate system based on local MCP (Model Context Protocol), featuring **dynamic expert generation architecture** that intelligently creates the most suitable expert combinations based on questions for multi-round intellectual confrontation.
 

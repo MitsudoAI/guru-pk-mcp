@@ -4,7 +4,7 @@
 
 ---
 
-# Guru-PK MCP 智能专家辩论系统
+## Guru-PK MCP 智能专家辩论系统
 
 基于本地MCP（Model Context Protocol）的AI专家辩论系统，采用**动态专家生成架构**，根据问题而智能的创建最适合的专家组合进行多轮智慧碰撞。
 
